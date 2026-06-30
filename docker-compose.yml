@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: baber-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: barbearia
+    ports:
+      - "5432:5432"
+    volumes:
+      - baber-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d barbearia"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: baber-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - baber-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Evolution API (WhatsApp) — opcional para dev local.
+  # Descomente quando for testar OTP / notificações de verdade.
+  # evolution-api:
+  #   image: atendai/evolution-api:latest
+  #   container_name: baber-evolution
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     AUTHENTICATION_API_KEY: change-me
+  #     DATABASE_ENABLED: "false"
+  #   volumes:
+  #     - baber-evolution-data:/evolution/instances
+
+volumes:
+  baber-postgres-data:
+  baber-redis-data:
+  # baber-evolution-data:
