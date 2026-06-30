@@ -19,19 +19,21 @@
     "db:seed": "tsx drizzle/seed.ts"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/event-emitter": "^3.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.0.0",
-    "@nestjs/bullmq": "^11.0.0",
     "bullmq": "^5.34.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.0",
+    "firebase-admin": "^14.1.0",
     "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.3",
     "nestjs-pino": "^4.3.0",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
@@ -40,13 +42,13 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.16.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@eslint/js": "^9.16.0",
-    "typescript-eslint": "^8.18.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.0",
     "@types/supertest": "^6.0.2",
     "drizzle-kit": "^0.30.0",
@@ -56,6 +58,7 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0"
   }
 }
