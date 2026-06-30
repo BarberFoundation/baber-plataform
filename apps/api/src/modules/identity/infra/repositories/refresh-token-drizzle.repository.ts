@@ -42,7 +42,7 @@ export class RefreshTokenDrizzleRepository implements IRefreshTokenRepository {
       tenantId: row.tenantId,
       tokenHash: row.tokenHash,
       expiresAt: row.expiresAt,
-      revokedAt: row.revokedAt ?? null,
+      revokedAt: row.revokedAt,
       createdAt: row.createdAt,
     };
   }
