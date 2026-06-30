@@ -109,4 +109,12 @@ describe('RefreshTokenUseCase', () => {
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
   });
+
+  it('throws InvalidRefreshTokenError when token belongs to different tenant', async () => {
+    const record = makeRecord(); // record.tenantId = TENANT_ID
+    const uc = new RefreshTokenUseCase(makeRefreshRepo(record), makeUserRepo(makeUser()), makeJwt());
+    await expect(
+      uc.execute({ rawRefreshToken: 'valid-token', tenantId: 'other-tenant' }),
+    ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
+  });
 });
