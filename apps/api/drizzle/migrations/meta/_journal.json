@@ -8,6 +8,13 @@
       "when": 1782857210596,
       "tag": "0000_cultured_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782858382000,
+      "tag": "0001_curved_mockingbird",
+      "breakpoints": true
     }
   ]
 }
