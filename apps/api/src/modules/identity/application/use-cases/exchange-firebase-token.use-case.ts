@@ -3,6 +3,7 @@ import { randomBytes, createHash, randomUUID } from 'crypto';
 import {
   FIREBASE_TOKEN_VALIDATOR,
   IFirebaseTokenValidator,
+  FirebaseTokenPayload,
 } from '../../domain/services/firebase-token-validator';
 import {
   USER_REPOSITORY,
@@ -37,12 +38,9 @@ export class ExchangeFirebaseTokenUseCase {
   ) {}
 
   async execute(input: ExchangeFirebaseTokenInput): Promise<AuthResult> {
-    let firebasePayload;
-    try {
-      firebasePayload = await this.validator.validate(input.idToken);
-    } catch {
+    const firebasePayload: FirebaseTokenPayload = await this.validator.validate(input.idToken).catch(() => {
       throw new InvalidFirebaseTokenError();
-    }
+    });
 
     let user = await this.userRepo.findByFirebaseUid(firebasePayload.uid, input.tenantId);
     if (!user) {

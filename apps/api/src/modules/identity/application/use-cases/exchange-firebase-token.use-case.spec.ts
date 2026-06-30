@@ -1,7 +1,7 @@
 import { ExchangeFirebaseTokenUseCase } from './exchange-firebase-token.use-case';
 import { IFirebaseTokenValidator } from '../../domain/services/firebase-token-validator';
 import { IUserRepository } from '../../domain/repositories/user.repository';
-import { IRefreshTokenRepository } from '../../domain/repositories/refresh-token.repository';
+import { IRefreshTokenRepository, RefreshTokenRecord } from '../../domain/repositories/refresh-token.repository';
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
 import { User } from '../../domain/entities/user.entity';
 import { InvalidFirebaseTokenError } from '../../domain/errors/identity.errors';
@@ -39,10 +39,11 @@ function makeJwt(): JwtTokenService {
 describe('ExchangeFirebaseTokenUseCase', () => {
   it('creates new user and returns tokens when user does not exist', async () => {
     const userRepo = makeUserRepo();
+    const refreshRepo = makeRefreshRepo();
     const uc = new ExchangeFirebaseTokenUseCase(
       makeValidator(),
       userRepo,
-      makeRefreshRepo(),
+      refreshRepo,
       makeJwt(),
     );
     const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
@@ -50,6 +51,10 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     expect(result.refreshToken).toBeTruthy();
     expect(result.user.role).toBe('ADMIN');
     expect(userRepo.save).toHaveBeenCalled();
+    expect(result.expiresIn).toBe(900); // 15m = 900s
+    const savedRecord = (refreshRepo.save as jest.Mock).mock.calls[0][0] as RefreshTokenRecord;
+    expect(savedRecord.tokenHash).not.toBe(result.refreshToken);
+    expect(savedRecord.tokenHash).toMatch(/^[0-9a-f]{64}$/); // SHA-256 hex
   });
 
   it('returns existing user without creating a new one', async () => {
@@ -65,16 +70,18 @@ describe('ExchangeFirebaseTokenUseCase', () => {
       updatedAt: new Date(),
     });
     const userRepo = makeUserRepo(existing);
+    const refreshRepo = makeRefreshRepo();
     const uc = new ExchangeFirebaseTokenUseCase(
       makeValidator(),
       userRepo,
-      makeRefreshRepo(),
+      refreshRepo,
       makeJwt(),
     );
     const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
     expect(result.user.id).toBe('existing-id');
     // save not called because user already exists
     expect(userRepo.save).not.toHaveBeenCalled();
+    expect(refreshRepo.save).toHaveBeenCalled();
   });
 
   it('throws InvalidFirebaseTokenError when validator rejects', async () => {
