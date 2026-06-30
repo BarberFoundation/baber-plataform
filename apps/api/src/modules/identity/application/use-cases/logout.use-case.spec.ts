@@ -25,21 +25,16 @@ describe('LogoutUseCase', () => {
     expect(refreshRepo.revokeByHash).toHaveBeenCalledWith(sha256('my-token'));
   });
 
-  it('is idempotent: does not throw if token not found', async () => {
-    const refreshRepo = makeRefreshRepo({
-      revokeByHash: jest.fn().mockResolvedValue(undefined),
-    });
-    const uc = new LogoutUseCase(refreshRepo);
-
-    await expect(uc.execute({ rawRefreshToken: 'nonexistent' })).resolves.toBeUndefined();
+  it('is idempotent: resolves when revokeByHash resolves (delegated to repo)', async () => {
+    const uc = new LogoutUseCase(makeRefreshRepo());
+    await expect(uc.execute({ rawRefreshToken: 'any-token' })).resolves.toBeUndefined();
   });
 
-  it('is idempotent: does not throw if token already revoked', async () => {
+  it('propagates repository errors upward', async () => {
     const refreshRepo = makeRefreshRepo({
-      revokeByHash: jest.fn().mockResolvedValue(undefined),
+      revokeByHash: jest.fn().mockRejectedValue(new Error('DB connection lost')),
     });
     const uc = new LogoutUseCase(refreshRepo);
-
-    await expect(uc.execute({ rawRefreshToken: 'already-revoked' })).resolves.toBeUndefined();
+    await expect(uc.execute({ rawRefreshToken: 'any-token' })).rejects.toThrow('DB connection lost');
   });
 });
