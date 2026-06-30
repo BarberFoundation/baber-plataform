@@ -8,6 +8,7 @@ import { createHash } from 'crypto';
 
 const TENANT_ID = 'tenant-222';
 const USER_ID = 'user-333';
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function sha256(raw: string): string {
   return createHash('sha256').update(raw).digest('hex');
@@ -19,7 +20,7 @@ function makeRecord(overrides?: Partial<RefreshTokenRecord>): RefreshTokenRecord
     userId: USER_ID,
     tenantId: TENANT_ID,
     tokenHash: sha256('valid-token'),
-    expiresAt: new Date(Date.now() + 86400_000),
+    expiresAt: new Date(Date.now() + ONE_DAY_MS),
     revokedAt: null,
     createdAt: new Date(),
     ...overrides,
@@ -73,7 +74,9 @@ describe('RefreshTokenUseCase', () => {
     expect(result.refreshToken).toBeTruthy();
     expect(result.refreshToken).not.toBe('valid-token'); // rotated
     expect(refreshRepo.revokeByHash).toHaveBeenCalledWith(sha256('valid-token'));
-    expect(refreshRepo.save).toHaveBeenCalled();
+    expect(refreshRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ tokenHash: sha256(result.refreshToken) }),
+    );
   });
 
   it('throws InvalidRefreshTokenError when token hash not found', async () => {
@@ -94,6 +97,14 @@ describe('RefreshTokenUseCase', () => {
   it('throws InvalidRefreshTokenError when token is expired', async () => {
     const expiredRecord = makeRecord({ expiresAt: new Date(Date.now() - 1000) });
     const uc = new RefreshTokenUseCase(makeRefreshRepo(expiredRecord), makeUserRepo(makeUser()), makeJwt());
+    await expect(
+      uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
+    ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
+  });
+
+  it('throws InvalidRefreshTokenError when user no longer exists', async () => {
+    const record = makeRecord();
+    const uc = new RefreshTokenUseCase(makeRefreshRepo(record), makeUserRepo(null), makeJwt());
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);

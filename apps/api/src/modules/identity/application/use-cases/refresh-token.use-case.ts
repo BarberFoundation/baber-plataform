@@ -38,12 +38,16 @@ export class RefreshTokenUseCase {
       throw new InvalidRefreshTokenError();
     }
 
+    if (record.tenantId !== input.tenantId) {
+      throw new InvalidRefreshTokenError();
+    }
+
     const user = await this.userRepo.findById(record.userId, record.tenantId);
     if (!user) {
       throw new InvalidRefreshTokenError();
     }
 
-    // Rotate: revoke old token
+    // Fail-closed: revoke first. If save throws, client loses session but no duplicate tokens exist.
     await this.refreshRepo.revokeByHash(hash);
 
     // Issue new pair
