@@ -38,9 +38,10 @@ function makeJwt(): JwtTokenService {
 
 describe('ExchangeFirebaseTokenUseCase', () => {
   it('creates new user and returns tokens when user does not exist', async () => {
+    const userRepo = makeUserRepo();
     const uc = new ExchangeFirebaseTokenUseCase(
       makeValidator(),
-      makeUserRepo(),
+      userRepo,
       makeRefreshRepo(),
       makeJwt(),
     );
@@ -48,6 +49,7 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     expect(result.accessToken).toBeTruthy();
     expect(result.refreshToken).toBeTruthy();
     expect(result.user.role).toBe('ADMIN');
+    expect(userRepo.save).toHaveBeenCalled();
   });
 
   it('returns existing user without creating a new one', async () => {
