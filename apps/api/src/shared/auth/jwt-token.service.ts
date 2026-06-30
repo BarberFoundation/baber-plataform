@@ -61,11 +61,11 @@ export class JwtTokenService {
 
   verifyAccess(token: string): JwtPayload {
     const decoded = jwt.verify(token, this.accessSecret) as jwt.JwtPayload;
-    return {
-      userId: decoded.sub!,
-      tenantId: decoded['tenantId'] as string,
-      role: decoded['role'] as Role,
-    };
+    const { sub, tenantId, role } = decoded as { sub?: string; tenantId?: string; role?: string };
+    if (!sub || !tenantId || !role) {
+      throw new Error('Token is missing required claims (sub, tenantId, role).');
+    }
+    return { userId: sub, tenantId, role: role as Role };
   }
 
   get accessExpiresInSeconds(): number {
@@ -73,11 +73,20 @@ export class JwtTokenService {
   }
 
   private parseTtl(ttl: string): number {
-    const match = /^(\d+)([smhd])$/.exec(ttl);
-    if (!match) return 900;
+    // Numeric string (seconds directly)
+    const numericOnly = /^\d+$/.exec(ttl);
+    if (numericOnly) return parseInt(ttl, 10);
+
+    const match = /^(\d+)([smhdwy])$/.exec(ttl);
+    if (!match) {
+      // Unrecognised format — surface it rather than silently defaulting
+      throw new Error(`JWT_ACCESS_TTL format not supported: "${ttl}". Use e.g. 15m, 1h, 30d.`);
+    }
     const value = parseInt(match[1], 10);
     const unit = match[2];
-    const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
-    return value * (multipliers[unit] ?? 1);
+    const multipliers: Record<string, number> = {
+      s: 1, m: 60, h: 3600, d: 86400, w: 604800, y: 31536000,
+    };
+    return value * multipliers[unit];
   }
 }

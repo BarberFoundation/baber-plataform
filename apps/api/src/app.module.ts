@@ -58,7 +58,13 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
   ],
   providers: [
     TenantContext,
-    JwtTokenService,
+    // Factory provider avoids union-type metadata issue (string | ConfigService emits
+    // Object via emitDecoratorMetadata, which NestJS cannot resolve from DI).
+    {
+      provide: JwtTokenService,
+      useFactory: (config: ConfigService) => new JwtTokenService(config),
+      inject: [ConfigService],
+    },
     { provide: APP_GUARD, useClass: JwtGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
