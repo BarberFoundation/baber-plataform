@@ -12,6 +12,7 @@ import { TenantContext } from './shared/tenancy/tenant-context';
 import { TenantMiddleware } from './shared/tenancy/tenant.middleware';
 import { JwtGuard } from './shared/auth/jwt.guard';
 import { RolesGuard } from './shared/auth/roles.guard';
+import { JwtTokenService } from './shared/auth/jwt-token.service';
 
 import { IdentityModule } from './modules/identity/identity.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -57,6 +58,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
   ],
   providers: [
     TenantContext,
+    JwtTokenService,
     { provide: APP_GUARD, useClass: JwtGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
