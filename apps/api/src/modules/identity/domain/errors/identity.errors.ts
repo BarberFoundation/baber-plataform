@@ -2,12 +2,21 @@ import { DomainError } from '@shared/kernel/errors/domain-error';
 
 export class InvalidFirebaseTokenError extends DomainError {
   readonly code = 'INVALID_FIREBASE_TOKEN';
+  constructor(message = 'Firebase token inválido ou expirado.') {
+    super(message);
+  }
 }
 
 export class UserNotFoundError extends DomainError {
   readonly code = 'USER_NOT_FOUND';
+  constructor(message = 'Usuário não encontrado.') {
+    super(message);
+  }
 }
 
 export class InvalidRefreshTokenError extends DomainError {
   readonly code = 'INVALID_REFRESH_TOKEN';
+  constructor(message = 'Refresh token inválido, expirado ou revogado.') {
+    super(message);
+  }
 }

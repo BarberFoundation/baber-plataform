@@ -23,7 +23,7 @@ export interface CreateAdminUserProps {
 export class User {
   readonly id: string;
   readonly tenantId: string;
-  name: string | null;
+  private _name: string | null;
   readonly role: Role;
   readonly phone: string | null;
   readonly email: string | null;
@@ -34,13 +34,21 @@ export class User {
   private constructor(props: UserProps) {
     this.id = props.id;
     this.tenantId = props.tenantId;
-    this.name = props.name;
+    this._name = props.name;
     this.role = props.role;
     this.phone = props.phone;
     this.email = props.email;
     this.firebaseUid = props.firebaseUid;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+  }
+
+  get name(): string | null {
+    return this._name;
+  }
+
+  rename(name: string | null): void {
+    this._name = name;
   }
 
   static reconstitute(props: UserProps): User {

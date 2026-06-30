@@ -20,7 +20,7 @@ describe('User entity', () => {
     expect(user.firebaseUid).toBe('firebase-uid-abc');
   });
 
-  it('creates new admin user', () => {
+  it('creates new admin user with correct props', () => {
     const user = User.createAdmin({
       tenantId: base.tenantId,
       email: 'new@barbearia.com',
@@ -30,5 +30,15 @@ describe('User entity', () => {
     expect(user.role).toBe('ADMIN');
     expect(user.id).toBeDefined();
     expect(user.phone).toBeNull();
+    expect(user.tenantId).toBe(base.tenantId);
+    expect(user.email).toBe('new@barbearia.com');
+    expect(user.firebaseUid).toBe('firebase-uid-xyz');
+    expect(user.name).toBeNull();
+  });
+
+  it('allows renaming via domain method', () => {
+    const user = User.reconstitute(base);
+    user.rename('Novo Nome');
+    expect(user.name).toBe('Novo Nome');
   });
 });
