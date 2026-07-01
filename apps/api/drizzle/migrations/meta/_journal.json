@@ -29,6 +29,13 @@
       "when": 1782867767320,
       "tag": "0003_cooing_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782907116760,
+      "tag": "0004_eminent_switch",
+      "breakpoints": true
     }
   ]
 }
