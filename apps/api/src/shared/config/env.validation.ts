@@ -42,6 +42,10 @@ export class EnvVars {
 
   @IsOptional()
   @IsString()
+  EVOLUTION_INSTANCE?: string;
+
+  @IsOptional()
+  @IsString()
   EVOLUTION_INSTANCE_NAME?: string;
 
   @IsOptional()
