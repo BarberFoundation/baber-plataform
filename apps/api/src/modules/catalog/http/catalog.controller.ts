@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -6,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -86,6 +88,7 @@ export class CatalogController {
   @Public()
   @Get()
   async list(@Headers('x-tenant-id') tenantId: string) {
+    if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
     const services = await this.listServices.execute({ tenantId, includeInactive: false });
     return services.map(serializeService);
   }
@@ -106,9 +109,10 @@ export class CatalogController {
   @Public()
   @Get(':id')
   async findOne(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Headers('x-tenant-id') tenantId: string,
   ) {
+    if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
     const service = await this.getService.execute({ id, tenantId });
     return serializeService(service);
   }
@@ -131,7 +135,7 @@ export class CatalogController {
   @Put(':id')
   async update(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateServiceDto,
   ) {
     const service = await this.updateService.execute({
@@ -148,7 +152,7 @@ export class CatalogController {
   @Roles('ADMIN')
   @Patch(':id/deactivate')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deactivate(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+  async deactivate(@CurrentUser() user: JwtPayload, @Param('id', new ParseUUIDPipe()) id: string) {
     await this.deactivateService.execute({ id, tenantId: user.tenantId });
   }
 }

@@ -5,6 +5,18 @@ import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
 import { ICatalogRepository } from '../../domain/repositories/catalog.repository';
 import { Service } from '../../domain/entities/service.entity';
+import { ServiceNameTakenError } from '../../domain/errors/catalog.errors';
+
+function isNameConstraintViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code: unknown }).code === '23505' &&
+    'constraint_name' in err &&
+    (err as { constraint_name: unknown }).constraint_name === 'services_tenant_name_unique'
+  );
+}
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -41,9 +53,32 @@ export class CatalogDrizzleRepository implements ICatalogRepository {
 
   async save(service: Service): Promise<Service> {
     const now = new Date();
-    await this.db
-      .insert(schema.services)
-      .values({
+    try {
+      await this.db
+        .insert(schema.services)
+        .values({
+          id: service.id,
+          tenantId: service.tenantId,
+          name: service.name,
+          description: service.description,
+          priceInCents: service.priceInCents,
+          durationMinutes: service.durationMinutes,
+          isActive: service.isActive,
+          createdAt: service.createdAt,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: schema.services.id,
+          set: {
+            name: service.name,
+            description: service.description,
+            priceInCents: service.priceInCents,
+            durationMinutes: service.durationMinutes,
+            isActive: service.isActive,
+            updatedAt: now,
+          },
+        });
+      return Service.reconstitute({
         id: service.id,
         tenantId: service.tenantId,
         name: service.name,
@@ -53,29 +88,13 @@ export class CatalogDrizzleRepository implements ICatalogRepository {
         isActive: service.isActive,
         createdAt: service.createdAt,
         updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: schema.services.id,
-        set: {
-          name: service.name,
-          description: service.description,
-          priceInCents: service.priceInCents,
-          durationMinutes: service.durationMinutes,
-          isActive: service.isActive,
-          updatedAt: now,
-        },
       });
-    return Service.reconstitute({
-      id: service.id,
-      tenantId: service.tenantId,
-      name: service.name,
-      description: service.description,
-      priceInCents: service.priceInCents,
-      durationMinutes: service.durationMinutes,
-      isActive: service.isActive,
-      createdAt: service.createdAt,
-      updatedAt: now,
-    });
+    } catch (err: unknown) {
+      if (isNameConstraintViolation(err)) {
+        throw new ServiceNameTakenError();
+      }
+      throw err;
+    }
   }
 
   private toEntity(row: typeof schema.services.$inferSelect): Service {

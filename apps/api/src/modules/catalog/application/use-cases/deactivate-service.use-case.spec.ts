@@ -3,19 +3,21 @@ import { ICatalogRepository } from '../../domain/repositories/catalog.repository
 import { Service } from '../../domain/entities/service.entity';
 import { ServiceNotFoundError } from '../../domain/errors/catalog.errors';
 
-const ACTIVE_SERVICE = Service.reconstitute({
-  id: 'svc-id-1',
-  tenantId: 'tenant-1',
-  name: 'Corte Masculino',
-  description: null,
-  priceInCents: 3500,
-  durationMinutes: 30,
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
+function makeActiveService() {
+  return Service.reconstitute({
+    id: 'svc-id-1',
+    tenantId: 'tenant-1',
+    name: 'Corte Masculino',
+    description: null,
+    priceInCents: 3500,
+    durationMinutes: 30,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+}
 
-function makeRepo(existing: Service | null = ACTIVE_SERVICE): ICatalogRepository {
+function makeRepo(existing: Service | null = makeActiveService()): ICatalogRepository {
   return {
     findById: jest.fn().mockResolvedValue(existing),
     findAll: jest.fn().mockResolvedValue([]),

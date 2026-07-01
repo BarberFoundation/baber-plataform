@@ -29,7 +29,7 @@ describe('CreateServiceUseCase', () => {
     expect(result.name).toBe('Corte Masculino');
     expect(result.tenantId).toBe('tenant-1');
     expect(result.isActive).toBe(true);
-    expect(repo.existsByName).toHaveBeenCalledWith('Corte Masculino', 'tenant-1', undefined);
+    expect(repo.existsByName).toHaveBeenCalledWith('Corte Masculino', 'tenant-1');
     expect(repo.save).toHaveBeenCalledWith(expect.any(Service));
   });
 

@@ -19,7 +19,7 @@ export class CreateServiceUseCase {
   ) {}
 
   async execute(input: CreateServiceInput): Promise<Service> {
-    const nameTaken = await this.repo.existsByName(input.name, input.tenantId, undefined);
+    const nameTaken = await this.repo.existsByName(input.name, input.tenantId);
     if (nameTaken) throw new ServiceNameTakenError();
 
     const service = Service.create({
