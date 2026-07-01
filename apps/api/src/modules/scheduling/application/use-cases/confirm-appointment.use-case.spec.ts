@@ -3,6 +3,8 @@ import { ISchedulingRepository } from '../../domain/repositories/scheduling.repo
 import { Appointment } from '../../domain/entities/appointment.entity';
 import { AppointmentNotFoundError, InvalidStatusTransitionError } from '../../domain/errors/scheduling.errors';
 
+const MOCK_EMITTER: any = { emit: jest.fn() };
+
 function makeAppt(status: Appointment['status'] = 'PENDING') {
   return Appointment.reconstitute({
     id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
@@ -24,19 +26,19 @@ function makeRepo(appt: Appointment | null = makeAppt()): ISchedulingRepository 
 describe('ConfirmAppointmentUseCase', () => {
   it('confirms a PENDING appointment', async () => {
     const repo = makeRepo();
-    const uc = new ConfirmAppointmentUseCase(repo);
+    const uc = new ConfirmAppointmentUseCase(repo, MOCK_EMITTER);
     const result = await uc.execute({ id: 'appt-1', tenantId: 'tenant-1' });
     expect(result.status).toBe('CONFIRMED');
     expect(repo.save).toHaveBeenCalled();
   });
 
   it('throws AppointmentNotFoundError when not found', async () => {
-    const uc = new ConfirmAppointmentUseCase(makeRepo(null));
+    const uc = new ConfirmAppointmentUseCase(makeRepo(null), MOCK_EMITTER);
     await expect(uc.execute({ id: 'x', tenantId: 'tenant-1' })).rejects.toBeInstanceOf(AppointmentNotFoundError);
   });
 
   it('throws InvalidStatusTransitionError when appointment is not PENDING', async () => {
-    const uc = new ConfirmAppointmentUseCase(makeRepo(makeAppt('CANCELLED')));
+    const uc = new ConfirmAppointmentUseCase(makeRepo(makeAppt('CANCELLED')), MOCK_EMITTER);
     await expect(uc.execute({ id: 'appt-1', tenantId: 'tenant-1' })).rejects.toBeInstanceOf(InvalidStatusTransitionError);
   });
 });

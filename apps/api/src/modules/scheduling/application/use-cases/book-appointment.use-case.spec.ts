@@ -8,6 +8,8 @@ import { defaultWorkSchedule } from '../../../team/domain/value-objects/work-sch
 
 const MONDAY = '2025-03-10';
 
+const MOCK_EMITTER: any = { emit: jest.fn() };
+
 const ACTIVE_BARBER = {
   isActive: true,
   workSchedule: defaultWorkSchedule(),
@@ -46,7 +48,7 @@ const INPUT: BookAppointmentInput = {
 describe('BookAppointmentUseCase', () => {
   it('creates and saves appointment with computed endTime', async () => {
     const repo = makeRepo();
-    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup());
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
     const result = await uc.execute(INPUT);
     expect(result.status).toBe('PENDING');
     expect(result.startTime).toBe('09:00');
@@ -57,19 +59,19 @@ describe('BookAppointmentUseCase', () => {
 
   it('throws InvalidAppointmentTimeError when barber not found', async () => {
     const repo = makeRepo();
-    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(null as any), makeServiceLookup());
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(null as any), makeServiceLookup(), MOCK_EMITTER);
     await expect(uc.execute(INPUT)).rejects.toBeInstanceOf(InvalidAppointmentTimeError);
   });
 
   it('throws InvalidAppointmentTimeError when service not found', async () => {
     const repo = makeRepo();
-    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(null as any));
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(null as any), MOCK_EMITTER);
     await expect(uc.execute(INPUT)).rejects.toBeInstanceOf(InvalidAppointmentTimeError);
   });
 
   it('throws InvalidAppointmentTimeError when barber does not work that day', async () => {
     const repo = makeRepo();
-    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup());
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
     await expect(uc.execute({ ...INPUT, date: '2025-03-09' })).rejects.toBeInstanceOf(InvalidAppointmentTimeError);
   });
 
@@ -81,7 +83,7 @@ describe('BookAppointmentUseCase', () => {
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = makeRepo({ findByBarberAndDate: jest.fn().mockResolvedValue([existing]) });
-    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup());
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
     await expect(uc.execute(INPUT)).rejects.toBeInstanceOf(AppointmentConflictError);
   });
 });

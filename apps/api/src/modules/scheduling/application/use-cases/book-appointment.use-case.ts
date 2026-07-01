@@ -6,6 +6,8 @@ import { Appointment } from '../../domain/entities/appointment.entity';
 import { BookingPolicy } from '../../domain/services/booking-policy';
 import { InvalidAppointmentTimeError } from '../../domain/errors/scheduling.errors';
 import { addMinutes } from '../../domain/utils/time.utils';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { APPOINTMENT_EVENTS, AppointmentEventPayload } from '@shared/events/appointment-events';
 
 export interface BookAppointmentInput {
   tenantId: string;
@@ -26,6 +28,7 @@ export class BookAppointmentUseCase {
     @Inject(SCHEDULING_REPOSITORY) private readonly repo: ISchedulingRepository,
     @Inject(BARBER_LOOKUP)         private readonly barberLookup: IBarberLookup,
     @Inject(SERVICE_LOOKUP)        private readonly serviceLookup: IServiceLookup,
+    @Inject(EventEmitter2)         private readonly emitter: EventEmitter2,
   ) {}
 
   async execute(input: BookAppointmentInput): Promise<Appointment> {
@@ -61,6 +64,19 @@ export class BookAppointmentUseCase {
       notes: input.notes ?? null,
     });
 
-    return this.repo.save(appointment);
+    const saved = await this.repo.save(appointment);
+    const payload: AppointmentEventPayload = {
+      appointmentId: saved.id,
+      tenantId:      saved.tenantId,
+      clientName:    saved.clientName,
+      clientPhone:   saved.clientPhone,
+      barberId:      saved.barberId,
+      serviceId:     saved.serviceId,
+      date:          saved.date,
+      startTime:     saved.startTime,
+      endTime:       saved.endTime,
+    };
+    this.emitter.emit(APPOINTMENT_EVENTS.BOOKED, payload);
+    return saved;
   }
 }
