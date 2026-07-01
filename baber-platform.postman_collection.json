@@ -9,7 +9,8 @@
     { "key": "accessToken",  "value": "" },
     { "key": "refreshToken", "value": "" },
     { "key": "serviceId",    "value": "" },
-    { "key": "barberId",     "value": "" }
+    { "key": "barberId",       "value": "" },
+    { "key": "appointmentId", "value": "" }
   ],
   "item": [
     {
@@ -312,6 +313,137 @@
             "method": "PATCH",
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{baseUrl}}/barbers/{{barberId}}/deactivate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scheduling — Appointments",
+      "item": [
+        {
+          "name": "Get Available Slots (public)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{tenantId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/available-slots?barberId={{barberId}}&serviceId={{serviceId}}&date=2025-03-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "available-slots"],
+              "query": [
+                { "key": "barberId",   "value": "{{barberId}}" },
+                { "key": "serviceId",  "value": "{{serviceId}}" },
+                { "key": "date",       "value": "2025-03-10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Book Appointment (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('appointmentId', body.id);",
+                  "  console.log('appointmentId salvo:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",  "value": "{{tenantId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"barberId\": \"{{barberId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"clientName\": \"João Cliente\",\n  \"clientPhone\": \"+5511999999999\",\n  \"date\": \"2025-03-10\",\n  \"startTime\": \"09:00\",\n  \"notes\": \"corte degradê\"\n}"
+            },
+            "url": "{{baseUrl}}/appointments"
+          }
+        },
+        {
+          "name": "List Appointments (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/appointments"
+          }
+        },
+        {
+          "name": "List Appointments — filtrar por data (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/appointments?date=2025-03-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [{ "key": "date", "value": "2025-03-10" }]
+            }
+          }
+        },
+        {
+          "name": "List Appointments — filtrar por barbeiro (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/appointments?barberId={{barberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [{ "key": "barberId", "value": "{{barberId}}" }]
+            }
+          }
+        },
+        {
+          "name": "List Appointments — filtrar por status (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/appointments?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment by ID (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}"
+          }
+        },
+        {
+          "name": "Confirm Appointment (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/confirm"
+          }
+        },
+        {
+          "name": "Cancel Appointment (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/cancel"
+          }
+        },
+        {
+          "name": "Complete Appointment (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/appointments/{{appointmentId}}/complete"
           }
         }
       ]
