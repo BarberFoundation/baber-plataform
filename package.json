@@ -14,10 +14,13 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "turbo": "^2.3.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"],
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ],
     "overrides": {
       "vite": "^6.0.0"
     }
