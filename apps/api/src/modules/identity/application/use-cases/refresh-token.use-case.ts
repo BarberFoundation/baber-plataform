@@ -14,7 +14,7 @@ import { AuthResult } from '../dto/auth-token-pair';
 
 export interface RefreshTokenInput {
   rawRefreshToken: string;
-  tenantId: string;
+  tenantId?: string; // optional — when absent, tenant guard is skipped (HTTP refresh flow)
 }
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -38,7 +38,7 @@ export class RefreshTokenUseCase {
       throw new InvalidRefreshTokenError();
     }
 
-    if (record.tenantId !== input.tenantId) {
+    if (input.tenantId && record.tenantId !== input.tenantId) {
       throw new InvalidRefreshTokenError();
     }
 
