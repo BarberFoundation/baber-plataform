@@ -109,6 +109,14 @@
             },
             "url": "{{baseUrl}}/auth/admin/logout"
           }
+        },
+        {
+          "name": "Get Current User (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/me"
+          }
         }
       ]
     },
