@@ -4,22 +4,36 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Request, Response } from 'express';
 import { Public } from '@shared/auth/public.decorator';
 import { ExchangeFirebaseTokenUseCase } from '../application/use-cases/exchange-firebase-token.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
-import { CurrentUser } from '@shared/auth/current-user.decorator';
-import { JwtPayload } from '@shared/auth/jwt-token.service';
 
 class ExchangeTokenDto {
+  @IsString()
+  @IsNotEmpty()
   idToken!: string;
+
+  @IsString()
+  @IsNotEmpty()
   tenantId!: string;
 }
 
-class RefreshDto {
+class RefreshBodyDto {
+  @IsString()
+  @IsOptional()
+  refreshToken?: string;
+}
+
+class LogoutDto {
+  @IsString()
+  @IsNotEmpty()
   refreshToken!: string;
 }
 
@@ -54,12 +68,16 @@ export class AdminAuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
-    @Body() dto: RefreshDto,
+    @Body() dto: RefreshBodyDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.refreshUseCase.execute({
-      rawRefreshToken: dto.refreshToken,
-    });
+    const rawRefreshToken =
+      (req.cookies as Record<string, string> | undefined)?.refreshToken ?? dto.refreshToken;
+    if (!rawRefreshToken) {
+      throw new UnauthorizedException('Refresh token ausente.');
+    }
+    const result = await this.refreshUseCase.execute({ rawRefreshToken });
     this.setRefreshCookie(res, result.refreshToken);
     return {
       accessToken: result.accessToken,
@@ -70,10 +88,7 @@ export class AdminAuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(
-    @Body() dto: RefreshDto,
-    @CurrentUser() _user: JwtPayload,
-  ) {
+  async logout(@Body() dto: LogoutDto) {
     await this.logoutUseCase.execute({ rawRefreshToken: dto.refreshToken });
   }
 
