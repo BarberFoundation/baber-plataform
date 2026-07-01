@@ -4,6 +4,7 @@ import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { DomainExceptionFilter } from './shared/kernel/errors/domain-exception.filter';
 
@@ -16,6 +17,8 @@ async function bootstrap() {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
