@@ -6,6 +6,8 @@ const ERROR_CODE_TO_STATUS: Record<string, HttpStatus> = {
   INVALID_FIREBASE_TOKEN: HttpStatus.UNAUTHORIZED,
   USER_NOT_FOUND: HttpStatus.NOT_FOUND,
   INVALID_REFRESH_TOKEN: HttpStatus.UNAUTHORIZED,
+  SERVICE_NOT_FOUND: HttpStatus.NOT_FOUND,
+  SERVICE_NAME_TAKEN: HttpStatus.CONFLICT,
 };
 
 @Catch(DomainError)
