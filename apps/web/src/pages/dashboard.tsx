@@ -1,3 +1,108 @@
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { apiFetch } from '@/lib/api';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import type { Appointment, AppointmentStatus } from '@/lib/types';
+
+const STATUS_LABEL: Record<AppointmentStatus, string> = {
+  PENDING: 'Pendente',
+  CONFIRMED: 'Confirmado',
+  COMPLETED: 'Concluído',
+  CANCELLED: 'Cancelado',
+};
+
+const STATUS_VARIANT: Record<AppointmentStatus, 'warning' | 'success' | 'secondary' | 'destructive'> = {
+  PENDING: 'warning',
+  CONFIRMED: 'success',
+  COMPLETED: 'secondary',
+  CANCELLED: 'destructive',
+};
+
+function StatusBadge({ status }: { status: AppointmentStatus }) {
+  return <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>;
+}
+
 export default function DashboardPage() {
-  return <div>Dashboard</div>;
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  const { data: appointments = [], isLoading } = useQuery({
+    queryKey: ['appointments', today],
+    queryFn: () => apiFetch<Appointment[]>(`/appointments?date=${today}`),
+  });
+
+  const counts = appointments.reduce(
+    (acc, a) => {
+      acc[a.status] = (acc[a.status] ?? 0) + 1;
+      return acc;
+    },
+    {} as Partial<Record<AppointmentStatus, number>>,
+  );
+
+  const dateLabel = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold capitalize">{dateLabel}</h1>
+        <p className="text-muted-foreground text-sm">Resumo dos agendamentos de hoje</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => (
+          <Card key={status}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {STATUS_LABEL[status]}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{counts[status] ?? 0}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Agendamentos de hoje</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <p className="text-muted-foreground text-sm">Carregando...</p>
+          ) : appointments.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Nenhum agendamento para hoje.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Hora</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {appointments
+                  .slice()
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                  .map((appt) => (
+                    <TableRow key={appt.id}>
+                      <TableCell className="font-mono text-sm">
+                        {appt.startTime}–{appt.endTime}
+                      </TableCell>
+                      <TableCell>{appt.clientName}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={appt.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
