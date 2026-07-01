@@ -1,0 +1,320 @@
+{
+  "info": {
+    "name": "baber-platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:3000" },
+    { "key": "tenantId",     "value": "01ca2c57-2d46-4f25-8570-679b88cc6211" },
+    { "key": "accessToken",  "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "serviceId",    "value": "" },
+    { "key": "barberId",     "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Identity — Auth",
+      "item": [
+        {
+          "name": "Exchange Firebase Token (stub mode)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate a fake JWT for stub mode (no FIREBASE_PROJECT_ID set)",
+                  "const toB64Url = (obj) =>",
+                  "  btoa(JSON.stringify(obj))",
+                  "    .replace(/=/g, '')",
+                  "    .replace(/\\+/g, '-')",
+                  "    .replace(/\\//g, '_');",
+                  "",
+                  "const header  = toB64Url({ alg: 'RS256', typ: 'JWT' });",
+                  "const payload = toB64Url({",
+                  "  uid:   'test-admin-1',",
+                  "  sub:   'test-admin-1',",
+                  "  email: 'admin@baber.com',",
+                  "  name:  'Admin Teste'",
+                  "});",
+                  "",
+                  "pm.variables.set('fakeFirebaseToken', `${header}.${payload}.stubsignature`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken',  body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken ?? '');",
+                  "  console.log('accessToken salvo:', body.accessToken?.slice(0, 40) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{fakeFirebaseToken}}\",\n  \"tenantId\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/exchange"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "  console.log('accessToken atualizado');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalog — Services",
+      "item": [
+        {
+          "name": "List Active Services (public)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/services"
+          }
+        },
+        {
+          "name": "List Services Admin — active only",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/services/admin"
+          }
+        },
+        {
+          "name": "List Services Admin — incluir inativos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/services/admin?includeInactive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "admin"],
+              "query": [{ "key": "includeInactive", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Get Service by ID (public)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/services/{{serviceId}}"
+          }
+        },
+        {
+          "name": "Create Service (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('serviceId', body.id);",
+                  "  console.log('serviceId salvo:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Corte Masculino\",\n  \"description\": \"Corte clássico com tesoura ou máquina\",\n  \"priceInCents\": 3500,\n  \"durationMinutes\": 30\n}"
+            },
+            "url": "{{baseUrl}}/services"
+          }
+        },
+        {
+          "name": "Update Service (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Corte + Barba\",\n  \"description\": \"Pacote completo\",\n  \"priceInCents\": 5500,\n  \"durationMinutes\": 45\n}"
+            },
+            "url": "{{baseUrl}}/services/{{serviceId}}"
+          }
+        },
+        {
+          "name": "Deactivate Service (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/services/{{serviceId}}/deactivate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team — Barbers",
+      "item": [
+        {
+          "name": "List Active Barbers (public)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/barbers"
+          }
+        },
+        {
+          "name": "List Barbers Admin — active only",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/barbers/admin"
+          }
+        },
+        {
+          "name": "List Barbers Admin — incluir inativos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/barbers/admin?includeInactive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["barbers", "admin"],
+              "query": [{ "key": "includeInactive", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Get Barber by ID (public)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/barbers/{{barberId}}"
+          }
+        },
+        {
+          "name": "Add Barber (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('barberId', body.id);",
+                  "  console.log('barberId salvo:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"phone\": \"+5511999999999\"\n}"
+            },
+            "url": "{{baseUrl}}/barbers"
+          }
+        },
+        {
+          "name": "Update Barber (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Barber Atualizado\",\n  \"phone\": \"+5511888888888\"\n}"
+            },
+            "url": "{{baseUrl}}/barbers/{{barberId}}"
+          }
+        },
+        {
+          "name": "Set Work Schedule (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workSchedule\": {\n    \"mon\": { \"isWorking\": true,  \"startTime\": \"08:00\", \"endTime\": \"17:00\" },\n    \"tue\": { \"isWorking\": true,  \"startTime\": \"08:00\", \"endTime\": \"17:00\" },\n    \"wed\": { \"isWorking\": true,  \"startTime\": \"08:00\", \"endTime\": \"17:00\" },\n    \"thu\": { \"isWorking\": true,  \"startTime\": \"08:00\", \"endTime\": \"17:00\" },\n    \"fri\": { \"isWorking\": true,  \"startTime\": \"08:00\", \"endTime\": \"17:00\" },\n    \"sat\": { \"isWorking\": true,  \"startTime\": \"09:00\", \"endTime\": \"13:00\" },\n    \"sun\": { \"isWorking\": false, \"startTime\": null,    \"endTime\": null    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/barbers/{{barberId}}/work-schedule"
+          }
+        },
+        {
+          "name": "Deactivate Barber (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/barbers/{{barberId}}/deactivate"
+          }
+        }
+      ]
+    }
+  ]
+}

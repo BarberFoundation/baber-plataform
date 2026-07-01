@@ -22,6 +22,13 @@
       "when": 1782866384079,
       "tag": "0002_clumsy_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782867767320,
+      "tag": "0003_cooing_northstar",
+      "breakpoints": true
     }
   ]
 }
