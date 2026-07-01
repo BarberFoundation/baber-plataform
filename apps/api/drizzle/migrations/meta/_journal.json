@@ -15,6 +15,13 @@
       "when": 1782858382000,
       "tag": "0001_curved_mockingbird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782866384079,
+      "tag": "0002_clumsy_winter_soldier",
+      "breakpoints": true
     }
   ]
 }
