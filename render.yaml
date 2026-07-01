@@ -1,9 +1,9 @@
 services:
   - type: web
     name: baber-api
-    runtime: docker
-    dockerfilePath: ./apps/api/Dockerfile
-    dockerContext: .
+    runtime: node
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
+    startCommand: node apps/api/dist/main.js
     envVars:
       - key: NODE_ENV
         value: production
