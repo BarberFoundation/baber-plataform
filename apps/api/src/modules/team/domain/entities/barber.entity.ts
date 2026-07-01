@@ -43,7 +43,13 @@ export class Barber {
   get name(): string { return this._name; }
   get phone(): string | null { return this._phone; }
   get isActive(): boolean { return this._isActive; }
-  get workSchedule(): WorkSchedule { return this._workSchedule; }
+  get workSchedule(): WorkSchedule {
+    const s = this._workSchedule;
+    return {
+      mon: { ...s.mon }, tue: { ...s.tue }, wed: { ...s.wed },
+      thu: { ...s.thu }, fri: { ...s.fri }, sat: { ...s.sat }, sun: { ...s.sun },
+    };
+  }
   get updatedAt(): Date { return this._updatedAt; }
 
   static create(props: CreateBarberProps): Barber {

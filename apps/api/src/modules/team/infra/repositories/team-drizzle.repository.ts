@@ -33,7 +33,7 @@ export class TeamDrizzleRepository implements ITeamRepository {
   }
 
   async save(barber: Barber): Promise<Barber> {
-    const now = new Date();
+    const updatedAt = barber.updatedAt;
     await this.db
       .insert(schema.barbers)
       .values({
@@ -44,7 +44,7 @@ export class TeamDrizzleRepository implements ITeamRepository {
         isActive: barber.isActive,
         workSchedule: barber.workSchedule,
         createdAt: barber.createdAt,
-        updatedAt: now,
+        updatedAt,
       })
       .onConflictDoUpdate({
         target: schema.barbers.id,
@@ -53,7 +53,7 @@ export class TeamDrizzleRepository implements ITeamRepository {
           phone: barber.phone,
           isActive: barber.isActive,
           workSchedule: barber.workSchedule,
-          updatedAt: now,
+          updatedAt,
         },
       });
 
@@ -65,7 +65,7 @@ export class TeamDrizzleRepository implements ITeamRepository {
       isActive: barber.isActive,
       workSchedule: barber.workSchedule,
       createdAt: barber.createdAt,
-      updatedAt: now,
+      updatedAt,
     });
   }
 

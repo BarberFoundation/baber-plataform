@@ -19,6 +19,9 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  isUUID,
+  Matches,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -39,12 +42,16 @@ class DayScheduleDto {
   @IsBoolean()
   isWorking!: boolean;
 
+  @ValidateIf((o: DayScheduleDto) => o.isWorking === true)
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'startTime deve estar no formato HH:mm' })
   startTime!: string | null;
 
+  @ValidateIf((o: DayScheduleDto) => o.isWorking === true)
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'endTime deve estar no formato HH:mm' })
   endTime!: string | null;
 }
 
@@ -119,6 +126,7 @@ export class TeamController {
   @Get()
   async list(@Headers('x-tenant-id') tenantId: string) {
     if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
+    if (!isUUID(tenantId, '4')) throw new BadRequestException('x-tenant-id must be a valid UUID v4.');
     const barbers = await this.listBarbers.execute({ tenantId, includeInactive: false });
     return barbers.map(serializeBarber);
   }
@@ -141,6 +149,7 @@ export class TeamController {
     @Headers('x-tenant-id') tenantId: string,
   ) {
     if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
+    if (!isUUID(tenantId, '4')) throw new BadRequestException('x-tenant-id must be a valid UUID v4.');
     const barber = await this.getBarber.execute({ id, tenantId });
     return serializeBarber(barber);
   }

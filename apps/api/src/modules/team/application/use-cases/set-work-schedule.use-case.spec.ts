@@ -4,16 +4,18 @@ import { Barber } from '../../domain/entities/barber.entity';
 import { BarberNotFoundError } from '../../domain/errors/team.errors';
 import { defaultWorkSchedule, WorkSchedule } from '../../domain/value-objects/work-schedule';
 
-const EXISTING = Barber.reconstitute({
-  id: 'barber-1',
-  tenantId: 'tenant-1',
-  name: 'João Barber',
-  phone: null,
-  isActive: true,
-  workSchedule: defaultWorkSchedule(),
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-});
+function makeExisting() {
+  return Barber.reconstitute({
+    id: 'barber-1',
+    tenantId: 'tenant-1',
+    name: 'João Barber',
+    phone: null,
+    isActive: true,
+    workSchedule: defaultWorkSchedule(),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  });
+}
 
 const NEW_SCHEDULE: WorkSchedule = {
   mon: { isWorking: true,  startTime: '08:00', endTime: '17:00' },
@@ -25,7 +27,7 @@ const NEW_SCHEDULE: WorkSchedule = {
   sun: { isWorking: false, startTime: null,     endTime: null     },
 };
 
-function makeRepo(existing: Barber | null = EXISTING): ITeamRepository {
+function makeRepo(existing: Barber | null = makeExisting()): ITeamRepository {
   return {
     findById: jest.fn().mockResolvedValue(existing),
     findAll: jest.fn().mockResolvedValue([]),
