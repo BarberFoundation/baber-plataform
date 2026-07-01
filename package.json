@@ -15,5 +15,8 @@
   },
   "devDependencies": {
     "turbo": "^2.3.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@firebase/util"]
   }
 }
