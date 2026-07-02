@@ -20,3 +20,17 @@ export class InvalidRefreshTokenError extends DomainError {
     super(message);
   }
 }
+
+export class OtpRateLimitedError extends DomainError {
+  readonly code = 'OTP_RATE_LIMITED';
+  constructor(message = 'Muitas tentativas. Tente novamente mais tarde.') {
+    super(message);
+  }
+}
+
+export class InvalidOtpError extends DomainError {
+  readonly code = 'INVALID_OTP';
+  constructor(message = 'Código inválido ou expirado.') {
+    super(message);
+  }
+}
