@@ -27,8 +27,10 @@ export type Database = PostgresJsDatabase<typeof schema>;
       provide: REDIS,
       inject: [ConfigService],
       useFactory: (config: ConfigService): Redis => {
-        return new Redis(config.getOrThrow<string>('REDIS_URL'), {
+        const url = config.getOrThrow<string>('REDIS_URL');
+        return new Redis(url, {
           maxRetriesPerRequest: null,
+          ...(url.startsWith('rediss://') && { tls: {} }),
         });
       },
     },
