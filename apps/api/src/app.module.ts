@@ -48,7 +48,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
             port: Number(url.port || (isTls ? 6380 : 6379)),
             username: url.username || undefined,
             password: url.password ? decodeURIComponent(url.password) : undefined,
-            ...(isTls && { tls: {} }),
+            ...(isTls && { tls: { rejectUnauthorized: false } }),
           },
         };
       },

@@ -15,7 +15,10 @@ export type Database = PostgresJsDatabase<typeof schema>;
       provide: PG_CLIENT,
       inject: [ConfigService],
       useFactory: (config: ConfigService): Sql => {
-        return postgres(config.getOrThrow<string>('DATABASE_URL'), { max: 10 });
+        return postgres(config.getOrThrow<string>('DATABASE_URL'), {
+          max: 10,
+          ssl: { rejectUnauthorized: false },
+        });
       },
     },
     {
@@ -30,7 +33,7 @@ export type Database = PostgresJsDatabase<typeof schema>;
         const url = config.getOrThrow<string>('REDIS_URL');
         return new Redis(url, {
           maxRetriesPerRequest: null,
-          ...(url.startsWith('rediss://') && { tls: {} }),
+          ...(url.startsWith('rediss://') && { tls: { rejectUnauthorized: false } }),
         });
       },
     },
