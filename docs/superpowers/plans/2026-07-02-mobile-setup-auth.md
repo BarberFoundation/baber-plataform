@@ -15,27 +15,28 @@
 ## Prerequisites
 
 - Flutter SDK installed (stable channel), `flutter doctor` passes for at least one target (Android or iOS).
-- This plan creates a **new standalone repo** at a sibling path to the current monorepo, e.g. `C:\Users\gabry\Documents\baber-mobile`. All commands in this plan assume that working directory once created.
+- This plan targets the existing (currently empty, no commits/branches) GitHub repo `https://github.com/BarberFoundation/baber-mobile.git`. Clone it to a sibling path of the current monorepo, e.g. `C:\Users\gabry\Documents\baber-mobile`. All commands in this plan assume that working directory once cloned.
 
 ---
 
 ### Task 1: Bootstrap Flutter project and folder structure
 
 **Files:**
-- Create: `baber-mobile/` (via `flutter create`)
+- Create: `baber-mobile/` (via clone + `flutter create`)
 - Modify: `baber-mobile/pubspec.yaml`
 - Create: `baber-mobile/lib/core/.gitkeep`, `baber-mobile/lib/features/.gitkeep`, `baber-mobile/lib/shared/.gitkeep` (removed once real files land in later tasks)
 
-- [ ] **Step 1: Create the Flutter project**
+- [ ] **Step 1: Clone the empty repo and scaffold the Flutter project into it**
 
 Run (from the parent directory of the monorepo, e.g. `C:\Users\gabry\Documents\`):
 
 ```bash
-flutter create --org com.baber --platforms=android,ios baber-mobile
+git clone https://github.com/BarberFoundation/baber-mobile.git
 cd baber-mobile
+flutter create --org com.baber --platforms=android,ios .
 ```
 
-Expected: project scaffold created, `flutter doctor` shows no blocking errors for at least one platform.
+Expected: `flutter create .` scaffolds the project directly into the cloned (empty) repo directory, project scaffold created, `flutter doctor` shows no blocking errors for at least one platform, `git status` shows the scaffold as untracked/new files inside the existing clone (not a fresh `git init` — the remote `origin` pointing at `BarberFoundation/baber-mobile` is already configured by the clone).
 
 - [ ] **Step 2: Add dependencies to `pubspec.yaml`**
 
@@ -72,13 +73,15 @@ mkdir -p lib/features/home/presentation
 mkdir -p lib/shared/widgets lib/shared/theme
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit and push**
 
 ```bash
-git init
 git add -A
 git commit -m "chore: bootstrap baber-mobile Flutter project"
+git push -u origin HEAD
 ```
+
+Note: `baber-mobile` is a separate remote repo from the `baber` monorepo — pushing here does not touch `master` on the main repo. Confirm the target branch name (`main` vs `master`) matches what's expected on `BarberFoundation/baber-mobile` before the first push; an empty GitHub repo created via the UI typically defaults to `main`.
 
 ---
 
