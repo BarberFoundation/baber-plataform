@@ -30,6 +30,7 @@ import { FindTenantBySlugUseCase } from './application/use-cases/find-tenant-by-
 
 // Controllers
 import { AdminAuthController } from './http/admin-auth.controller';
+import { AuthController } from './http/auth.controller';
 import { MeController } from './http/me.controller';
 import { OtpAuthController } from './http/otp-auth.controller';
 import { TenantsController } from './http/tenants.controller';
@@ -39,7 +40,13 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
 
 @Module({
   imports: [DatabaseModule, NotificationsModule],
-  controllers: [AdminAuthController, MeController, OtpAuthController, TenantsController],
+  controllers: [
+    AdminAuthController,
+    AuthController,
+    MeController,
+    OtpAuthController,
+    TenantsController,
+  ],
   providers: [
     // JwtTokenService — provided here via factory because AppModule does not export it.
     // ConfigModule is global so ConfigService is available in every module's DI context.
