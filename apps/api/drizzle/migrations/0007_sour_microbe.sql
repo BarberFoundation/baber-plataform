@@ -1,0 +1,1 @@
+CREATE INDEX "otp_codes_tenant_phone_idx" ON "otp_codes" USING btree ("tenant_id","phone");
