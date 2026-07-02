@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
 import { UpdateUserNameUseCase } from '../application/use-cases/update-user-name.use-case';
 
 class UpdateNameDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @IsNotEmpty()
   name!: string;
