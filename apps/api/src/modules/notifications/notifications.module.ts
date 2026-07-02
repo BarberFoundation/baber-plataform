@@ -41,5 +41,6 @@ import { SendReminderNotificationUseCase }     from './application/use-cases/sen
     AppointmentCancelledListener,
     ReminderProcessor,
   ],
+  exports: [WHATSAPP_GATEWAY],
 })
 export class NotificationsModule {}
