@@ -19,6 +19,7 @@ function makeValidator(overrides?: Partial<IFirebaseTokenValidator>): IFirebaseT
 function makeUserRepo(existingUser?: User): IUserRepository {
   return {
     findByFirebaseUid: jest.fn().mockResolvedValue(existingUser ?? null),
+    findByPhone: jest.fn().mockResolvedValue(null),
     save: jest.fn().mockImplementation(async (u: User) => u),
     findById: jest.fn().mockResolvedValue(null),
   };

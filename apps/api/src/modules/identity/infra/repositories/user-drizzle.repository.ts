@@ -23,6 +23,15 @@ export class UserDrizzleRepository implements IUserRepository {
     return rows[0] ? this.toEntity(rows[0]) : null;
   }
 
+  async findByPhone(phone: string, tenantId: string): Promise<User | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.phone, phone), eq(schema.users.tenantId, tenantId)))
+      .limit(1);
+    return rows[0] ? this.toEntity(rows[0]) : null;
+  }
+
   async findById(id: string, tenantId: string): Promise<User | null> {
     const rows = await this.db
       .select()
