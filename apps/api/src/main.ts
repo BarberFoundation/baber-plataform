@@ -33,21 +33,25 @@ async function bootstrap() {
   app.enableCors({ origin: true, credentials: true });
   app.enableShutdownHooks();
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Baber API')
-    .setDescription('API da plataforma de barbearia (multi-tenant).')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
-
   const config = app.get(ConfigService);
+  const isProd = config.get<string>('NODE_ENV') === 'production';
+
+  if (!isProd) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Baber API')
+      .setDescription('API da plataforma de barbearia (multi-tenant).')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
+
   const port = config.get<number>('PORT', 3000);
   await app.listen(port, '0.0.0.0');
 
   const logger = app.get(Logger);
-  logger.log(`API on http://localhost:${port} | docs em /docs | health em /health`);
+  logger.log(`API on port ${port}${!isProd ? ' | docs em /docs' : ''} | health em /health`);
 }
 
 void bootstrap();

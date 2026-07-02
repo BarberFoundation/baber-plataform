@@ -22,7 +22,13 @@ export class HealthController {
   @Public()
   @Get()
   async check() {
-    const [postgres, redis] = await Promise.all([this.checkPostgres(), this.checkRedis()]);
+    const timeout = <T>(ms: number, promise: Promise<T>): Promise<T> =>
+      Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+
+    const [postgres, redis] = await Promise.all([
+      timeout(5000, this.checkPostgres()),
+      timeout(5000, this.checkRedis()),
+    ]);
 
     const ok = postgres === 'up' && redis === 'up';
     const body = {
@@ -52,4 +58,5 @@ export class HealthController {
       return 'down';
     }
   }
+
 }

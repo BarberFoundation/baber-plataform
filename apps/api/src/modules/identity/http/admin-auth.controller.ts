@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { Public } from '@shared/auth/public.decorator';
 import { ExchangeFirebaseTokenUseCase } from '../application/use-cases/exchange-firebase-token.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
@@ -43,6 +44,7 @@ export class AdminAuthController {
     private readonly exchangeUseCase: ExchangeFirebaseTokenUseCase,
     private readonly refreshUseCase: RefreshTokenUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly config: ConfigService,
   ) {}
 
   @Public()
@@ -95,7 +97,7 @@ export class AdminAuthController {
   private setRefreshCookie(res: Response, token: string): void {
     res.cookie('refreshToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: this.config.get<string>('NODE_ENV') === 'production',
       sameSite: 'strict',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
