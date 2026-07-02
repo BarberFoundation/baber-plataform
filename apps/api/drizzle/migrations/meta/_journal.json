@@ -43,6 +43,13 @@
       "when": 1782919732523,
       "tag": "0005_zippy_landau",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783030520284,
+      "tag": "0006_fast_deathstrike",
+      "breakpoints": true
     }
   ]
 }

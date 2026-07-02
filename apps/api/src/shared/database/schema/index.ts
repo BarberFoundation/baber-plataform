@@ -3,6 +3,7 @@
 export * from './tenants';
 export * from './users';
 export * from './refresh-tokens';
+export * from './otp-codes';
 export * from './services';
 export * from './barbers';
 export * from './appointments';
