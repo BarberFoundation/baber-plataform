@@ -1,19 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
-
-// Mirrors the UpdateNameDto defined in me.controller.ts. It is not exported from that
-// module, so we redeclare it here with the exact same decorators to exercise the
-// same class-transformer/class-validator pipeline that Nest's global ValidationPipe
-// (transform: true) runs against the real DTO.
-class UpdateNameDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString()
-  @IsNotEmpty()
-  name!: string;
-}
+import { UpdateNameDto } from './me.controller';
 
 describe('UpdateNameDto (PATCH /me validation)', () => {
   it('trims leading/trailing whitespace from a legitimate name', async () => {
