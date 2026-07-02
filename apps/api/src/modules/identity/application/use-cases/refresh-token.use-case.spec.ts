@@ -2,6 +2,7 @@ import { RefreshTokenUseCase } from './refresh-token.use-case';
 import { IUserRepository } from '../../domain/repositories/user.repository';
 import { IRefreshTokenRepository, RefreshTokenRecord } from '../../domain/repositories/refresh-token.repository';
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
+import { TokenPairIssuer } from '../services/token-pair-issuer';
 import { User } from '../../domain/entities/user.entity';
 import { InvalidRefreshTokenError } from '../../domain/errors/identity.errors';
 import { createHash } from 'crypto';
@@ -58,8 +59,8 @@ function makeUserRepo(user?: User | null): IUserRepository {
   };
 }
 
-function makeJwt(): JwtTokenService {
-  return new JwtTokenService('acc-secret', 'ref-secret', '15m', '30d');
+function makeIssuer(refreshRepo: IRefreshTokenRepository): TokenPairIssuer {
+  return new TokenPairIssuer(refreshRepo, new JwtTokenService('acc-secret', 'ref-secret', '15m', '30d'));
 }
 
 describe('RefreshTokenUseCase', () => {
@@ -67,7 +68,7 @@ describe('RefreshTokenUseCase', () => {
     const record = makeRecord();
     const refreshRepo = makeRefreshRepo(record);
     const userRepo = makeUserRepo(makeUser());
-    const uc = new RefreshTokenUseCase(refreshRepo, userRepo, makeJwt());
+    const uc = new RefreshTokenUseCase(refreshRepo, userRepo, makeIssuer(refreshRepo));
 
     const result = await uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID });
 
@@ -81,7 +82,8 @@ describe('RefreshTokenUseCase', () => {
   });
 
   it('throws InvalidRefreshTokenError when token hash not found', async () => {
-    const uc = new RefreshTokenUseCase(makeRefreshRepo(null), makeUserRepo(makeUser()), makeJwt());
+    const refreshRepo = makeRefreshRepo(null);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'unknown-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
@@ -89,7 +91,8 @@ describe('RefreshTokenUseCase', () => {
 
   it('throws InvalidRefreshTokenError when token is revoked', async () => {
     const revokedRecord = makeRecord({ revokedAt: new Date(Date.now() - 1000) });
-    const uc = new RefreshTokenUseCase(makeRefreshRepo(revokedRecord), makeUserRepo(makeUser()), makeJwt());
+    const refreshRepo = makeRefreshRepo(revokedRecord);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
@@ -97,7 +100,8 @@ describe('RefreshTokenUseCase', () => {
 
   it('throws InvalidRefreshTokenError when token is expired', async () => {
     const expiredRecord = makeRecord({ expiresAt: new Date(Date.now() - 1000) });
-    const uc = new RefreshTokenUseCase(makeRefreshRepo(expiredRecord), makeUserRepo(makeUser()), makeJwt());
+    const refreshRepo = makeRefreshRepo(expiredRecord);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
@@ -105,7 +109,8 @@ describe('RefreshTokenUseCase', () => {
 
   it('throws InvalidRefreshTokenError when user no longer exists', async () => {
     const record = makeRecord();
-    const uc = new RefreshTokenUseCase(makeRefreshRepo(record), makeUserRepo(null), makeJwt());
+    const refreshRepo = makeRefreshRepo(record);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(null), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
@@ -113,7 +118,8 @@ describe('RefreshTokenUseCase', () => {
 
   it('throws InvalidRefreshTokenError when token belongs to different tenant', async () => {
     const record = makeRecord(); // record.tenantId = TENANT_ID
-    const uc = new RefreshTokenUseCase(makeRefreshRepo(record), makeUserRepo(makeUser()), makeJwt());
+    const refreshRepo = makeRefreshRepo(record);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: 'other-tenant' }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);

@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { randomBytes, createHash, randomUUID } from 'crypto';
+import { createHash } from 'crypto';
 import {
   REFRESH_TOKEN_REPOSITORY,
   IRefreshTokenRepository,
@@ -8,16 +8,14 @@ import {
   USER_REPOSITORY,
   IUserRepository,
 } from '../../domain/repositories/user.repository';
-import { JwtTokenService } from '@shared/auth/jwt-token.service';
 import { InvalidRefreshTokenError } from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
+import { TokenPairIssuer } from '../services/token-pair-issuer';
 
 export interface RefreshTokenInput {
   rawRefreshToken: string;
   tenantId?: string; // optional — when absent, tenant guard is skipped (HTTP refresh flow)
 }
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -26,7 +24,7 @@ export class RefreshTokenUseCase {
     private readonly refreshRepo: IRefreshTokenRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
-    private readonly jwtTokenService: JwtTokenService,
+    private readonly tokenPairIssuer: TokenPairIssuer,
   ) {}
 
   async execute(input: RefreshTokenInput): Promise<AuthResult> {
@@ -50,32 +48,6 @@ export class RefreshTokenUseCase {
     // Fail-closed: revoke first. If save throws, client loses session but no duplicate tokens exist.
     await this.refreshRepo.revokeByHash(hash);
 
-    // Issue new pair
-    const jwtPayload = { userId: user.id, tenantId: user.tenantId, role: user.role };
-    const accessToken = this.jwtTokenService.signAccess(jwtPayload);
-    const rawRefresh = randomBytes(48).toString('base64url');
-    const newHash = createHash('sha256').update(rawRefresh).digest('hex');
-
-    await this.refreshRepo.save({
-      id: randomUUID(),
-      userId: user.id,
-      tenantId: user.tenantId,
-      tokenHash: newHash,
-      expiresAt: new Date(Date.now() + THIRTY_DAYS_MS),
-      revokedAt: null,
-      createdAt: new Date(),
-    });
-
-    return {
-      accessToken,
-      refreshToken: rawRefresh,
-      expiresIn: this.jwtTokenService.accessExpiresInSeconds,
-      user: {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        email: user.email,
-      },
-    };
+    return this.tokenPairIssuer.issue(user);
   }
 }

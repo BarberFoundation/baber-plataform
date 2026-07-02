@@ -12,5 +12,6 @@ export interface AuthResult extends AuthTokenPair {
     name: string | null;
     role: Role;
     email: string | null;
+    phone: string | null;
   };
 }

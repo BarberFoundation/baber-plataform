@@ -12,6 +12,9 @@ import { UserDrizzleRepository } from './infra/repositories/user-drizzle.reposit
 import { RefreshTokenDrizzleRepository } from './infra/repositories/refresh-token-drizzle.repository';
 import { FirebaseTokenValidatorAdapter } from './infra/firebase/firebase-token-validator.adapter';
 
+// Application services
+import { TokenPairIssuer } from './application/services/token-pair-issuer';
+
 // Use cases
 import { ExchangeFirebaseTokenUseCase } from './application/use-cases/exchange-firebase-token.use-case';
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case';
@@ -40,6 +43,8 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     { provide: REFRESH_TOKEN_REPOSITORY, useClass: RefreshTokenDrizzleRepository },
     // Firebase validator binding
     { provide: FIREBASE_TOKEN_VALIDATOR, useClass: FirebaseTokenValidatorAdapter },
+    // Application services
+    TokenPairIssuer,
     // Use cases
     ExchangeFirebaseTokenUseCase,
     RefreshTokenUseCase,
