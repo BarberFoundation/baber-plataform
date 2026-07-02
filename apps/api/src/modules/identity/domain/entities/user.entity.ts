@@ -20,6 +20,11 @@ export interface CreateAdminUserProps {
   name: string | null;
 }
 
+export interface CreateClientUserProps {
+  tenantId: string;
+  phone: string;
+}
+
 export class User {
   readonly id: string;
   readonly tenantId: string;
@@ -65,6 +70,21 @@ export class User {
       phone: null,
       email: props.email,
       firebaseUid: props.firebaseUid,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  static createClient(props: CreateClientUserProps): User {
+    const now = new Date();
+    return new User({
+      id: randomUUID(),
+      tenantId: props.tenantId,
+      name: null,
+      role: 'CLIENT',
+      phone: props.phone,
+      email: null,
+      firebaseUid: null,
       createdAt: now,
       updatedAt: now,
     });

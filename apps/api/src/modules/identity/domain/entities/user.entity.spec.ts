@@ -41,4 +41,18 @@ describe('User entity', () => {
     user.rename('Novo Nome');
     expect(user.name).toBe('Novo Nome');
   });
+
+  describe('User.createClient', () => {
+    it('creates a CLIENT user with phone and no name', () => {
+      const user = User.createClient({ tenantId: 'tenant-1', phone: '+5511999999999' });
+
+      expect(user.role).toBe('CLIENT');
+      expect(user.phone).toBe('+5511999999999');
+      expect(user.tenantId).toBe('tenant-1');
+      expect(user.name).toBeNull();
+      expect(user.email).toBeNull();
+      expect(user.firebaseUid).toBeNull();
+      expect(user.id).toBeTruthy();
+    });
+  });
 });
