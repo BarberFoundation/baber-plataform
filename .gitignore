@@ -30,3 +30,6 @@ Thumbs.db
 
 # drizzle local
 apps/api/drizzle/migrations/meta/_journal.json.bak
+
+.vercel
+.env*

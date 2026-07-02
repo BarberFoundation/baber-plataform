@@ -34,7 +34,7 @@ export class UserDrizzleRepository implements IUserRepository {
 
   async save(user: User): Promise<User> {
     const now = new Date();
-    await this.db
+    const [row] = await this.db
       .insert(schema.users)
       .values({
         id: user.id,
@@ -48,23 +48,14 @@ export class UserDrizzleRepository implements IUserRepository {
         updatedAt: now,
       })
       .onConflictDoUpdate({
-        target: schema.users.id,
+        target: schema.users.firebaseUid,
         set: {
           name: user.name,
           updatedAt: now,
         },
-      });
-    return User.reconstitute({
-      id: user.id,
-      tenantId: user.tenantId,
-      name: user.name,
-      role: user.role,
-      phone: user.phone,
-      email: user.email,
-      firebaseUid: user.firebaseUid,
-      createdAt: user.createdAt,
-      updatedAt: now,
-    });
+      })
+      .returning();
+    return this.toEntity(row);
   }
 
   private toEntity(row: typeof schema.users.$inferSelect): User {
