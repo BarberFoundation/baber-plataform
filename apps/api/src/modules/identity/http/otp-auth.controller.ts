@@ -7,21 +7,23 @@ import { VerifyOtpUseCase } from '../application/use-cases/verify-otp.use-case';
 
 /**
  * Normalizes a phone number to a canonical form: strips all non-digit
- * characters except a leading '+'. This ensures the same real number
- * always maps to the same string, regardless of how it was formatted on
- * input (e.g. "+55 11 99999-9999" vs "5511999999999"), so Redis
- * rate-limit keys and DB lookups keyed by phone don't fragment across
- * equivalent representations.
+ * characters (including any leading '+'), then re-adds a single leading
+ * '+' when there are digits present. This ensures the same real number
+ * always maps to the same string regardless of how it was formatted on
+ * input (e.g. "+55 11 99999-9999" vs "5511999999999" vs "+5511999999999"),
+ * so Redis rate-limit keys and DB lookups keyed by phone don't fragment
+ * across equivalent representations.
  */
 function normalizePhone(value: string): string {
-  return value.replace(/(?!^\+)[^\d]/g, '');
+  const digits = value.replace(/[^\d]/g, '');
+  return digits ? `+${digits}` : value;
 }
 
 export class RequestOtpDto {
   @Transform(({ value }) => (typeof value === 'string' ? normalizePhone(value) : value))
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?\d{10,15}$/)
+  @Matches(/^\+\d{10,15}$/)
   phone!: string;
 
   @IsString()
@@ -33,7 +35,7 @@ export class VerifyOtpDto {
   @Transform(({ value }) => (typeof value === 'string' ? normalizePhone(value) : value))
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?\d{10,15}$/)
+  @Matches(/^\+\d{10,15}$/)
   phone!: string;
 
   @IsString()
