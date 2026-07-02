@@ -15,7 +15,7 @@ export class FirebaseTokenValidatorAdapter implements IFirebaseTokenValidator {
   constructor(private readonly config: ConfigService) {
     const projectId = config.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = config.get<string>('FIREBASE_CLIENT_EMAIL');
-    const privateKey = config.get<string>('FIREBASE_PRIVATE_KEY');
+    const privateKey = config.get<string>('FIREBASE_PRIVATE_KEY')?.replace(/\\n/g, '\n');
 
     if (projectId && clientEmail && privateKey) {
       // Reuse existing app if already initialised (hot-reload safe)
