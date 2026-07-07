@@ -57,7 +57,10 @@ export class UserDrizzleRepository implements IUserRepository {
         updatedAt: now,
       })
       .onConflictDoUpdate({
-        target: schema.users.firebaseUid,
+        // Conflict on the PK: OTP-created users have firebaseUid = null, and
+        // NULLs never collide on a unique index, so targeting firebaseUid let
+        // re-saves of existing users fall through to a duplicate-pkey error.
+        target: schema.users.id,
         set: {
           name: user.name,
           updatedAt: now,
