@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 
 import { validateEnv } from './shared/config/env.validation';
@@ -36,23 +36,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       },
     }),
     EventEmitterModule.forRoot(),
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const redisUrl = config.getOrThrow<string>('REDIS_URL');
-        const url = new URL(redisUrl);
-        const isTls = redisUrl.startsWith('rediss://');
-        return {
-          connection: {
-            host: url.hostname,
-            port: Number(url.port || (isTls ? 6380 : 6379)),
-            username: url.username || undefined,
-            password: url.password ? decodeURIComponent(url.password) : undefined,
-            ...(isTls && { tls: { rejectUnauthorized: false } }),
-          },
-        };
-      },
-    }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     HealthModule,
     IdentityModule,
