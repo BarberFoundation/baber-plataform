@@ -1,9 +1,13 @@
-node_modules
+**/node_modules
 .git
 .github
+.worktrees
+.claude
+.vercel
 apps/web
 docs
 dist
+**/dist
 .turbo
 coverage
 *.log
