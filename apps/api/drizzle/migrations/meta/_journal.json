@@ -57,6 +57,13 @@
       "when": 1783030689127,
       "tag": "0007_sour_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783470475011,
+      "tag": "0008_cultured_photon",
+      "breakpoints": true
     }
   ]
 }
