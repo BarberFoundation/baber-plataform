@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
 import { UpdateUserNameUseCase } from '../application/use-cases/update-user-name.use-case';
+import { GetUserProfileUseCase } from '../application/use-cases/get-user-profile.use-case';
 
 export class UpdateNameDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
@@ -14,15 +15,14 @@ export class UpdateNameDto {
 
 @Controller('me')
 export class MeController {
-  constructor(private readonly updateUserNameUseCase: UpdateUserNameUseCase) {}
+  constructor(
+    private readonly updateUserNameUseCase: UpdateUserNameUseCase,
+    private readonly getUserProfileUseCase: GetUserProfileUseCase,
+  ) {}
 
   @Get()
-  me(@CurrentUser() user: JwtPayload) {
-    return {
-      userId: user.userId,
-      tenantId: user.tenantId,
-      role: user.role,
-    };
+  async me(@CurrentUser() user: JwtPayload) {
+    return this.getUserProfileUseCase.execute({ userId: user.userId, tenantId: user.tenantId });
   }
 
   @Patch()

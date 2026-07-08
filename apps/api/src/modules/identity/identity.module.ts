@@ -25,6 +25,7 @@ import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RequestOtpUseCase } from './application/use-cases/request-otp.use-case';
 import { VerifyOtpUseCase } from './application/use-cases/verify-otp.use-case';
 import { UpdateUserNameUseCase } from './application/use-cases/update-user-name.use-case';
+import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { ListTenantsUseCase } from './application/use-cases/list-tenants.use-case';
 import { FindTenantBySlugUseCase } from './application/use-cases/find-tenant-by-slug.use-case';
 
@@ -70,6 +71,7 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     RequestOtpUseCase,
     VerifyOtpUseCase,
     UpdateUserNameUseCase,
+    GetUserProfileUseCase,
     ListTenantsUseCase,
     FindTenantBySlugUseCase,
   ],
