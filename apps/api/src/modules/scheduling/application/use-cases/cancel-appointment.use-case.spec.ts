@@ -7,7 +7,7 @@ const MOCK_EMITTER: any = { emit: jest.fn() };
 
 function makeAppt(status: Appointment['status'] = 'PENDING') {
   return Appointment.reconstitute({
-    id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+    id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
     clientName: 'João', clientPhone: '+55', date: '2025-03-10',
     startTime: '09:00', endTime: '09:30', durationMinutes: 30,
     status, notes: null, createdAt: new Date(), updatedAt: new Date(),

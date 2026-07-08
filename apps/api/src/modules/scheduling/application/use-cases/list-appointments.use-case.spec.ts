@@ -4,7 +4,7 @@ import { Appointment } from '../../domain/entities/appointment.entity';
 
 function makeAppt(id: string, date: string, barberId: string, status: Appointment['status']) {
   return Appointment.reconstitute({
-    id, tenantId: 'tenant-1', barberId, serviceId: 'svc-1',
+    id, tenantId: 'tenant-1', barberId, serviceId: 'svc-1', customerId: null,
     clientName: 'João', clientPhone: '+55', date,
     startTime: '09:00', endTime: '09:30', durationMinutes: 30,
     status, notes: null, createdAt: new Date(), updatedAt: new Date(),

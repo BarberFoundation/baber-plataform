@@ -62,7 +62,7 @@ describe('GetAvailableSlotsUseCase', () => {
 
   it('excludes slots that overlap with existing appointments', async () => {
     const existing = Appointment.reconstitute({
-      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
       startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
@@ -76,7 +76,7 @@ describe('GetAvailableSlotsUseCase', () => {
 
   it('includes slots adjacent to existing appointments', async () => {
     const existing = Appointment.reconstitute({
-      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
       startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
@@ -91,7 +91,7 @@ describe('GetAvailableSlotsUseCase', () => {
     const barberA = { id: 'barber-a', isActive: true, workSchedule: defaultWorkSchedule() };
     const barberB = { id: 'barber-b', isActive: true, workSchedule: defaultWorkSchedule() };
     const busyA = Appointment.reconstitute({
-      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-a', serviceId: 'service-1',
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-a', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
       startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),

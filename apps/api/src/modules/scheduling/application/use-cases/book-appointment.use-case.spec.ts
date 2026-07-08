@@ -80,7 +80,7 @@ describe('BookAppointmentUseCase', () => {
 
   it('throws AppointmentConflictError when slot is taken', async () => {
     const existing = Appointment.reconstitute({
-      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+5511888888888',
       date: MONDAY, startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
@@ -104,7 +104,7 @@ describe('BookAppointmentUseCase', () => {
 
   it('skips a busy barber and assigns the next available one', async () => {
     const busyOnBarber1 = Appointment.reconstitute({
-      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
       startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
@@ -143,7 +143,7 @@ describe('BookAppointmentUseCase', () => {
 
   it('throws NoBarberAvailableError when every active barber is busy', async () => {
     const busy = (bId: string) => Appointment.reconstitute({
-      id: `appt-${bId}`, tenantId: 'tenant-1', barberId: bId, serviceId: 'service-1',
+      id: `appt-${bId}`, tenantId: 'tenant-1', barberId: bId, serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
       startTime: '09:00', endTime: '09:30', durationMinutes: 30,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
