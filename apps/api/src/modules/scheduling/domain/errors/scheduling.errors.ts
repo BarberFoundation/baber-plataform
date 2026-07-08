@@ -19,3 +19,8 @@ export class InvalidStatusTransitionError extends DomainError {
   readonly code = 'INVALID_STATUS_TRANSITION';
   constructor(message = 'Transição de status inválida.') { super(message); }
 }
+
+export class NoBarberAvailableError extends DomainError {
+  readonly code = 'NO_BARBER_AVAILABLE';
+  constructor(message = 'Nenhum barbeiro disponível neste horário.') { super(message); }
+}
