@@ -21,8 +21,11 @@ function makeRepo(existing: Appointment[] = []): ISchedulingRepository {
   };
 }
 
-function makeBarberLookup(result = ACTIVE_BARBER): IBarberLookup {
-  return { findById: jest.fn().mockResolvedValue(result) };
+function makeBarberLookup(result = ACTIVE_BARBER, activeList: any[] = [{ id: 'barber-1', ...ACTIVE_BARBER }]): IBarberLookup {
+  return {
+    findById: jest.fn().mockResolvedValue(result),
+    listActiveByTenant: jest.fn().mockResolvedValue(activeList),
+  };
 }
 
 function makeServiceLookup(durationMinutes = 30): IServiceLookup {
@@ -82,5 +85,40 @@ describe('GetAvailableSlotsUseCase', () => {
     const slots = await uc.execute(INPUT);
     const has0930 = slots.some((s) => s.startTime === '09:30');
     expect(has0930).toBe(true);
+  });
+
+  it('aggregates slots across all active barbers when barberId is omitted', async () => {
+    const barberA = { id: 'barber-a', isActive: true, workSchedule: defaultWorkSchedule() };
+    const barberB = { id: 'barber-b', isActive: true, workSchedule: defaultWorkSchedule() };
+    const busyA = Appointment.reconstitute({
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-a', serviceId: 'service-1',
+      clientName: 'Ana', clientPhone: '+55', date: MONDAY,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo: ISchedulingRepository = {
+      findById: jest.fn().mockResolvedValue(null),
+      findAll: jest.fn().mockResolvedValue([]),
+      findByBarberAndDate: jest.fn().mockImplementation(async (barberId: string) =>
+        barberId === 'barber-a' ? [busyA] : [],
+      ),
+      save: jest.fn(),
+    };
+    const uc = new GetAvailableSlotsUseCase(
+      repo,
+      makeBarberLookup(ACTIVE_BARBER, [barberA, barberB]),
+      makeServiceLookup(30),
+    );
+    const { barberId, ...rest } = INPUT;
+    const slots = await uc.execute(rest);
+    expect(slots.some((s) => s.startTime === '09:00')).toBe(true);
+  });
+
+  it('returns empty array when no active barbers exist and barberId is omitted', async () => {
+    const repo = makeRepo();
+    const uc = new GetAvailableSlotsUseCase(repo, makeBarberLookup(ACTIVE_BARBER, []), makeServiceLookup(30));
+    const { barberId, ...rest } = INPUT;
+    const slots = await uc.execute(rest);
+    expect(slots).toEqual([]);
   });
 });
