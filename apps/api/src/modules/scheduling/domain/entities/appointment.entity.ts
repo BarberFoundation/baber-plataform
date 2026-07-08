@@ -6,6 +6,7 @@ export interface AppointmentProps {
   tenantId: string;
   barberId: string;
   serviceId: string;
+  customerId: string | null;
   clientName: string;
   clientPhone: string;
   date: string;            // YYYY-MM-DD
@@ -22,6 +23,7 @@ export interface CreateAppointmentProps {
   tenantId: string;
   barberId: string;
   serviceId: string;
+  customerId?: string | null;
   clientName: string;
   clientPhone: string;
   date: string;
@@ -36,6 +38,7 @@ export class Appointment {
   readonly tenantId: string;
   readonly barberId: string;
   readonly serviceId: string;
+  readonly customerId: string | null;
   private _clientName: string;
   private _clientPhone: string;
   readonly date: string;
@@ -52,6 +55,7 @@ export class Appointment {
     this.tenantId = props.tenantId;
     this.barberId = props.barberId;
     this.serviceId = props.serviceId;
+    this.customerId = props.customerId;
     this._clientName = props.clientName;
     this._clientPhone = props.clientPhone;
     this.date = props.date;
@@ -77,6 +81,7 @@ export class Appointment {
       tenantId: props.tenantId,
       barberId: props.barberId,
       serviceId: props.serviceId,
+      customerId: props.customerId ?? null,
       clientName: props.clientName,
       clientPhone: props.clientPhone,
       date: props.date,
