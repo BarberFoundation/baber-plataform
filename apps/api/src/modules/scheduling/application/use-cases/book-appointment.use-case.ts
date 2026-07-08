@@ -1,23 +1,24 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SCHEDULING_REPOSITORY, ISchedulingRepository } from '../../domain/repositories/scheduling.repository';
-import { BARBER_LOOKUP, IBarberLookup } from '../../domain/ports/barber-lookup.port';
+import { BARBER_LOOKUP, IBarberLookup, ActiveBarber } from '../../domain/ports/barber-lookup.port';
 import { SERVICE_LOOKUP, IServiceLookup } from '../../domain/ports/service-lookup.port';
 import { Appointment } from '../../domain/entities/appointment.entity';
 import { BookingPolicy } from '../../domain/services/booking-policy';
-import { InvalidAppointmentTimeError } from '../../domain/errors/scheduling.errors';
+import { InvalidAppointmentTimeError, NoBarberAvailableError } from '../../domain/errors/scheduling.errors';
 import { addMinutes } from '../../domain/utils/time.utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { APPOINTMENT_EVENTS, AppointmentEventPayload } from '@shared/events/appointment-events';
 
 export interface BookAppointmentInput {
   tenantId: string;
-  barberId: string;
+  barberId?: string;
   serviceId: string;
   clientName: string;
   clientPhone: string;
   date: string;
   startTime: string;
   notes?: string | null;
+  customerId?: string | null;
 }
 
 @Injectable()
@@ -32,28 +33,18 @@ export class BookAppointmentUseCase {
   ) {}
 
   async execute(input: BookAppointmentInput): Promise<Appointment> {
-    const [barber, service] = await Promise.all([
-      this.barberLookup.findById(input.barberId, input.tenantId),
-      this.serviceLookup.findById(input.serviceId, input.tenantId),
-    ]);
-
-    if (!barber) throw new InvalidAppointmentTimeError('Barbeiro não encontrado.');
+    const service = await this.serviceLookup.findById(input.serviceId, input.tenantId);
     if (!service) throw new InvalidAppointmentTimeError('Serviço não encontrado.');
 
     const endTime = addMinutes(input.startTime, service.durationMinutes);
-    const existing = await this.repo.findByBarberAndDate(input.barberId, input.date, input.tenantId);
 
-    this.policy.validate({
-      barber,
-      date: input.date,
-      startTime: input.startTime,
-      endTime,
-      existing: existing.map((a) => ({ startTime: a.startTime, endTime: a.endTime, status: a.status })),
-    });
+    const assignedBarberId = input.barberId
+      ? await this.assignSpecificBarber(input.barberId, input.tenantId, input.date, input.startTime, endTime)
+      : await this.assignFirstAvailableBarber(input.tenantId, input.date, input.startTime, endTime);
 
     const appointment = Appointment.create({
       tenantId: input.tenantId,
-      barberId: input.barberId,
+      barberId: assignedBarberId,
       serviceId: input.serviceId,
       clientName: input.clientName,
       clientPhone: input.clientPhone,
@@ -78,5 +69,51 @@ export class BookAppointmentUseCase {
     };
     this.emitter.emit(APPOINTMENT_EVENTS.BOOKED, payload);
     return saved;
+  }
+
+  private async assignSpecificBarber(
+    barberId: string,
+    tenantId: string,
+    date: string,
+    startTime: string,
+    endTime: string,
+  ): Promise<string> {
+    const barber = await this.barberLookup.findById(barberId, tenantId);
+    if (!barber) throw new InvalidAppointmentTimeError('Barbeiro não encontrado.');
+
+    const existing = await this.repo.findByBarberAndDate(barberId, date, tenantId);
+    this.policy.validate({
+      barber,
+      date,
+      startTime,
+      endTime,
+      existing: existing.map((a) => ({ startTime: a.startTime, endTime: a.endTime, status: a.status })),
+    });
+    return barberId;
+  }
+
+  private async assignFirstAvailableBarber(
+    tenantId: string,
+    date: string,
+    startTime: string,
+    endTime: string,
+  ): Promise<string> {
+    const candidates = await this.barberLookup.listActiveByTenant(tenantId);
+    for (const candidate of candidates) {
+      const existing = await this.repo.findByBarberAndDate(candidate.id, date, tenantId);
+      try {
+        this.policy.validate({
+          barber: candidate,
+          date,
+          startTime,
+          endTime,
+          existing: existing.map((a) => ({ startTime: a.startTime, endTime: a.endTime, status: a.status })),
+        });
+        return candidate.id;
+      } catch {
+        continue;
+      }
+    }
+    throw new NoBarberAvailableError();
   }
 }

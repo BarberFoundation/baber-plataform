@@ -3,7 +3,7 @@ import { ISchedulingRepository } from '../../domain/repositories/scheduling.repo
 import { IBarberLookup } from '../../domain/ports/barber-lookup.port';
 import { IServiceLookup } from '../../domain/ports/service-lookup.port';
 import { Appointment } from '../../domain/entities/appointment.entity';
-import { AppointmentConflictError, InvalidAppointmentTimeError } from '../../domain/errors/scheduling.errors';
+import { AppointmentConflictError, InvalidAppointmentTimeError, NoBarberAvailableError } from '../../domain/errors/scheduling.errors';
 import { defaultWorkSchedule } from '../../../team/domain/value-objects/work-schedule';
 
 const MONDAY = '2025-03-10';
@@ -27,8 +27,11 @@ function makeRepo(overrides?: Partial<ISchedulingRepository>): ISchedulingReposi
   };
 }
 
-function makeBarberLookup(result = ACTIVE_BARBER): IBarberLookup {
-  return { findById: jest.fn().mockResolvedValue(result) };
+function makeBarberLookup(result = ACTIVE_BARBER, activeList: any[] = [{ id: 'barber-1', ...ACTIVE_BARBER }]): IBarberLookup {
+  return {
+    findById: jest.fn().mockResolvedValue(result),
+    listActiveByTenant: jest.fn().mockResolvedValue(activeList),
+  };
 }
 
 function makeServiceLookup(result = ACTIVE_SERVICE): IServiceLookup {
@@ -85,5 +88,66 @@ describe('BookAppointmentUseCase', () => {
     const repo = makeRepo({ findByBarberAndDate: jest.fn().mockResolvedValue([existing]) });
     const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
     await expect(uc.execute(INPUT)).rejects.toBeInstanceOf(AppointmentConflictError);
+  });
+
+  it('auto-assigns the first available active barber when barberId is omitted', async () => {
+    const repo = makeRepo();
+    const barberLookup = makeBarberLookup(ACTIVE_BARBER, [
+      { id: 'barber-1', ...ACTIVE_BARBER },
+      { id: 'barber-2', ...ACTIVE_BARBER },
+    ]);
+    const uc = new BookAppointmentUseCase(repo, barberLookup, makeServiceLookup(), MOCK_EMITTER);
+    const { barberId, ...rest } = INPUT;
+    const result = await uc.execute(rest);
+    expect(result.barberId).toBe('barber-1');
+  });
+
+  it('skips a busy barber and assigns the next available one', async () => {
+    const busyOnBarber1 = Appointment.reconstitute({
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      clientName: 'Ana', clientPhone: '+55', date: MONDAY,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo = makeRepo({
+      findByBarberAndDate: jest.fn().mockImplementation(async (barberId: string) =>
+        barberId === 'barber-1' ? [busyOnBarber1] : [],
+      ),
+    });
+    const barberLookup = makeBarberLookup(ACTIVE_BARBER, [
+      { id: 'barber-1', ...ACTIVE_BARBER },
+      { id: 'barber-2', ...ACTIVE_BARBER },
+    ]);
+    const uc = new BookAppointmentUseCase(repo, barberLookup, makeServiceLookup(), MOCK_EMITTER);
+    const { barberId, ...rest } = INPUT;
+    const result = await uc.execute(rest);
+    expect(result.barberId).toBe('barber-2');
+  });
+
+  it('throws NoBarberAvailableError when every active barber is busy', async () => {
+    const busy = (bId: string) => Appointment.reconstitute({
+      id: `appt-${bId}`, tenantId: 'tenant-1', barberId: bId, serviceId: 'service-1',
+      clientName: 'Ana', clientPhone: '+55', date: MONDAY,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo = makeRepo({
+      findByBarberAndDate: jest.fn().mockImplementation(async (barberId: string) => [busy(barberId)]),
+    });
+    const barberLookup = makeBarberLookup(ACTIVE_BARBER, [
+      { id: 'barber-1', ...ACTIVE_BARBER },
+      { id: 'barber-2', ...ACTIVE_BARBER },
+    ]);
+    const uc = new BookAppointmentUseCase(repo, barberLookup, makeServiceLookup(), MOCK_EMITTER);
+    const { barberId, ...rest } = INPUT;
+    await expect(uc.execute(rest)).rejects.toBeInstanceOf(NoBarberAvailableError);
+  });
+
+  it('throws NoBarberAvailableError when there are no active barbers', async () => {
+    const repo = makeRepo();
+    const barberLookup = makeBarberLookup(ACTIVE_BARBER, []);
+    const uc = new BookAppointmentUseCase(repo, barberLookup, makeServiceLookup(), MOCK_EMITTER);
+    const { barberId, ...rest } = INPUT;
+    await expect(uc.execute(rest)).rejects.toBeInstanceOf(NoBarberAvailableError);
   });
 });
