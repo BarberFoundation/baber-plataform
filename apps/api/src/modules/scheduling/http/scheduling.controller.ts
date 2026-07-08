@@ -36,8 +36,8 @@ import { AppointmentStatus, APPOINTMENT_STATUSES } from '../domain/value-objects
 
 class BookAppointmentDto {
   @IsString()
-  @IsNotEmpty()
-  barberId!: string;
+  @IsOptional()
+  barberId?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -103,15 +103,15 @@ export class SchedulingController {
   @Get('available-slots')
   async availableSlots(
     @Headers('x-tenant-id') tenantId: string,
-    @Query('barberId') barberId: string,
+    @Query('barberId') barberId: string | undefined,
     @Query('serviceId') serviceId: string,
     @Query('date') date: string,
   ) {
     requireTenantId(tenantId);
-    if (!barberId || !serviceId || !date) {
-      throw new BadRequestException('barberId, serviceId e date são obrigatórios.');
+    if (!serviceId || !date) {
+      throw new BadRequestException('serviceId e date são obrigatórios.');
     }
-    return this.getAvailableSlots.execute({ tenantId, barberId, serviceId, date });
+    return this.getAvailableSlots.execute({ tenantId, barberId: barberId || undefined, serviceId, date });
   }
 
   @Public()
