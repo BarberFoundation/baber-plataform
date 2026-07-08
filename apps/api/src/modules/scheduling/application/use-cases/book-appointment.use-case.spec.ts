@@ -124,6 +124,23 @@ describe('BookAppointmentUseCase', () => {
     expect(result.barberId).toBe('barber-2');
   });
 
+  it('propagates an unexpected error instead of skipping to the next candidate', async () => {
+    const boom = new Error('boom');
+    const repo = makeRepo({
+      findByBarberAndDate: jest.fn().mockImplementation(async (barberId: string) => {
+        if (barberId === 'barber-1') throw boom;
+        return [];
+      }),
+    });
+    const barberLookup = makeBarberLookup(ACTIVE_BARBER, [
+      { id: 'barber-1', ...ACTIVE_BARBER },
+      { id: 'barber-2', ...ACTIVE_BARBER },
+    ]);
+    const uc = new BookAppointmentUseCase(repo, barberLookup, makeServiceLookup(), MOCK_EMITTER);
+    const { barberId, ...rest } = INPUT;
+    await expect(uc.execute(rest)).rejects.toBe(boom);
+  });
+
   it('throws NoBarberAvailableError when every active barber is busy', async () => {
     const busy = (bId: string) => Appointment.reconstitute({
       id: `appt-${bId}`, tenantId: 'tenant-1', barberId: bId, serviceId: 'service-1',

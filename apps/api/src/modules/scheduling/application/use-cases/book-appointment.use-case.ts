@@ -4,7 +4,7 @@ import { BARBER_LOOKUP, IBarberLookup, ActiveBarber } from '../../domain/ports/b
 import { SERVICE_LOOKUP, IServiceLookup } from '../../domain/ports/service-lookup.port';
 import { Appointment } from '../../domain/entities/appointment.entity';
 import { BookingPolicy } from '../../domain/services/booking-policy';
-import { InvalidAppointmentTimeError, NoBarberAvailableError } from '../../domain/errors/scheduling.errors';
+import { AppointmentConflictError, InvalidAppointmentTimeError, NoBarberAvailableError } from '../../domain/errors/scheduling.errors';
 import { addMinutes } from '../../domain/utils/time.utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { APPOINTMENT_EVENTS, AppointmentEventPayload } from '@shared/events/appointment-events';
@@ -110,8 +110,11 @@ export class BookAppointmentUseCase {
           existing: existing.map((a) => ({ startTime: a.startTime, endTime: a.endTime, status: a.status })),
         });
         return candidate.id;
-      } catch {
-        continue;
+      } catch (err) {
+        if (err instanceof InvalidAppointmentTimeError || err instanceof AppointmentConflictError) {
+          continue;
+        }
+        throw err;
       }
     }
     throw new NoBarberAvailableError();
