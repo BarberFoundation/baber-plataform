@@ -7,6 +7,13 @@ export interface BarberLookupResult {
   workSchedule: WorkSchedule;
 }
 
+export interface ActiveBarber {
+  id: string;
+  isActive: boolean;
+  workSchedule: WorkSchedule;
+}
+
 export interface IBarberLookup {
   findById(id: string, tenantId: string): Promise<BarberLookupResult | null>;
+  listActiveByTenant(tenantId: string): Promise<ActiveBarber[]>;
 }

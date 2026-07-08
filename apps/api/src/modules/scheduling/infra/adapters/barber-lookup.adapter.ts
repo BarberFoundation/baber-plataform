@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
-import { IBarberLookup, BarberLookupResult } from '../../domain/ports/barber-lookup.port';
+import { IBarberLookup, BarberLookupResult, ActiveBarber } from '../../domain/ports/barber-lookup.port';
 import { WorkSchedule } from '../../../team/domain/value-objects/work-schedule';
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -23,5 +23,17 @@ export class BarberLookupAdapter implements IBarberLookup {
       isActive:     rows[0].isActive,
       workSchedule: rows[0].workSchedule as WorkSchedule,
     };
+  }
+
+  async listActiveByTenant(tenantId: string): Promise<ActiveBarber[]> {
+    const rows = await this.db
+      .select({ id: schema.barbers.id, isActive: schema.barbers.isActive, workSchedule: schema.barbers.workSchedule })
+      .from(schema.barbers)
+      .where(and(eq(schema.barbers.tenantId, tenantId), eq(schema.barbers.isActive, true)));
+    return rows.map((r) => ({
+      id: r.id,
+      isActive: r.isActive,
+      workSchedule: r.workSchedule as WorkSchedule,
+    }));
   }
 }
