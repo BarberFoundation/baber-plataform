@@ -23,6 +23,7 @@ function makeUser(name: string | null = null): User {
 function makeUserRepo(user: User | null): IUserRepository {
   return {
     findByFirebaseUid: jest.fn().mockResolvedValue(null),
+    findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(null),
     findByPhone: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue(user),
     save: jest.fn().mockImplementation(async (u: User) => u),

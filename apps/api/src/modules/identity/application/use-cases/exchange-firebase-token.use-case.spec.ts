@@ -5,7 +5,7 @@ import { IRefreshTokenRepository, RefreshTokenRecord } from '../../domain/reposi
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
 import { User } from '../../domain/entities/user.entity';
-import { InvalidFirebaseTokenError } from '../../domain/errors/identity.errors';
+import { InvalidFirebaseTokenError, FirebaseAccountTenantMismatchError } from '../../domain/errors/identity.errors';
 
 const TENANT_ID = 'tenant-111';
 const FIREBASE_UID = 'firebase-abc';
@@ -20,6 +20,7 @@ function makeValidator(overrides?: Partial<IFirebaseTokenValidator>): IFirebaseT
 function makeUserRepo(existingUser?: User): IUserRepository {
   return {
     findByFirebaseUid: jest.fn().mockResolvedValue(existingUser ?? null),
+    findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(existingUser ?? null),
     findByPhone: jest.fn().mockResolvedValue(null),
     save: jest.fn().mockImplementation(async (u: User) => u),
     findById: jest.fn().mockResolvedValue(null),
@@ -74,6 +75,26 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     // save not called because user already exists
     expect(userRepo.save).not.toHaveBeenCalled();
     expect(refreshRepo.save).toHaveBeenCalled();
+  });
+
+  it('throws FirebaseAccountTenantMismatchError when the firebaseUid already belongs to a different tenant', async () => {
+    const existingElsewhere = User.reconstitute({
+      id: 'existing-id',
+      tenantId: 'tenant-999',
+      name: 'João',
+      role: 'ADMIN',
+      phone: null,
+      email: 'a@b.com',
+      firebaseUid: FIREBASE_UID,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const userRepo = makeUserRepo(existingElsewhere);
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      FirebaseAccountTenantMismatchError,
+    );
+    expect(userRepo.save).not.toHaveBeenCalled();
   });
 
   it('throws InvalidFirebaseTokenError when validator rejects', async () => {

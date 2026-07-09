@@ -42,6 +42,7 @@ function makeOtpRepo(record: OtpCodeRecord | null): IOtpCodeRepository {
 function makeUserRepo(existingUser?: User | null): IUserRepository {
   return {
     findByFirebaseUid: jest.fn().mockResolvedValue(null),
+    findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(null),
     findByPhone: jest.fn().mockResolvedValue(existingUser ?? null),
     findById: jest.fn().mockResolvedValue(null),
     save: jest.fn().mockImplementation(async (u: User) => u),

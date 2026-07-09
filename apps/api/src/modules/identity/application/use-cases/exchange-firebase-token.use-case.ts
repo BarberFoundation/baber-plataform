@@ -9,7 +9,7 @@ import {
   IUserRepository,
 } from '../../domain/repositories/user.repository';
 import { User } from '../../domain/entities/user.entity';
-import { InvalidFirebaseTokenError } from '../../domain/errors/identity.errors';
+import { InvalidFirebaseTokenError, FirebaseAccountTenantMismatchError } from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
 
@@ -33,7 +33,10 @@ export class ExchangeFirebaseTokenUseCase {
       throw new InvalidFirebaseTokenError();
     });
 
-    let user = await this.userRepo.findByFirebaseUid(firebasePayload.uid, input.tenantId);
+    let user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+    if (user && user.tenantId !== input.tenantId) {
+      throw new FirebaseAccountTenantMismatchError();
+    }
     if (!user) {
       const newUser = User.createAdmin({
         tenantId: input.tenantId,

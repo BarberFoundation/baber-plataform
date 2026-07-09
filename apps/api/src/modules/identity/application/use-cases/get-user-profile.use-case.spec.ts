@@ -12,6 +12,7 @@ describe('GetUserProfileUseCase', () => {
     });
     const repo: IUserRepository = {
       findByFirebaseUid: jest.fn(),
+      findByFirebaseUidAnyTenant: jest.fn(),
       findByPhone: jest.fn(),
       findById: jest.fn().mockResolvedValue(user),
       save: jest.fn(),
@@ -24,6 +25,7 @@ describe('GetUserProfileUseCase', () => {
   it('throws UserNotFoundError when user does not exist', async () => {
     const repo: IUserRepository = {
       findByFirebaseUid: jest.fn(),
+      findByFirebaseUidAnyTenant: jest.fn(),
       findByPhone: jest.fn(),
       findById: jest.fn().mockResolvedValue(null),
       save: jest.fn(),

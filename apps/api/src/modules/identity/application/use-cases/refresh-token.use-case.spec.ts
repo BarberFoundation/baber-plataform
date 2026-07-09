@@ -53,6 +53,7 @@ function makeRefreshRepo(record?: RefreshTokenRecord | null): IRefreshTokenRepos
 function makeUserRepo(user?: User | null): IUserRepository {
   return {
     findByFirebaseUid: jest.fn().mockResolvedValue(null),
+    findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(null),
     findByPhone: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue(user ?? null),
     save: jest.fn().mockResolvedValue(null),

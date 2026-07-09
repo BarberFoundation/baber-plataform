@@ -34,3 +34,10 @@ export class InvalidOtpError extends DomainError {
     super(message);
   }
 }
+
+export class FirebaseAccountTenantMismatchError extends DomainError {
+  readonly code = 'FIREBASE_ACCOUNT_TENANT_MISMATCH';
+  constructor(message = 'Esta conta já está vinculada a outra barbearia.') {
+    super(message);
+  }
+}
