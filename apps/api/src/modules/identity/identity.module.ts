@@ -8,12 +8,14 @@ import { USER_REPOSITORY } from './domain/repositories/user.repository';
 import { REFRESH_TOKEN_REPOSITORY } from './domain/repositories/refresh-token.repository';
 import { OTP_CODE_REPOSITORY } from './domain/repositories/otp-code.repository';
 import { FIREBASE_TOKEN_VALIDATOR } from './domain/services/firebase-token-validator';
+import { TENANT_LOOKUP } from './domain/ports/tenant-lookup.port';
 
 // Infra
 import { UserDrizzleRepository } from './infra/repositories/user-drizzle.repository';
 import { RefreshTokenDrizzleRepository } from './infra/repositories/refresh-token-drizzle.repository';
 import { OtpCodeDrizzleRepository } from './infra/repositories/otp-code-drizzle.repository';
 import { FirebaseTokenValidatorAdapter } from './infra/firebase/firebase-token-validator.adapter';
+import { TenantLookupAdapter } from './infra/adapters/tenant-lookup.adapter';
 
 // Application services
 import { TokenPairIssuer } from './application/services/token-pair-issuer';
@@ -62,6 +64,7 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     { provide: OTP_CODE_REPOSITORY, useClass: OtpCodeDrizzleRepository },
     // Firebase validator binding
     { provide: FIREBASE_TOKEN_VALIDATOR, useClass: FirebaseTokenValidatorAdapter },
+    { provide: TENANT_LOOKUP, useClass: TenantLookupAdapter },
     // Application services
     TokenPairIssuer,
     // Use cases
