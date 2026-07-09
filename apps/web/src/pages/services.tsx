@@ -205,13 +205,13 @@ export default function ServicesPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <SummaryCard
           icon={CheckCircle2}
-          iconClassName="bg-emerald-500/10 text-emerald-400"
+          variant="success"
           label="Ativos"
           count={activeCount}
         />
         <SummaryCard
           icon={XCircle}
-          iconClassName="bg-destructive/10 text-destructive"
+          variant="destructive"
           label="Inativos"
           count={inactiveCount}
         />

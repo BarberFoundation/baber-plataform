@@ -155,13 +155,13 @@ export default function BarbersPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <SummaryCard
           icon={UserCheck}
-          iconClassName="bg-emerald-500/10 text-emerald-400"
+          variant="success"
           label="Ativos"
           count={activeCount}
         />
         <SummaryCard
           icon={UserX}
-          iconClassName="bg-destructive/10 text-destructive"
+          variant="destructive"
           label="Inativos"
           count={inactiveCount}
         />
