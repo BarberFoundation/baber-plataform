@@ -11,8 +11,8 @@ export default function Hero() {
 
   useEffect(() => {
     if (!headlineRef.current) return;
-    const { words } = split(headlineRef.current, { words: true });
-    const animation = animate(words, {
+    const splitResult = split(headlineRef.current, { words: true });
+    const animation = animate(splitResult.words, {
       opacity: [0, 1],
       translateY: [20, 0],
       delay: stagger(80),
@@ -21,6 +21,7 @@ export default function Hero() {
     });
     return () => {
       animation.pause();
+      splitResult.revert();
     };
   }, []);
 

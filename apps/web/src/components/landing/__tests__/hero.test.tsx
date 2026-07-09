@@ -6,7 +6,7 @@ import Hero from '../hero';
 vi.mock('animejs', () => ({
   animate: vi.fn(() => ({ pause: vi.fn() })),
   stagger: vi.fn(() => 0),
-  split: vi.fn(() => ({ words: [] })),
+  split: vi.fn(() => ({ words: [], revert: vi.fn() })),
 }));
 
 describe('Hero', () => {
