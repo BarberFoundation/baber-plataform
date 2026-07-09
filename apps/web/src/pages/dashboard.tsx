@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Agendamentos de hoje</CardTitle>
+          <CardTitle>Agendamentos de hoje ({appointments.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
