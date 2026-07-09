@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SummaryCard } from '@/components/ui/summary-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,27 +79,15 @@ export default function AppointmentsPage() {
       <h1 className="text-2xl font-bold">Agendamentos</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((s) => {
-          const Icon = STATUS_ICON[s];
-          return (
-            <Card key={s}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <div
-                  className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-                    STATUS_ICON_CLASS[s],
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">{STATUS_LABEL[s]}</div>
-                  <div className="text-3xl font-bold">{statusCounts[s] ?? 0}</div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((s) => (
+          <SummaryCard
+            key={s}
+            icon={STATUS_ICON[s]}
+            iconClassName={STATUS_ICON_CLASS[s]}
+            label={STATUS_LABEL[s]}
+            count={statusCounts[s] ?? 0}
+          />
+        ))}
       </div>
 
       <Card>

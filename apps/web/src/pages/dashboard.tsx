@@ -4,9 +4,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { animate, stagger } from 'animejs';
 import { apiFetch } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { SummaryCard } from '@/components/ui/summary-card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
@@ -73,29 +73,15 @@ export default function DashboardPage() {
       </div>
 
       <div ref={cardsRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => {
-          const Icon = STATUS_ICON[status];
-          return (
-            <Card key={status}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <div
-                  className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-                    STATUS_ICON_CLASS[status],
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    {STATUS_LABEL[status]}
-                  </div>
-                  <div className="text-3xl font-bold">{counts[status] ?? 0}</div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => (
+          <SummaryCard
+            key={status}
+            icon={STATUS_ICON[status]}
+            iconClassName={STATUS_ICON_CLASS[status]}
+            label={STATUS_LABEL[status]}
+            count={counts[status] ?? 0}
+          />
+        ))}
       </div>
 
       <Card>

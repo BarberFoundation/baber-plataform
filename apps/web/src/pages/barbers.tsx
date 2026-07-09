@@ -6,7 +6,8 @@ import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { SummaryCard } from '@/components/ui/summary-card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -152,28 +153,18 @@ export default function BarbersPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Ativos</div>
-              <div className="text-3xl font-bold">{activeCount}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <UserX className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Inativos</div>
-              <div className="text-3xl font-bold">{inactiveCount}</div>
-            </div>
-          </CardContent>
-        </Card>
+        <SummaryCard
+          icon={UserCheck}
+          iconClassName="bg-emerald-500/10 text-emerald-400"
+          label="Ativos"
+          count={activeCount}
+        />
+        <SummaryCard
+          icon={UserX}
+          iconClassName="bg-destructive/10 text-destructive"
+          label="Inativos"
+          count={inactiveCount}
+        />
       </div>
 
       <Card>
