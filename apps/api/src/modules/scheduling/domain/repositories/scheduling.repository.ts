@@ -7,6 +7,7 @@ export interface ListAppointmentsFilter {
   date?: string;
   barberId?: string;
   status?: AppointmentStatus;
+  customerId?: string;
 }
 
 export interface ISchedulingRepository {

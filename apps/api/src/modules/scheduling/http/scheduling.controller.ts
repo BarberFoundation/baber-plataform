@@ -31,6 +31,7 @@ import { CancelAppointmentUseCase } from '../application/use-cases/cancel-appoin
 import { CompleteAppointmentUseCase } from '../application/use-cases/complete-appointment.use-case';
 import { GetAppointmentUseCase } from '../application/use-cases/get-appointment.use-case';
 import { ListAppointmentsUseCase } from '../application/use-cases/list-appointments.use-case';
+import { ListMyAppointmentsUseCase } from '../application/use-cases/list-my-appointments.use-case';
 import { Appointment } from '../domain/entities/appointment.entity';
 import { AppointmentStatus, APPOINTMENT_STATUSES } from '../domain/value-objects/appointment-status';
 
@@ -98,6 +99,7 @@ export class SchedulingController {
     private readonly completeAppointment: CompleteAppointmentUseCase,
     private readonly getAppointment:      GetAppointmentUseCase,
     private readonly listAppointments:    ListAppointmentsUseCase,
+    private readonly listMyAppointments:  ListMyAppointmentsUseCase,
   ) {}
 
   @Public()
@@ -113,6 +115,13 @@ export class SchedulingController {
       throw new BadRequestException('serviceId e date são obrigatórios.');
     }
     return this.getAvailableSlots.execute({ tenantId, barberId: barberId || undefined, serviceId, date });
+  }
+
+  @Roles('CLIENT')
+  @Get('my')
+  async myAppointments(@CurrentUser() user: JwtPayload) {
+    const appts = await this.listMyAppointments.execute({ tenantId: user.tenantId, customerId: user.userId });
+    return appts.map(serializeAppointment);
   }
 
   @Roles('CLIENT')

@@ -16,6 +16,7 @@ import { CancelAppointmentUseCase }   from './application/use-cases/cancel-appoi
 import { CompleteAppointmentUseCase } from './application/use-cases/complete-appointment.use-case';
 import { GetAppointmentUseCase }      from './application/use-cases/get-appointment.use-case';
 import { ListAppointmentsUseCase }    from './application/use-cases/list-appointments.use-case';
+import { ListMyAppointmentsUseCase }  from './application/use-cases/list-my-appointments.use-case';
 
 import { SchedulingController } from './http/scheduling.controller';
 
@@ -33,6 +34,7 @@ import { SchedulingController } from './http/scheduling.controller';
     CompleteAppointmentUseCase,
     GetAppointmentUseCase,
     ListAppointmentsUseCase,
+    ListMyAppointmentsUseCase,
   ],
 })
 export class SchedulingModule {}

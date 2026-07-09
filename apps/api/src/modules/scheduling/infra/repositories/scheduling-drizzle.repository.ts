@@ -30,6 +30,7 @@ export class SchedulingDrizzleRepository implements ISchedulingRepository {
     if (filter.date)     conditions.push(eq(schema.appointments.date,     filter.date));
     if (filter.barberId) conditions.push(eq(schema.appointments.barberId, filter.barberId));
     if (filter.status)   conditions.push(eq(schema.appointments.status,   filter.status));
+    if (filter.customerId) conditions.push(eq(schema.appointments.customerId, filter.customerId));
     const rows = await this.db
       .select()
       .from(schema.appointments)
@@ -60,6 +61,7 @@ export class SchedulingDrizzleRepository implements ISchedulingRepository {
         tenantId:        appointment.tenantId,
         barberId:        appointment.barberId,
         serviceId:       appointment.serviceId,
+        customerId:      appointment.customerId,
         clientName:      appointment.clientName,
         clientPhone:     appointment.clientPhone,
         date:            appointment.date,
