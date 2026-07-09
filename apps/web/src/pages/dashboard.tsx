@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { animate, stagger } from 'animejs';
+import { Clock, CalendarCheck, CheckCheck, XCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -21,6 +23,20 @@ const STATUS_VARIANT: Record<AppointmentStatus, 'warning' | 'success' | 'seconda
   CONFIRMED: 'success',
   COMPLETED: 'secondary',
   CANCELLED: 'destructive',
+};
+
+const STATUS_ICON: Record<AppointmentStatus, typeof Clock> = {
+  PENDING: Clock,
+  CONFIRMED: CalendarCheck,
+  COMPLETED: CheckCheck,
+  CANCELLED: XCircle,
+};
+
+const STATUS_ICON_CLASS: Record<AppointmentStatus, string> = {
+  PENDING: 'bg-amber-500/10 text-amber-400',
+  CONFIRMED: 'bg-emerald-500/10 text-emerald-400',
+  COMPLETED: 'bg-secondary text-secondary-foreground',
+  CANCELLED: 'bg-destructive/10 text-destructive',
 };
 
 function getGreeting(): string {
@@ -85,18 +101,29 @@ export default function DashboardPage() {
       </div>
 
       <div ref={cardsRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => (
-          <Card key={status}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {STATUS_LABEL[status]}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{counts[status] ?? 0}</div>
-            </CardContent>
-          </Card>
-        ))}
+        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => {
+          const Icon = STATUS_ICON[status];
+          return (
+            <Card key={status}>
+              <CardContent className="flex items-center gap-4 pt-6">
+                <div
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                    STATUS_ICON_CLASS[status],
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {STATUS_LABEL[status]}
+                  </div>
+                  <div className="text-3xl font-bold">{counts[status] ?? 0}</div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Card>
