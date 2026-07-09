@@ -14,12 +14,16 @@ import { AppointmentConfirmedListener }  from './infra/listeners/appointment-con
 import { AppointmentCancelledListener }  from './infra/listeners/appointment-cancelled.listener';
 import { ReminderScheduler }             from './infra/schedulers/reminder.scheduler';
 
+import { NotificationsController } from './http/notifications.controller';
+
 import { SendConfirmationNotificationUseCase } from './application/use-cases/send-confirmation-notification.use-case';
 import { SendCancellationNotificationUseCase } from './application/use-cases/send-cancellation-notification.use-case';
 import { SendReminderNotificationUseCase }     from './application/use-cases/send-reminder-notification.use-case';
+import { ListMyNotificationsUseCase }          from './application/use-cases/list-my-notifications.use-case';
 
 @Module({
   imports: [DatabaseModule],
+  controllers: [NotificationsController],
   providers: [
     { provide: NOTIFICATION_REPOSITORY, useClass: NotificationDrizzleRepository },
     { provide: DUE_REMINDER_QUERY,      useClass: DueReminderDrizzleRepository },
@@ -34,6 +38,7 @@ import { SendReminderNotificationUseCase }     from './application/use-cases/sen
     SendConfirmationNotificationUseCase,
     SendCancellationNotificationUseCase,
     SendReminderNotificationUseCase,
+    ListMyNotificationsUseCase,
     AppointmentBookedListener,
     AppointmentConfirmedListener,
     AppointmentCancelledListener,
