@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,20 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { Appointment, AppointmentStatus, Barber } from '@/lib/types';
-
-const STATUS_LABEL: Record<AppointmentStatus, string> = {
-  PENDING: 'Pendente',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
-};
-
-const STATUS_VARIANT: Record<AppointmentStatus, 'warning' | 'success' | 'secondary' | 'destructive'> = {
-  PENDING: 'warning',
-  CONFIRMED: 'success',
-  COMPLETED: 'secondary',
-  CANCELLED: 'destructive',
-};
 
 export default function AppointmentsPage() {
   const qc = useQueryClient();
@@ -78,9 +66,41 @@ export default function AppointmentsPage() {
 
   const sorted = appointments.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+  const statusCounts = sorted.reduce(
+    (acc, a) => {
+      acc[a.status] = (acc[a.status] ?? 0) + 1;
+      return acc;
+    },
+    {} as Partial<Record<AppointmentStatus, number>>,
+  );
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Agendamentos</h1>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((s) => {
+          const Icon = STATUS_ICON[s];
+          return (
+            <Card key={s}>
+              <CardContent className="flex items-center gap-4 pt-6">
+                <div
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                    STATUS_ICON_CLASS[s],
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">{STATUS_LABEL[s]}</div>
+                  <div className="text-3xl font-bold">{statusCounts[s] ?? 0}</div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <Card>
         <CardContent className="pt-4">
