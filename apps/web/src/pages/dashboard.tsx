@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { animate, stagger } from 'animejs';
 import { apiFetch } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +29,35 @@ function StatusBadge({ status }: { status: AppointmentStatus }) {
 
 export default function DashboardPage() {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
 
   const { data: appointments = [], isLoading } = useQuery({
     queryKey: ['appointments', today],
     queryFn: () => apiFetch<Appointment[]>(`/appointments?date=${today}`),
   });
+
+  useEffect(() => {
+    if (!cardsRef.current) return;
+    animate(cardsRef.current.children, {
+      opacity: [0, 1],
+      translateY: [12, 0],
+      delay: stagger(120),
+      duration: 700,
+      easing: 'easeOutQuad',
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || !tableBodyRef.current) return;
+    animate(tableBodyRef.current.children, {
+      opacity: [0, 1],
+      translateY: [8, 0],
+      delay: stagger(90),
+      duration: 600,
+      easing: 'easeOutQuad',
+    });
+  }, [isLoading, appointments]);
 
   const counts = appointments.reduce(
     (acc, a) => {
@@ -50,7 +76,7 @@ export default function DashboardPage() {
         <p className="text-muted-foreground text-sm">Resumo dos agendamentos de hoje</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div ref={cardsRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as AppointmentStatus[]).map((status) => (
           <Card key={status}>
             <CardHeader className="pb-2">
@@ -83,7 +109,7 @@ export default function DashboardPage() {
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody ref={tableBodyRef}>
                 {appointments
                   .slice()
                   .sort((a, b) => a.startTime.localeCompare(b.startTime))
