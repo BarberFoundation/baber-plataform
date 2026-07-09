@@ -1,10 +1,20 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SCHEDULING_REPOSITORY, ISchedulingRepository } from '../../domain/repositories/scheduling.repository';
 import { Appointment } from '../../domain/entities/appointment.entity';
-import { AppointmentNotFoundError, InvalidStatusTransitionError } from '../../domain/errors/scheduling.errors';
-import { AppointmentActionInput } from './confirm-appointment.use-case';
+import {
+  AppointmentNotFoundError,
+  InvalidStatusTransitionError,
+  ForbiddenCancellationError,
+} from '../../domain/errors/scheduling.errors';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { APPOINTMENT_EVENTS, AppointmentEventPayload } from '@shared/events/appointment-events';
+import { Role } from '@shared/auth/roles.decorator';
+
+export interface CancelAppointmentInput {
+  id: string;
+  tenantId: string;
+  requestedBy: { userId: string; role: Role };
+}
 
 @Injectable()
 export class CancelAppointmentUseCase {
@@ -13,9 +23,20 @@ export class CancelAppointmentUseCase {
     @Inject(EventEmitter2)         private readonly emitter: EventEmitter2,
   ) {}
 
-  async execute(input: AppointmentActionInput): Promise<Appointment> {
+  async execute(input: CancelAppointmentInput): Promise<Appointment> {
     const appt = await this.repo.findById(input.id, input.tenantId);
     if (!appt) throw new AppointmentNotFoundError();
+
+    if (input.requestedBy.role !== 'ADMIN') {
+      if (appt.customerId !== input.requestedBy.userId) {
+        throw new ForbiddenCancellationError();
+      }
+      const startsAt = new Date(`${appt.date}T${appt.startTime}:00`);
+      if (startsAt.getTime() <= Date.now()) {
+        throw new ForbiddenCancellationError('Não é possível cancelar um agendamento que já começou.');
+      }
+    }
+
     try {
       appt.cancel();
     } catch {

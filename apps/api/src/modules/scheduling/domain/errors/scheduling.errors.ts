@@ -24,3 +24,8 @@ export class NoBarberAvailableError extends DomainError {
   readonly code = 'NO_BARBER_AVAILABLE';
   constructor(message = 'Nenhum barbeiro disponível neste horário.') { super(message); }
 }
+
+export class ForbiddenCancellationError extends DomainError {
+  readonly code = 'FORBIDDEN_CANCELLATION';
+  constructor(message = 'Você não pode cancelar este agendamento.') { super(message); }
+}

@@ -185,14 +185,18 @@ export class SchedulingController {
     await this.confirmAppointment.execute({ id, tenantId: user.tenantId });
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLIENT')
   @Patch(':id/cancel')
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancel(
     @CurrentUser() user: JwtPayload,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    await this.cancelAppointment.execute({ id, tenantId: user.tenantId });
+    await this.cancelAppointment.execute({
+      id,
+      tenantId: user.tenantId,
+      requestedBy: { userId: user.userId, role: user.role },
+    });
   }
 
   @Roles('ADMIN')
