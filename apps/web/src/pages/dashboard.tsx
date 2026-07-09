@@ -23,6 +23,13 @@ const STATUS_VARIANT: Record<AppointmentStatus, 'warning' | 'success' | 'seconda
   CANCELLED: 'destructive',
 };
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Bom dia';
+  if (hour >= 12 && hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 function StatusBadge({ status }: { status: AppointmentStatus }) {
   return <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>;
 }
@@ -72,6 +79,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
+        <p className="text-sm font-medium text-primary">{getGreeting()}</p>
         <h1 className="text-2xl font-bold capitalize">{dateLabel}</h1>
         <p className="text-muted-foreground text-sm">Resumo dos agendamentos de hoje</p>
       </div>
