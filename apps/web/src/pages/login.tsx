@@ -36,7 +36,7 @@ export default function LoginPage() {
       );
 
       setAuth(result.accessToken, result.expiresIn, result.user);
-      void navigate('/');
+      void navigate('/app');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao fazer login';
       toast.error(message);

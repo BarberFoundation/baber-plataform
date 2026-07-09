@@ -6,11 +6,13 @@ import DashboardPage from '@/pages/dashboard';
 import AppointmentsPage from '@/pages/appointments';
 import BarbersPage from '@/pages/barbers';
 import ServicesPage from '@/pages/services';
+import LandingPage from '@/pages/landing';
 
 const router = createBrowserRouter([
+  { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   {
-    path: '/',
+    path: '/app',
     element: (
       <ProtectedRoute>
         <AppShell />

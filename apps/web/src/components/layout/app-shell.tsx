@@ -5,10 +5,10 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/appointments', label: 'Agendamentos', icon: CalendarDays, end: false },
-  { to: '/barbers', label: 'Barbeiros', icon: Users, end: false },
-  { to: '/services', label: 'Serviços', icon: Scissors, end: false },
+  { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/app/appointments', label: 'Agendamentos', icon: CalendarDays, end: false },
+  { to: '/app/barbers', label: 'Barbeiros', icon: Users, end: false },
+  { to: '/app/services', label: 'Serviços', icon: Scissors, end: false },
 ];
 
 export default function AppShell() {
