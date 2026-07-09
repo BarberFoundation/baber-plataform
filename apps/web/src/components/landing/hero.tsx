@@ -67,9 +67,14 @@ export default function Hero() {
       }),
     );
 
-    function handleMouseMove(e: MouseEvent) {
+    let rafId: number | null = null;
+    let latestEvent: MouseEvent | null = null;
+
+    function applyParallax() {
+      rafId = null;
+      if (!latestEvent) return;
       const { innerWidth } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 20;
+      const x = (latestEvent.clientX / innerWidth - 0.5) * 20;
       icons.forEach((icon, i) => {
         animate(icon, {
           translateX: x * (i + 1) * 0.3,
@@ -79,9 +84,16 @@ export default function Hero() {
       });
     }
 
+    function handleMouseMove(e: MouseEvent) {
+      latestEvent = e;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(applyParallax);
+    }
+
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId !== null) cancelAnimationFrame(rafId);
       loopAnimations.forEach((a) => a.pause());
     };
   }, []);
