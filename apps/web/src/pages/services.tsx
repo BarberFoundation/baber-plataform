@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,6 +137,9 @@ export default function ServicesPage() {
     queryFn: () => apiFetch<Service[]>('/services/admin?includeInactive=true'),
   });
 
+  const activeCount = services.filter((s) => s.isActive).length;
+  const inactiveCount = services.length - activeCount;
+
   const createMutation = useMutation({
     mutationFn: (data: ServiceFormData) =>
       apiFetch<Service>('/services', {
@@ -196,6 +199,31 @@ export default function ServicesPage() {
             />
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardContent className="flex items-center gap-4 pt-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Ativos</div>
+              <div className="text-3xl font-bold">{activeCount}</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 pt-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <XCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Inativos</div>
+              <div className="text-3xl font-bold">{inactiveCount}</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
