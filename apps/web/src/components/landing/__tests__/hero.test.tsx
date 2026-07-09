@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Hero from '../hero';
 
 vi.mock('animejs', () => ({
-  animate: vi.fn(),
+  animate: vi.fn(() => ({ pause: vi.fn() })),
   stagger: vi.fn(() => 0),
   split: vi.fn(() => ({ words: [] })),
 }));

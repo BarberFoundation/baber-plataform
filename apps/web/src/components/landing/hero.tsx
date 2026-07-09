@@ -9,24 +9,30 @@ export default function Hero() {
   useEffect(() => {
     if (!headlineRef.current) return;
     const { words } = split(headlineRef.current, { words: true });
-    animate(words, {
+    const animation = animate(words, {
       opacity: [0, 1],
       translateY: [20, 0],
       delay: stagger(80),
       duration: 600,
       easing: 'easeOutQuad',
     });
+    return () => {
+      animation.pause();
+    };
   }, []);
 
   useEffect(() => {
     if (!ctaRef.current) return;
-    animate(ctaRef.current, {
+    const animation = animate(ctaRef.current, {
       scale: [1, 1.03],
       duration: 1200,
       loop: true,
       direction: 'alternate',
       easing: 'easeInOutSine',
     });
+    return () => {
+      animation.pause();
+    };
   }, []);
 
   return (
