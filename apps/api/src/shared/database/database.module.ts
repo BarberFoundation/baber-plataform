@@ -15,9 +15,12 @@ export type Database = PostgresJsDatabase<typeof schema>;
       provide: PG_CLIENT,
       inject: [ConfigService],
       useFactory: (config: ConfigService): Sql => {
-        return postgres(config.getOrThrow<string>('DATABASE_URL'), {
+        const url = config.getOrThrow<string>('DATABASE_URL');
+        return postgres(url, {
           max: 10,
-          ssl: { rejectUnauthorized: false },
+          ssl: url.includes('localhost') || url.includes('127.0.0.1')
+            ? false
+            : { rejectUnauthorized: false },
         });
       },
     },
