@@ -4,7 +4,10 @@ import { IWhatsAppGateway } from '../../domain/ports/whatsapp-gateway.port';
 import { NotificationLog } from '../../domain/entities/notification-log.entity';
 
 function makeRepo(): INotificationRepository {
-  return { save: jest.fn().mockImplementation(async (l: NotificationLog) => l) };
+  return {
+    save: jest.fn().mockImplementation(async (l: NotificationLog) => l),
+    findByCustomer: jest.fn().mockResolvedValue([]),
+  };
 }
 
 function makeGateway(fail = false): IWhatsAppGateway {

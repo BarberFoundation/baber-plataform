@@ -4,4 +4,5 @@ export const NOTIFICATION_REPOSITORY = Symbol('INotificationRepository');
 
 export interface INotificationRepository {
   save(log: NotificationLog): Promise<NotificationLog>;
+  findByCustomer(customerId: string, tenantId: string): Promise<NotificationLog[]>;
 }
