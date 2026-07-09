@@ -1,7 +1,8 @@
 import { RequestOtpUseCase } from './request-otp.use-case';
 import { IOtpCodeRepository, OtpCodeRecord } from '../../domain/repositories/otp-code.repository';
 import { IWhatsAppGateway } from '../../../notifications/domain/ports/whatsapp-gateway.port';
-import { OtpRateLimitedError } from '../../domain/errors/identity.errors';
+import { OtpRateLimitedError, TenantNotFoundError } from '../../domain/errors/identity.errors';
+import { ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 const TENANT_ID = 'tenant-1';
 const PHONE = '+5511999999999';
@@ -19,6 +20,10 @@ function makeGateway(): IWhatsAppGateway {
   return { send: jest.fn().mockResolvedValue(undefined) };
 }
 
+function makeTenantLookup(exists = true): ITenantLookup {
+  return { existsById: jest.fn().mockResolvedValue(exists) };
+}
+
 function makeRedis(overrides?: { setResult?: string | null; incrResult?: number }) {
   const setResult = overrides && 'setResult' in overrides ? overrides.setResult : 'OK';
   return {
@@ -33,7 +38,7 @@ describe('RequestOtpUseCase', () => {
     const otpRepo = makeOtpRepo();
     const gateway = makeGateway();
     const redis = makeRedis();
-    const uc = new RequestOtpUseCase(otpRepo, gateway, redis as never);
+    const uc = new RequestOtpUseCase(otpRepo, gateway, redis as never, makeTenantLookup());
 
     await uc.execute({ phone: PHONE, tenantId: TENANT_ID });
 
@@ -49,7 +54,7 @@ describe('RequestOtpUseCase', () => {
 
   it('throws OtpRateLimitedError when cooldown key already exists', async () => {
     const redis = makeRedis({ setResult: null }); // NX failed = key already set
-    const uc = new RequestOtpUseCase(makeOtpRepo(), makeGateway(), redis as never);
+    const uc = new RequestOtpUseCase(makeOtpRepo(), makeGateway(), redis as never, makeTenantLookup());
 
     await expect(uc.execute({ phone: PHONE, tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       OtpRateLimitedError,
@@ -58,10 +63,18 @@ describe('RequestOtpUseCase', () => {
 
   it('throws OtpRateLimitedError when hourly limit exceeded', async () => {
     const redis = makeRedis({ incrResult: 6 });
-    const uc = new RequestOtpUseCase(makeOtpRepo(), makeGateway(), redis as never);
+    const uc = new RequestOtpUseCase(makeOtpRepo(), makeGateway(), redis as never, makeTenantLookup());
 
     await expect(uc.execute({ phone: PHONE, tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       OtpRateLimitedError,
+    );
+  });
+
+  it('throws TenantNotFoundError when tenantId does not exist', async () => {
+    const uc = new RequestOtpUseCase(makeOtpRepo(), makeGateway(), makeRedis() as never, makeTenantLookup(false));
+
+    await expect(uc.execute({ phone: PHONE, tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      TenantNotFoundError,
     );
   });
 });

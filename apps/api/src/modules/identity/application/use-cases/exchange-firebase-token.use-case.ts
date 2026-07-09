@@ -9,9 +9,14 @@ import {
   IUserRepository,
 } from '../../domain/repositories/user.repository';
 import { User } from '../../domain/entities/user.entity';
-import { InvalidFirebaseTokenError, FirebaseAccountTenantMismatchError } from '../../domain/errors/identity.errors';
+import {
+  InvalidFirebaseTokenError,
+  FirebaseAccountTenantMismatchError,
+  TenantNotFoundError,
+} from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
+import { TENANT_LOOKUP, ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 export interface ExchangeFirebaseTokenInput {
   idToken: string;
@@ -26,6 +31,8 @@ export class ExchangeFirebaseTokenUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
     private readonly tokenPairIssuer: TokenPairIssuer,
+    @Inject(TENANT_LOOKUP)
+    private readonly tenantLookup: ITenantLookup,
   ) {}
 
   async execute(input: ExchangeFirebaseTokenInput): Promise<AuthResult> {
@@ -34,6 +41,10 @@ export class ExchangeFirebaseTokenUseCase {
     });
 
     let user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+
+    if (!user && !(await this.tenantLookup.existsById(input.tenantId))) {
+      throw new TenantNotFoundError();
+    }
     if (user && user.tenantId !== input.tenantId) {
       throw new FirebaseAccountTenantMismatchError();
     }

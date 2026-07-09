@@ -10,7 +10,8 @@ import {
   WHATSAPP_GATEWAY,
   IWhatsAppGateway,
 } from '../../../notifications/domain/ports/whatsapp-gateway.port';
-import { OtpRateLimitedError } from '../../domain/errors/identity.errors';
+import { OtpRateLimitedError, TenantNotFoundError } from '../../domain/errors/identity.errors';
+import { TENANT_LOOKUP, ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 export interface RequestOtpInput {
   phone: string;
@@ -31,9 +32,15 @@ export class RequestOtpUseCase {
     private readonly whatsapp: IWhatsAppGateway,
     @Inject(REDIS)
     private readonly redis: Redis,
+    @Inject(TENANT_LOOKUP)
+    private readonly tenantLookup: ITenantLookup,
   ) {}
 
   async execute(input: RequestOtpInput): Promise<void> {
+    if (!(await this.tenantLookup.existsById(input.tenantId))) {
+      throw new TenantNotFoundError();
+    }
+
     await this.checkRateLimit(input.tenantId, input.phone);
 
     const code = randomInt(100000, 1000000).toString();

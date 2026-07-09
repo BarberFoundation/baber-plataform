@@ -5,7 +5,12 @@ import { IRefreshTokenRepository, RefreshTokenRecord } from '../../domain/reposi
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
 import { User } from '../../domain/entities/user.entity';
-import { InvalidFirebaseTokenError, FirebaseAccountTenantMismatchError } from '../../domain/errors/identity.errors';
+import {
+  InvalidFirebaseTokenError,
+  FirebaseAccountTenantMismatchError,
+  TenantNotFoundError,
+} from '../../domain/errors/identity.errors';
+import { ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 const TENANT_ID = 'tenant-111';
 const FIREBASE_UID = 'firebase-abc';
@@ -39,11 +44,15 @@ function makeIssuer(refreshRepo: IRefreshTokenRepository): TokenPairIssuer {
   return new TokenPairIssuer(refreshRepo, new JwtTokenService('acc-secret', 'ref-secret', '15m', '30d'));
 }
 
+function makeTenantLookup(exists = true): ITenantLookup {
+  return { existsById: jest.fn().mockResolvedValue(exists) };
+}
+
 describe('ExchangeFirebaseTokenUseCase', () => {
   it('creates new user and returns tokens when user does not exist', async () => {
     const userRepo = makeUserRepo();
     const refreshRepo = makeRefreshRepo();
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo), makeTenantLookup());
     const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
     expect(result.accessToken).toBeTruthy();
     expect(result.refreshToken).toBeTruthy();
@@ -69,7 +78,7 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     });
     const userRepo = makeUserRepo(existing);
     const refreshRepo = makeRefreshRepo();
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo), makeTenantLookup());
     const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
     expect(result.user.id).toBe('existing-id');
     // save not called because user already exists
@@ -90,7 +99,7 @@ describe('ExchangeFirebaseTokenUseCase', () => {
       updatedAt: new Date(),
     });
     const userRepo = makeUserRepo(existingElsewhere);
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()), makeTenantLookup());
     await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       FirebaseAccountTenantMismatchError,
     );
@@ -101,9 +110,21 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     const validator = makeValidator({
       validate: jest.fn().mockRejectedValue(new Error('bad token')),
     });
-    const uc = new ExchangeFirebaseTokenUseCase(validator, makeUserRepo(), makeIssuer(makeRefreshRepo()));
+    const uc = new ExchangeFirebaseTokenUseCase(validator, makeUserRepo(), makeIssuer(makeRefreshRepo()), makeTenantLookup());
     await expect(uc.execute({ idToken: 'bad', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       InvalidFirebaseTokenError,
+    );
+  });
+
+  it('throws TenantNotFoundError when tenantId does not exist', async () => {
+    const uc = new ExchangeFirebaseTokenUseCase(
+      makeValidator(),
+      makeUserRepo(),
+      makeIssuer(makeRefreshRepo()),
+      makeTenantLookup(false),
+    );
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      TenantNotFoundError,
     );
   });
 });
