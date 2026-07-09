@@ -4,7 +4,7 @@ import Features from '../features';
 
 vi.mock('animejs', () => ({
   onScroll: vi.fn(() => ({})),
-  animate: vi.fn(() => ({ pause: vi.fn() })),
+  animate: vi.fn(() => ({ pause: vi.fn(), revert: vi.fn() })),
   stagger: vi.fn(() => 0),
 }));
 

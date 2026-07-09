@@ -17,7 +17,10 @@ export default function Cta() {
       autoplay: onScroll({ target: contentRef.current, enter: 'bottom-=10% top', repeat: false }),
     });
     return () => {
-      animation.pause();
+      // See features.tsx: revert() also unlinks the ScrollObserver created by
+      // onScroll(), preventing a StrictMode-orphaned observer from later
+      // resetting opacity back to 0 on the shared DOM nodes.
+      animation.revert();
     };
   }, []);
 

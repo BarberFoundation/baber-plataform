@@ -40,7 +40,13 @@ export default function Features() {
       autoplay: onScroll({ target: gridRef.current, enter: 'bottom-=10% top', repeat: false }),
     });
     return () => {
-      animation.pause();
+      // Use revert() (not pause()) so the linked ScrollObserver is also
+      // unlinked/removed from the scroll container. pause() alone leaves a
+      // zombie ScrollObserver registered; under StrictMode's double-invoke
+      // that zombie's updateBounds() later seeks the (never-played) old
+      // animation back to its initial frame, snapping opacity back to 0 on
+      // the shared DOM nodes and permanently hiding the section.
+      animation.revert();
     };
   }, []);
 
