@@ -69,6 +69,7 @@ function serializeAppointment(a: Appointment) {
     tenantId:        a.tenantId,
     barberId:        a.barberId,
     serviceId:       a.serviceId,
+    customerId:      a.customerId,
     clientName:      a.clientName,
     clientPhone:     a.clientPhone,
     date:            a.date,
@@ -114,16 +115,16 @@ export class SchedulingController {
     return this.getAvailableSlots.execute({ tenantId, barberId: barberId || undefined, serviceId, date });
   }
 
-  @Public()
+  @Roles('CLIENT')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async book(
-    @Headers('x-tenant-id') tenantId: string,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: BookAppointmentDto,
   ) {
-    requireTenantId(tenantId);
     const appt = await this.bookAppointment.execute({
-      tenantId,
+      tenantId:    user.tenantId,
+      customerId:  user.userId,
       barberId:    dto.barberId,
       serviceId:   dto.serviceId,
       clientName:  dto.clientName,

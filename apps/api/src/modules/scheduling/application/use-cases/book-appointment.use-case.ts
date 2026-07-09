@@ -46,6 +46,7 @@ export class BookAppointmentUseCase {
       tenantId: input.tenantId,
       barberId: assignedBarberId,
       serviceId: input.serviceId,
+      customerId: input.customerId ?? null,
       clientName: input.clientName,
       clientPhone: input.clientPhone,
       date: input.date,
