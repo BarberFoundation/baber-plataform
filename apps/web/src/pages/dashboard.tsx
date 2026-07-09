@@ -3,41 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { animate, stagger } from 'animejs';
-import { Clock, CalendarCheck, CheckCheck, XCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
-
-const STATUS_LABEL: Record<AppointmentStatus, string> = {
-  PENDING: 'Pendente',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
-};
-
-const STATUS_VARIANT: Record<AppointmentStatus, 'warning' | 'success' | 'secondary' | 'destructive'> = {
-  PENDING: 'warning',
-  CONFIRMED: 'success',
-  COMPLETED: 'secondary',
-  CANCELLED: 'destructive',
-};
-
-const STATUS_ICON: Record<AppointmentStatus, typeof Clock> = {
-  PENDING: Clock,
-  CONFIRMED: CalendarCheck,
-  COMPLETED: CheckCheck,
-  CANCELLED: XCircle,
-};
-
-const STATUS_ICON_CLASS: Record<AppointmentStatus, string> = {
-  PENDING: 'bg-amber-500/10 text-amber-400',
-  CONFIRMED: 'bg-emerald-500/10 text-emerald-400',
-  COMPLETED: 'bg-secondary text-secondary-foreground',
-  CANCELLED: 'bg-destructive/10 text-destructive',
-};
 
 function getGreeting(): string {
   const hour = new Date().getHours();
