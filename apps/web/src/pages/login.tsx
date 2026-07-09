@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { toast } from 'sonner';
 import { firebaseAuth } from '@/lib/firebase';
 import { apiFetch } from '@/lib/api';
+import { resolveTenantId } from '@/lib/tenant';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,8 +25,7 @@ export default function LoginPage() {
     try {
       const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
       const idToken = await credential.user.getIdToken();
-      const tenantId = import.meta.env.VITE_TENANT_ID as string;
-      if (!tenantId) throw new Error('VITE_TENANT_ID não configurado no .env');
+      const tenantId = await resolveTenantId();
 
       const result = await apiFetch<{ accessToken: string; expiresIn: number; user: User }>(
         '/auth/admin/exchange',
