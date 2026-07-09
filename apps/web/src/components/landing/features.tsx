@@ -37,7 +37,7 @@ export default function Features() {
       delay: stagger(100),
       duration: 500,
       easing: 'easeOutQuad',
-      autoplay: onScroll({ target: gridRef.current, enter: 'bottom-=10% top' }),
+      autoplay: onScroll({ target: gridRef.current, enter: 'bottom-=10% top', repeat: false }),
     });
     return () => {
       animation.pause();
