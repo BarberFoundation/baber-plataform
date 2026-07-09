@@ -22,4 +22,13 @@ describe('Hero', () => {
       '/login',
     );
   });
+
+  it('renders three floating decorative icons', () => {
+    render(
+      <MemoryRouter>
+        <Hero />
+      </MemoryRouter>,
+    );
+    expect(screen.getAllByTestId('hero-floating-icon')).toHaveLength(3);
+  });
 });
