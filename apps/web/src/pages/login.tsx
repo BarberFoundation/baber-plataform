@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { toast } from 'sonner';
+import { Scissors } from 'lucide-react';
 import { firebaseAuth } from '@/lib/firebase';
 import { apiFetch } from '@/lib/api';
 import { resolveTenantId } from '@/lib/tenant';
@@ -9,7 +10,6 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import type { User } from '@/lib/types';
 
 export default function LoginPage() {
@@ -46,13 +46,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Baber Admin</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <div className="relative hidden overflow-hidden bg-neutral-950 lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12">
+        <div className="relative flex items-center gap-2 text-2xl font-bold text-white">
+          <Scissors className="h-7 w-7 text-orange-500" />
+          Baber Admin
+        </div>
+        <p className="relative mt-4 max-w-sm text-center text-neutral-300">
+          Sua barbearia, sob controle.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-bold">Entrar</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Acesse o painel administrativo.</p>
+          <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -79,8 +88,8 @@ export default function LoginPage() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
