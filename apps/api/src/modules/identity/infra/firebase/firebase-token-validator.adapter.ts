@@ -43,6 +43,7 @@ export class FirebaseTokenValidatorAdapter implements IFirebaseTokenValidator {
       return {
         uid: decoded.uid,
         email: decoded.email,
+        phone: decoded.phone_number,
         name: decoded.name,
       };
     }
@@ -56,12 +57,13 @@ export class FirebaseTokenValidatorAdapter implements IFirebaseTokenValidator {
       sub?: string;
       uid?: string;
       email?: string;
+      phone_number?: string;
       name?: string;
     };
     const uid = payload.uid ?? payload.sub;
     if (!uid) {
       throw new Error('Stub mode: token payload missing uid/sub claim');
     }
-    return { uid, email: payload.email, name: payload.name };
+    return { uid, email: payload.email, phone: payload.phone_number, name: payload.name };
   }
 }

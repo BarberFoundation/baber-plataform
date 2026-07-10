@@ -3,6 +3,7 @@ export const FIREBASE_TOKEN_VALIDATOR = Symbol('IFirebaseTokenValidator');
 export interface FirebaseTokenPayload {
   uid: string;
   email: string | undefined;
+  phone: string | undefined;
   name: string | undefined;
 }
 
