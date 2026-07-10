@@ -20,8 +20,9 @@ export const users = pgTable(
   },
   (t) => [
     // NULL values are not considered equal in PG unique indexes, so multiple
-    // users per tenant can have phone=NULL or email=NULL — intentional: CLIENT
-    // users log in via OTP (phone optional at creation) and ADMIN via Firebase.
+    // users per tenant can have phone=NULL or email=NULL — CLIENT users always
+    // have phone (Firebase phone auth), ADMIN users may have phone or email
+    // (Firebase phone or email/password auth).
     unique('users_tenant_phone_unique').on(t.tenantId, t.phone),
     unique('users_tenant_email_unique').on(t.tenantId, t.email),
   ],

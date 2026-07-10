@@ -21,20 +21,6 @@ export class InvalidRefreshTokenError extends DomainError {
   }
 }
 
-export class OtpRateLimitedError extends DomainError {
-  readonly code = 'OTP_RATE_LIMITED';
-  constructor(message = 'Muitas tentativas. Tente novamente mais tarde.') {
-    super(message);
-  }
-}
-
-export class InvalidOtpError extends DomainError {
-  readonly code = 'INVALID_OTP';
-  constructor(message = 'Código inválido ou expirado.') {
-    super(message);
-  }
-}
-
 export class TenantNotFoundError extends DomainError {
   readonly code = 'TENANT_NOT_FOUND';
   constructor(message = 'Barbearia não encontrada.') {
