@@ -24,6 +24,7 @@ describe('User entity', () => {
     const user = User.createAdmin({
       tenantId: base.tenantId,
       email: 'new@barbearia.com',
+      phone: null,
       firebaseUid: 'firebase-uid-xyz',
       name: null,
     });
@@ -36,6 +37,19 @@ describe('User entity', () => {
     expect(user.name).toBeNull();
   });
 
+  it('creates an admin logging in by phone (no email)', () => {
+    const user = User.createAdmin({
+      tenantId: base.tenantId,
+      email: null,
+      phone: '+5511999999999',
+      firebaseUid: 'firebase-uid-phone',
+      name: null,
+    });
+    expect(user.role).toBe('ADMIN');
+    expect(user.email).toBeNull();
+    expect(user.phone).toBe('+5511999999999');
+  });
+
   it('allows renaming via domain method', () => {
     const user = User.reconstitute(base);
     user.rename('Novo Nome');
@@ -43,15 +57,19 @@ describe('User entity', () => {
   });
 
   describe('User.createClient', () => {
-    it('creates a CLIENT user with phone and no name', () => {
-      const user = User.createClient({ tenantId: 'tenant-1', phone: '+5511999999999' });
+    it('creates a CLIENT user with phone, firebaseUid, and no name', () => {
+      const user = User.createClient({
+        tenantId: 'tenant-1',
+        phone: '+5511999999999',
+        firebaseUid: 'firebase-uid-client',
+      });
 
       expect(user.role).toBe('CLIENT');
       expect(user.phone).toBe('+5511999999999');
       expect(user.tenantId).toBe('tenant-1');
       expect(user.name).toBeNull();
       expect(user.email).toBeNull();
-      expect(user.firebaseUid).toBeNull();
+      expect(user.firebaseUid).toBe('firebase-uid-client');
       expect(user.id).toBeTruthy();
     });
   });
