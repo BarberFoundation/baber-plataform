@@ -17,7 +17,7 @@ const FIREBASE_UID = 'firebase-abc';
 
 function makeValidator(overrides?: Partial<IFirebaseTokenValidator>): IFirebaseTokenValidator {
   return {
-    validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: 'a@b.com', name: 'A' }),
+    validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: 'a@b.com', phone: undefined, name: 'A' }),
     ...overrides,
   };
 }
@@ -126,5 +126,20 @@ describe('ExchangeFirebaseTokenUseCase', () => {
     await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       TenantNotFoundError,
     );
+  });
+
+  it('creates a new admin with phone when the token has no email (phone login)', async () => {
+    const userRepo = makeUserRepo();
+    const refreshRepo = makeRefreshRepo();
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: '+5511999999999', name: undefined }),
+    });
+    const uc = new ExchangeFirebaseTokenUseCase(validator, userRepo, makeIssuer(refreshRepo), makeTenantLookup());
+    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
+    expect(result.user.role).toBe('ADMIN');
+    expect(result.user.phone).toBe('+5511999999999');
+    const savedUser = (userRepo.save as jest.Mock).mock.calls[0][0] as User;
+    expect(savedUser.email).toBeNull();
+    expect(savedUser.phone).toBe('+5511999999999');
   });
 });

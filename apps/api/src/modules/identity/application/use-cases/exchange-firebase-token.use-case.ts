@@ -52,6 +52,7 @@ export class ExchangeFirebaseTokenUseCase {
       const newUser = User.createAdmin({
         tenantId: input.tenantId,
         email: firebasePayload.email ?? null,
+        phone: firebasePayload.phone ?? null,
         firebaseUid: firebasePayload.uid,
         name: firebasePayload.name ?? null,
       });
