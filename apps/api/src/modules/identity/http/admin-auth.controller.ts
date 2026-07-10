@@ -1,19 +1,9 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '@shared/auth/public.decorator';
 import { ExchangeFirebaseTokenUseCase } from '../application/use-cases/exchange-firebase-token.use-case';
-
-class ExchangeTokenDto {
-  @IsString()
-  @IsNotEmpty()
-  idToken!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  tenantId!: string;
-}
+import { ExchangeTokenDto } from './exchange-token.dto';
 
 @Controller('auth/admin')
 export class AdminAuthController {
