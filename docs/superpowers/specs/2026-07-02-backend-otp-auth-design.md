@@ -1,5 +1,7 @@
 # Backend OTP Auth (Identity) — Design
 
+> **Superseded by** `docs/superpowers/specs/2026-07-09-firebase-phone-email-login-design.md` — the custom OTP/Evolution flow described here was removed in favor of Firebase phone auth (native SMS). Kept for historical reference only.
+
 Status: aprovado (autor decidiu prosseguir com defaults recomendados, ausente durante revisão — ver seção "Decisões tomadas sem confirmação ao vivo"). Depende de: nenhum. Bloqueia: `docs/superpowers/plans/2026-07-02-mobile-setup-auth.md`.
 
 ## Escopo
