@@ -35,3 +35,9 @@ apps/api/drizzle/migrations/meta/_journal.json.bak
 .env*
 
 .worktrees/
+
+# local tooling / stray artifacts
+.playwright-mcp/
+.mcp.json
+google-services*.json
+landing-full.png
