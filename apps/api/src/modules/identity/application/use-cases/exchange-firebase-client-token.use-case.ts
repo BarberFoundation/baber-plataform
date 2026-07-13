@@ -54,6 +54,16 @@ export class ExchangeFirebaseClientTokenUseCase {
       throw new FirebaseAccountTenantMismatchError();
     }
     if (!user) {
+      // Usuário legado criado pelo admin (sem login) com o mesmo telefone: vincula
+      // em vez de inserir e estourar o unique (tenant_id, phone).
+      const legacy = await this.userRepo.findByPhone(firebasePayload.phone, input.tenantId);
+      if (legacy && !legacy.firebaseUid) {
+        legacy.linkFirebaseUid(firebasePayload.uid);
+        user = await this.userRepo.save(legacy);
+      }
+    }
+
+    if (!user) {
       const newUser = User.createClient({
         tenantId: input.tenantId,
         phone: firebasePayload.phone,

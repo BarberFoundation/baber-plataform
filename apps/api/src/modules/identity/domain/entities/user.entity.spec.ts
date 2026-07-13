@@ -73,4 +73,36 @@ describe('User entity', () => {
       expect(user.id).toBeTruthy();
     });
   });
+  describe('linkFirebaseUid', () => {
+    it('links a firebase uid to a user that has none', () => {
+      const user = User.reconstitute({
+        id: 'u1',
+        tenantId: 't1',
+        name: 'Legado',
+        role: 'CLIENT',
+        phone: '+5511999999999',
+        email: null,
+        firebaseUid: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      user.linkFirebaseUid('fb-123');
+      expect(user.firebaseUid).toBe('fb-123');
+    });
+
+    it('refuses to overwrite an existing firebase uid', () => {
+      const user = User.reconstitute({
+        id: 'u1',
+        tenantId: 't1',
+        name: null,
+        role: 'CLIENT',
+        phone: '+5511999999999',
+        email: null,
+        firebaseUid: 'fb-original',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      expect(() => user.linkFirebaseUid('fb-other')).toThrow();
+    });
+  });
 });

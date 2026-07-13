@@ -160,6 +160,33 @@ describe('ExchangeFirebaseClientTokenUseCase', () => {
     );
   });
 
+  it('links firebase uid to a legacy user with the same phone instead of failing', async () => {
+    const legacy = User.reconstitute({
+      id: 'legacy-id',
+      tenantId: TENANT_ID,
+      name: 'Cliente Balcão',
+      role: 'CLIENT',
+      phone: PHONE,
+      email: null,
+      firebaseUid: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const userRepo = makeUserRepo();
+    (userRepo.findByPhone as jest.Mock).mockResolvedValue(legacy);
+
+    const uc = new ExchangeFirebaseClientTokenUseCase(
+      makeValidator(),
+      userRepo,
+      makeIssuer(makeRefreshRepo()),
+      makeTenantLookup(),
+    );
+    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
+    expect(result.user.id).toBe('legacy-id');
+    const saved = (userRepo.save as jest.Mock).mock.calls[0][0] as User;
+    expect(saved.firebaseUid).toBe(FIREBASE_UID);
+  });
+
   it('throws TenantNotFoundError when tenantId does not exist', async () => {
     const uc = new ExchangeFirebaseClientTokenUseCase(
       makeValidator(),

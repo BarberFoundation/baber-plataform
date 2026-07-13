@@ -34,7 +34,7 @@ export class User {
   readonly role: Role;
   readonly phone: string | null;
   readonly email: string | null;
-  readonly firebaseUid: string | null;
+  private _firebaseUid: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
@@ -45,13 +45,25 @@ export class User {
     this.role = props.role;
     this.phone = props.phone;
     this.email = props.email;
-    this.firebaseUid = props.firebaseUid;
+    this._firebaseUid = props.firebaseUid;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
 
   get name(): string | null {
     return this._name;
+  }
+
+  get firebaseUid(): string | null {
+    return this._firebaseUid;
+  }
+
+  /** Vincula conta Firebase a um usuário legado (criado sem login). Uid existente nunca é sobrescrito. */
+  linkFirebaseUid(firebaseUid: string): void {
+    if (this._firebaseUid) {
+      throw new Error('Usuário já está vinculado a uma conta Firebase.');
+    }
+    this._firebaseUid = firebaseUid;
   }
 
   rename(name: string | null): void {

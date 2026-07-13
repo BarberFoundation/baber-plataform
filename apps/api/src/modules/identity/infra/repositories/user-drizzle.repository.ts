@@ -75,6 +75,7 @@ export class UserDrizzleRepository implements IUserRepository {
           target: schema.users.id,
           set: {
             name: user.name,
+            firebaseUid: user.firebaseUid,
             updatedAt: now,
           },
         })
