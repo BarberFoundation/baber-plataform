@@ -8,21 +8,25 @@ import {
   USER_REPOSITORY,
   IUserRepository,
 } from '../../domain/repositories/user.repository';
-import { User } from '../../domain/entities/user.entity';
 import {
   InvalidFirebaseTokenError,
-  FirebaseAccountTenantMismatchError,
-  TenantNotFoundError,
+  AdminAccountNotFoundError,
 } from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
-import { TENANT_LOOKUP, ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 export interface ExchangeFirebaseTokenInput {
   idToken: string;
   tenantId: string;
 }
 
+/**
+ * Troca um idToken Firebase por tokens da plataforma para o painel admin.
+ *
+ * NUNCA cria usuário: contas de admin/barbeiro são provisionadas fora deste
+ * fluxo (seed/convite). Resposta genérica para uid desconhecido, role CLIENT
+ * e tenant divergente — evita enumeração de contas.
+ */
 @Injectable()
 export class ExchangeFirebaseTokenUseCase {
   constructor(
@@ -31,8 +35,6 @@ export class ExchangeFirebaseTokenUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
     private readonly tokenPairIssuer: TokenPairIssuer,
-    @Inject(TENANT_LOOKUP)
-    private readonly tenantLookup: ITenantLookup,
   ) {}
 
   async execute(input: ExchangeFirebaseTokenInput): Promise<AuthResult> {
@@ -40,23 +42,10 @@ export class ExchangeFirebaseTokenUseCase {
       throw new InvalidFirebaseTokenError();
     });
 
-    let user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+    const user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
 
-    if (!user && !(await this.tenantLookup.existsById(input.tenantId))) {
-      throw new TenantNotFoundError();
-    }
-    if (user && user.tenantId !== input.tenantId) {
-      throw new FirebaseAccountTenantMismatchError();
-    }
-    if (!user) {
-      const newUser = User.createAdmin({
-        tenantId: input.tenantId,
-        email: firebasePayload.email ?? null,
-        phone: firebasePayload.phone ?? null,
-        firebaseUid: firebasePayload.uid,
-        name: firebasePayload.name ?? null,
-      });
-      user = await this.userRepo.save(newUser);
+    if (!user || user.role === 'CLIENT' || user.tenantId !== input.tenantId) {
+      throw new AdminAccountNotFoundError();
     }
 
     return this.tokenPairIssuer.issue(user);

@@ -34,3 +34,10 @@ export class FirebaseAccountTenantMismatchError extends DomainError {
     super(message);
   }
 }
+
+export class AdminAccountNotFoundError extends DomainError {
+  readonly code = 'ADMIN_ACCOUNT_NOT_FOUND';
+  constructor(message = 'Conta de administrador não encontrada. Solicite acesso ao responsável pela barbearia.') {
+    super(message);
+  }
+}
