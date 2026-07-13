@@ -13,6 +13,7 @@ import {
   InvalidFirebaseTokenError,
   FirebaseAccountTenantMismatchError,
   TenantNotFoundError,
+  UserAlreadyExistsError,
 } from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
@@ -53,12 +54,31 @@ export class ExchangeFirebaseClientTokenUseCase {
       throw new FirebaseAccountTenantMismatchError();
     }
     if (!user) {
+      // Usuário legado criado pelo admin (sem login) com o mesmo telefone: vincula
+      // em vez de inserir e estourar o unique (tenant_id, phone).
+      const legacy = await this.userRepo.findByPhone(firebasePayload.phone, input.tenantId);
+      if (legacy && !legacy.firebaseUid) {
+        legacy.linkFirebaseUid(firebasePayload.uid);
+        user = await this.userRepo.save(legacy);
+      }
+    }
+
+    if (!user) {
       const newUser = User.createClient({
         tenantId: input.tenantId,
         phone: firebasePayload.phone,
         firebaseUid: firebasePayload.uid,
       });
-      user = await this.userRepo.save(newUser);
+      try {
+        user = await this.userRepo.save(newUser);
+      } catch (err) {
+        if (!(err instanceof UserAlreadyExistsError)) throw err;
+        // Request concorrente criou o mesmo usuário entre a leitura e o insert.
+        const winner = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+        if (!winner) throw err; // conflito veio de outro unique (tenant+phone) — propaga 409
+        if (winner.tenantId !== input.tenantId) throw new FirebaseAccountTenantMismatchError();
+        user = winner;
+      }
     }
 
     return this.tokenPairIssuer.issue(user);

@@ -30,11 +30,22 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new DomainExceptionFilter());
 
-  app.enableCors({ origin: true, credentials: true });
-  app.enableShutdownHooks();
-
   const config = app.get(ConfigService);
   const isProd = config.get<string>('NODE_ENV') === 'production';
+
+  const corsOrigins = config
+    .get<string>('CORS_ORIGINS')
+    ?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    // Produção sem CORS_ORIGINS definido = nenhuma origem cross-site permitida.
+    // Dev sem CORS_ORIGINS = reflete qualquer origem (localhost com portas variadas).
+    origin: corsOrigins && corsOrigins.length > 0 ? corsOrigins : !isProd,
+    credentials: true,
+  });
+  app.enableShutdownHooks();
 
   if (!isProd) {
     const swaggerConfig = new DocumentBuilder()

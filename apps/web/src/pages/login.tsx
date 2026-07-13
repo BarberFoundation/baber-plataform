@@ -30,7 +30,9 @@ const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
 function firebaseErrorMessage(err: unknown): string {
   const code = (err as { code?: string })?.code;
   if (code && FIREBASE_ERROR_MESSAGES[code]) return FIREBASE_ERROR_MESSAGES[code];
-  return err instanceof Error ? err.message : 'Erro ao fazer login';
+  // Erros do Firebase não mapeados vêm em inglês — não expor ao usuário.
+  if (code?.startsWith('auth/')) return 'Erro ao fazer login. Tente novamente.';
+  return err instanceof Error ? err.message : 'Erro ao fazer login. Tente novamente.';
 }
 
 async function exchangeIdToken(idToken: string): Promise<{ accessToken: string; expiresIn: number; user: User }> {
@@ -59,6 +61,17 @@ export default function LoginPage() {
 
   const blobRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // O verifier fica amarrado ao <div> do form de telefone; trocar de aba
+  // desmonta esse div, então verifier e fluxo de confirmação morrem juntos.
+  useEffect(() => {
+    return () => {
+      recaptchaVerifierRef.current?.clear();
+      recaptchaVerifierRef.current = null;
+      setConfirmation(null);
+      setCode('');
+    };
+  }, [method]);
 
   useEffect(() => {
     if (!blobRef.current) return;
@@ -120,10 +133,18 @@ export default function LoginPage() {
       setConfirmation(result);
       toast.success('Código enviado por SMS.');
     } catch (err) {
+      // Verifier invisível consumido/errado não pode ser reusado.
+      recaptchaVerifierRef.current?.clear();
+      recaptchaVerifierRef.current = null;
       toast.error(firebaseErrorMessage(err));
     } finally {
       setPhoneLoading(false);
     }
+  }
+
+  function resetPhoneFlow() {
+    setConfirmation(null);
+    setCode('');
   }
 
   async function handleConfirmCode(e: React.FormEvent) {
@@ -247,6 +268,11 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={phoneLoading}>
                 {phoneLoading ? 'Aguarde...' : confirmation ? 'Confirmar' : 'Enviar código'}
               </Button>
+              {confirmation && (
+                <Button type="button" variant="ghost" className="w-full" onClick={resetPhoneFlow}>
+                  Trocar número ou reenviar código
+                </Button>
+              )}
             </form>
           )}
         </div>

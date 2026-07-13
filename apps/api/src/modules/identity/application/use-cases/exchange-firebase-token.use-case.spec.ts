@@ -1,16 +1,14 @@
 import { ExchangeFirebaseTokenUseCase } from './exchange-firebase-token.use-case';
 import { IFirebaseTokenValidator } from '../../domain/services/firebase-token-validator';
 import { IUserRepository } from '../../domain/repositories/user.repository';
-import { IRefreshTokenRepository, RefreshTokenRecord } from '../../domain/repositories/refresh-token.repository';
+import { IRefreshTokenRepository } from '../../domain/repositories/refresh-token.repository';
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
-import { User } from '../../domain/entities/user.entity';
+import { User, UserProps } from '../../domain/entities/user.entity';
 import {
   InvalidFirebaseTokenError,
-  FirebaseAccountTenantMismatchError,
-  TenantNotFoundError,
+  AdminAccountNotFoundError,
 } from '../../domain/errors/identity.errors';
-import { ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
 const TENANT_ID = 'tenant-111';
 const FIREBASE_UID = 'firebase-abc';
@@ -44,102 +42,70 @@ function makeIssuer(refreshRepo: IRefreshTokenRepository): TokenPairIssuer {
   return new TokenPairIssuer(refreshRepo, new JwtTokenService('acc-secret', 'ref-secret', '15m', '30d'));
 }
 
-function makeTenantLookup(exists = true): ITenantLookup {
-  return { existsById: jest.fn().mockResolvedValue(exists) };
+function makeExistingUser(overrides?: Partial<UserProps>): User {
+  return User.reconstitute({
+    id: 'existing-id',
+    tenantId: TENANT_ID,
+    name: 'João',
+    role: 'ADMIN',
+    phone: null,
+    email: 'a@b.com',
+    firebaseUid: FIREBASE_UID,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
 }
 
 describe('ExchangeFirebaseTokenUseCase', () => {
-  it('creates new user and returns tokens when user does not exist', async () => {
-    const userRepo = makeUserRepo();
+  it('returns tokens for an existing ADMIN in the tenant without creating anything', async () => {
+    const userRepo = makeUserRepo(makeExistingUser());
     const refreshRepo = makeRefreshRepo();
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo), makeTenantLookup());
-    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
-    expect(result.accessToken).toBeTruthy();
-    expect(result.refreshToken).toBeTruthy();
-    expect(result.user.role).toBe('ADMIN');
-    expect(userRepo.save).toHaveBeenCalled();
-    expect(result.expiresIn).toBe(900); // 15m = 900s
-    const savedRecord = (refreshRepo.save as jest.Mock).mock.calls[0][0] as RefreshTokenRecord;
-    expect(savedRecord.tokenHash).not.toBe(result.refreshToken);
-    expect(savedRecord.tokenHash).toMatch(/^[0-9a-f]{64}$/); // SHA-256 hex
-  });
-
-  it('returns existing user without creating a new one', async () => {
-    const existing = User.reconstitute({
-      id: 'existing-id',
-      tenantId: TENANT_ID,
-      name: 'João',
-      role: 'ADMIN',
-      phone: null,
-      email: 'a@b.com',
-      firebaseUid: FIREBASE_UID,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    const userRepo = makeUserRepo(existing);
-    const refreshRepo = makeRefreshRepo();
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo), makeTenantLookup());
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(refreshRepo));
     const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
     expect(result.user.id).toBe('existing-id');
-    // save not called because user already exists
+    expect(result.accessToken).toBeTruthy();
     expect(userRepo.save).not.toHaveBeenCalled();
     expect(refreshRepo.save).toHaveBeenCalled();
   });
 
-  it('throws FirebaseAccountTenantMismatchError when the firebaseUid already belongs to a different tenant', async () => {
-    const existingElsewhere = User.reconstitute({
-      id: 'existing-id',
-      tenantId: 'tenant-999',
-      name: 'João',
-      role: 'ADMIN',
-      phone: null,
-      email: 'a@b.com',
-      firebaseUid: FIREBASE_UID,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    const userRepo = makeUserRepo(existingElsewhere);
-    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()), makeTenantLookup());
+  it('returns tokens for an existing BARBER in the tenant', async () => {
+    const userRepo = makeUserRepo(makeExistingUser({ role: 'BARBER' }));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
+    expect(result.user.role).toBe('BARBER');
+  });
+
+  it('throws AdminAccountNotFoundError when the firebaseUid is unknown (never auto-creates)', async () => {
+    const userRepo = makeUserRepo();
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
     await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
-      FirebaseAccountTenantMismatchError,
+      AdminAccountNotFoundError,
     );
     expect(userRepo.save).not.toHaveBeenCalled();
   });
 
+  it('throws AdminAccountNotFoundError when the user is a CLIENT', async () => {
+    const userRepo = makeUserRepo(makeExistingUser({ role: 'CLIENT' }));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      AdminAccountNotFoundError,
+    );
+  });
+
+  it('throws AdminAccountNotFoundError when the user belongs to another tenant (no enumeration)', async () => {
+    const userRepo = makeUserRepo(makeExistingUser({ tenantId: 'tenant-999' }));
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      AdminAccountNotFoundError,
+    );
+  });
+
   it('throws InvalidFirebaseTokenError when validator rejects', async () => {
-    const validator = makeValidator({
-      validate: jest.fn().mockRejectedValue(new Error('bad token')),
-    });
-    const uc = new ExchangeFirebaseTokenUseCase(validator, makeUserRepo(), makeIssuer(makeRefreshRepo()), makeTenantLookup());
+    const validator = makeValidator({ validate: jest.fn().mockRejectedValue(new Error('bad token')) });
+    const uc = new ExchangeFirebaseTokenUseCase(validator, makeUserRepo(), makeIssuer(makeRefreshRepo()));
     await expect(uc.execute({ idToken: 'bad', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       InvalidFirebaseTokenError,
     );
-  });
-
-  it('throws TenantNotFoundError when tenantId does not exist', async () => {
-    const uc = new ExchangeFirebaseTokenUseCase(
-      makeValidator(),
-      makeUserRepo(),
-      makeIssuer(makeRefreshRepo()),
-      makeTenantLookup(false),
-    );
-    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
-      TenantNotFoundError,
-    );
-  });
-
-  it('creates a new admin with phone when the token has no email (phone login)', async () => {
-    const userRepo = makeUserRepo();
-    const refreshRepo = makeRefreshRepo();
-    const validator = makeValidator({
-      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: '+5511999999999', name: undefined }),
-    });
-    const uc = new ExchangeFirebaseTokenUseCase(validator, userRepo, makeIssuer(refreshRepo), makeTenantLookup());
-    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
-    expect(result.user.role).toBe('ADMIN');
-    expect(result.user.phone).toBe('+5511999999999');
-    const savedUser = (userRepo.save as jest.Mock).mock.calls[0][0] as User;
-    expect(savedUser.email).toBeNull();
-    expect(savedUser.phone).toBe('+5511999999999');
   });
 });

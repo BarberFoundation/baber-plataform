@@ -10,6 +10,10 @@ import {
 } from 'class-validator';
 
 export class EnvVars {
+  @IsOptional()
+  @IsString()
+  NODE_ENV?: string;
+
   @IsString()
   @IsNotEmpty()
   DATABASE_URL!: string;
@@ -60,6 +64,11 @@ export class EnvVars {
   @IsString()
   FIREBASE_PRIVATE_KEY?: string;
 
+  /** Origens permitidas para CORS, separadas por vírgula. Obrigatória em produção para habilitar cross-origin. */
+  @IsOptional()
+  @IsString()
+  CORS_ORIGINS?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(0)
@@ -82,6 +91,16 @@ export function validateEnv(config: Record<string, unknown>): EnvVars {
         .map((e) => `  - ${e.property}: ${Object.values(e.constraints ?? {}).join(', ')}`)
         .join('\n')}`,
     );
+  }
+
+  if (validated.NODE_ENV === 'production') {
+    const required = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'] as const;
+    const missing = required.filter((key) => !validated[key]);
+    if (missing.length > 0) {
+      throw new Error(
+        `Firebase Admin credentials are required in production (token signature verification). Missing: ${missing.join(', ')}`,
+      );
+    }
   }
 
   return validated;
