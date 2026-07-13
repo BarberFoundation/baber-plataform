@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '@shared/auth/public.decorator';
 import { ExchangeFirebaseTokenUseCase } from '../application/use-cases/exchange-firebase-token.use-case';
 import { ExchangeTokenDto } from './exchange-token.dto';
@@ -13,6 +14,7 @@ export class AdminAuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('exchange')
   @HttpCode(HttpStatus.OK)
   async exchange(

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 
 import { validateEnv } from './shared/config/env.validation';
@@ -37,6 +38,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 100 }] }),
     DatabaseModule,
     HealthModule,
     IdentityModule,
@@ -54,6 +56,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       useFactory: (config: ConfigService) => new JwtTokenService(config),
       inject: [ConfigService],
     },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
