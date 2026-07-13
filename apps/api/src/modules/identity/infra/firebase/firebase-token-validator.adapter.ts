@@ -48,6 +48,12 @@ export class FirebaseTokenValidatorAdapter implements IFirebaseTokenValidator {
       };
     }
 
+    // Stub mode nunca pode rodar em produção — sem verificação de assinatura,
+    // qualquer JWT forjado autenticaria.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Firebase stub mode is not allowed in production.');
+    }
+
     // Stub mode: decode without verification
     const parts = idToken.split('.');
     if (parts.length !== 3) {
