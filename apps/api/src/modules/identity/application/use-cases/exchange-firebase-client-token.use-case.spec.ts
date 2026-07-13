@@ -9,6 +9,7 @@ import {
   InvalidFirebaseTokenError,
   FirebaseAccountTenantMismatchError,
   TenantNotFoundError,
+  UserAlreadyExistsError,
 } from '../../domain/errors/identity.errors';
 import { ITenantLookup } from '../../domain/ports/tenant-lookup.port';
 
@@ -114,6 +115,48 @@ describe('ExchangeFirebaseClientTokenUseCase', () => {
     const uc = new ExchangeFirebaseClientTokenUseCase(validator, makeUserRepo(), makeIssuer(makeRefreshRepo()), makeTenantLookup());
     await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       InvalidFirebaseTokenError,
+    );
+  });
+
+  it('recovers when a concurrent request already created the user (unique violation)', async () => {
+    const concurrentUser = User.reconstitute({
+      id: 'created-by-other-request',
+      tenantId: TENANT_ID,
+      name: null,
+      role: 'CLIENT',
+      phone: PHONE,
+      email: null,
+      firebaseUid: FIREBASE_UID,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const userRepo = makeUserRepo();
+    (userRepo.findByFirebaseUidAnyTenant as jest.Mock)
+      .mockResolvedValueOnce(null) // primeira leitura: ainda não existe
+      .mockResolvedValueOnce(concurrentUser); // releitura pós-conflito
+    (userRepo.save as jest.Mock).mockRejectedValue(new UserAlreadyExistsError());
+
+    const uc = new ExchangeFirebaseClientTokenUseCase(
+      makeValidator(),
+      userRepo,
+      makeIssuer(makeRefreshRepo()),
+      makeTenantLookup(),
+    );
+    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
+    expect(result.user.id).toBe('created-by-other-request');
+  });
+
+  it('rethrows UserAlreadyExistsError when the conflict is not resolvable by re-reading', async () => {
+    const userRepo = makeUserRepo();
+    (userRepo.save as jest.Mock).mockRejectedValue(new UserAlreadyExistsError());
+    const uc = new ExchangeFirebaseClientTokenUseCase(
+      makeValidator(),
+      userRepo,
+      makeIssuer(makeRefreshRepo()),
+      makeTenantLookup(),
+    );
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
+      UserAlreadyExistsError,
     );
   });
 

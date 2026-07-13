@@ -35,6 +35,13 @@ export class FirebaseAccountTenantMismatchError extends DomainError {
   }
 }
 
+export class UserAlreadyExistsError extends DomainError {
+  readonly code = 'USER_ALREADY_EXISTS';
+  constructor(message = 'Já existe um usuário com estes dados nesta barbearia.') {
+    super(message);
+  }
+}
+
 export class AdminAccountNotFoundError extends DomainError {
   readonly code = 'ADMIN_ACCOUNT_NOT_FOUND';
   constructor(message = 'Conta de administrador não encontrada. Solicite acesso ao responsável pela barbearia.') {

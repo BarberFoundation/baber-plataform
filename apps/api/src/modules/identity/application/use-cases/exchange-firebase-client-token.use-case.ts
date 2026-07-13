@@ -13,6 +13,7 @@ import {
   InvalidFirebaseTokenError,
   FirebaseAccountTenantMismatchError,
   TenantNotFoundError,
+  UserAlreadyExistsError,
 } from '../../domain/errors/identity.errors';
 import { AuthResult } from '../dto/auth-token-pair';
 import { TokenPairIssuer } from '../services/token-pair-issuer';
@@ -58,7 +59,16 @@ export class ExchangeFirebaseClientTokenUseCase {
         phone: firebasePayload.phone,
         firebaseUid: firebasePayload.uid,
       });
-      user = await this.userRepo.save(newUser);
+      try {
+        user = await this.userRepo.save(newUser);
+      } catch (err) {
+        if (!(err instanceof UserAlreadyExistsError)) throw err;
+        // Request concorrente criou o mesmo usuário entre a leitura e o insert.
+        const winner = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+        if (!winner) throw err; // conflito veio de outro unique (tenant+phone) — propaga 409
+        if (winner.tenantId !== input.tenantId) throw new FirebaseAccountTenantMismatchError();
+        user = winner;
+      }
     }
 
     return this.tokenPairIssuer.issue(user);

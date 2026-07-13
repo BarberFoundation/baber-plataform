@@ -5,6 +5,7 @@ import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
 import { IUserRepository } from '../../domain/repositories/user.repository';
 import { User } from '../../domain/entities/user.entity';
+import { UserAlreadyExistsError } from '../../domain/errors/identity.errors';
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -52,32 +53,41 @@ export class UserDrizzleRepository implements IUserRepository {
 
   async save(user: User): Promise<User> {
     const now = new Date();
-    const [row] = await this.db
-      .insert(schema.users)
-      .values({
-        id: user.id,
-        tenantId: user.tenantId,
-        name: user.name,
-        role: user.role,
-        phone: user.phone,
-        email: user.email,
-        firebaseUid: user.firebaseUid,
-        createdAt: user.createdAt,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        // Conflict on the PK (id), not firebaseUid: firebaseUid has a unique
-        // index but NULLs never collide on it, so targeting firebaseUid could
-        // let a re-save of a user without one fall through to a duplicate-pkey
-        // error instead of updating the existing row.
-        target: schema.users.id,
-        set: {
+    try {
+      const [row] = await this.db
+        .insert(schema.users)
+        .values({
+          id: user.id,
+          tenantId: user.tenantId,
           name: user.name,
+          role: user.role,
+          phone: user.phone,
+          email: user.email,
+          firebaseUid: user.firebaseUid,
+          createdAt: user.createdAt,
           updatedAt: now,
-        },
-      })
-      .returning();
-    return this.toEntity(row);
+        })
+        .onConflictDoUpdate({
+          // Conflict on the PK (id), not firebaseUid: firebaseUid has a unique
+          // index but NULLs never collide on it, so targeting firebaseUid could
+          // let a re-save of a user without one fall through to a duplicate-pkey
+          // error instead of updating the existing row.
+          target: schema.users.id,
+          set: {
+            name: user.name,
+            updatedAt: now,
+          },
+        })
+        .returning();
+      return this.toEntity(row);
+    } catch (err) {
+      // 23505 = unique_violation (firebase_uid ou tenant+phone/email) — vira erro
+      // de domínio para o use case decidir entre re-ler e propagar.
+      if ((err as { code?: string })?.code === '23505') {
+        throw new UserAlreadyExistsError();
+      }
+      throw err;
+    }
   }
 
   private toEntity(row: typeof schema.users.$inferSelect): User {
