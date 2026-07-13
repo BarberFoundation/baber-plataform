@@ -41,3 +41,4 @@ apps/api/drizzle/migrations/meta/_journal.json.bak
 .mcp.json
 google-services*.json
 landing-full.png
+docs/
