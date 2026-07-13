@@ -42,3 +42,9 @@ apps/api/drizzle/migrations/meta/_journal.json.bak
 google-services*.json
 landing-full.png
 docs/
+
+# local notes / personal tooling
+Handoff.md
+.claude/
+*.postman_collection.json
+*.postman_environment.json
