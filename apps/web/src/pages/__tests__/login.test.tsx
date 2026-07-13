@@ -59,7 +59,8 @@ describe('LoginPage — telefone tab', () => {
 
     await waitFor(() => expect(mockSignInWithPhoneNumber).toHaveBeenCalled());
 
-    fireEvent.change(screen.getByLabelText(/c(o|ó)digo/i), { target: { value: '123456' } });
+    const codeInput = await screen.findByLabelText(/c(o|ó)digo/i);
+    fireEvent.change(codeInput, { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
     await waitFor(() => expect(mockConfirm).toHaveBeenCalledWith('123456'));
