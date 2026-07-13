@@ -64,6 +64,11 @@ export class EnvVars {
   @IsString()
   FIREBASE_PRIVATE_KEY?: string;
 
+  /** Origens permitidas para CORS, separadas por vírgula. Obrigatória em produção para habilitar cross-origin. */
+  @IsOptional()
+  @IsString()
+  CORS_ORIGINS?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(0)
