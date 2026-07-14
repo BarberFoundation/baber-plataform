@@ -1,15 +1,13 @@
 # baber-platform
 
-Monorepo da plataforma de barbearia (multi-tenant). Backend NestJS + Drizzle, painel admin React (a vir), mobile Flutter em repo separado (`baber-mobile`).
-
-> Decisões de arquitetura e backlog: ver [`Handoff.md`](./Handoff.md). Não refazer decisões fechadas lá.
+Monorepo da plataforma de barbearia (multi-tenant). Backend NestJS + Drizzle, painel admin React, mobile Flutter em repo separado (`baber-mobile`).
 
 ## Stack
 
-- **API** — NestJS 11 + TypeScript + Drizzle ORM + PostgreSQL 16 + Redis 7.
-- **Admin web** — React 19 + Vite + Tailwind + shadcn/ui *(scaffold pendente)*.
-- **Dev local** — Docker Compose (Postgres + Redis).
-- **Monorepo** — pnpm workspaces + Turborepo.
+- **API** (`apps/api`) — NestJS 11 + TypeScript + Drizzle ORM + PostgreSQL 16 + Redis 7. Deploy: Fly.io (`baber-api`, região `gru`).
+- **Admin web** (`apps/web`) — React 18 + Vite 6 + Tailwind + shadcn/ui + TanStack Query + Zustand. Auth admin via Firebase. Deploy: Vercel.
+- **Dev local** — Docker Compose (Postgres + Redis; Evolution API opcional para WhatsApp).
+- **Monorepo** — pnpm workspaces + Turborepo. CI no GitHub Actions (`ci.yml`, `release.yml` com Changesets).
 
 ## Bounded contexts (API)
 
@@ -42,9 +40,12 @@ docker compose up -d
 
 # API
 cp apps/api/.env.example apps/api/.env   # preencher segredos
-pnpm --filter api db:generate            # gera migration a partir do schema
-pnpm --filter api db:migrate             # aplica (cria tabela tenants)
+pnpm --filter api db:generate            # gera migrations a partir do schema
+pnpm --filter api db:migrate             # aplica migrations
 pnpm --filter api db:seed                # cria tenant "Barbearia do Amigo"
+
+# Web
+cp apps/web/.env.example apps/web/.env   # VITE_API_URL, VITE_FIREBASE_*, VITE_TENANT_SLUG
 
 # dev (todos os apps)
 pnpm dev
@@ -55,7 +56,11 @@ API sobe em `http://localhost:3000`:
 - Swagger: `GET /docs`
 - Rotas de negócio: prefixo `/api/v1`
 
-## Scripts (raiz)
+Web sobe em `http://localhost:5173` (Vite).
+
+## Scripts
+
+Raiz (via Turborepo):
 
 | Comando           | Ação                                  |
 |-------------------|---------------------------------------|
@@ -63,7 +68,18 @@ API sobe em `http://localhost:3000`:
 | `pnpm build`      | build de todos os apps                |
 | `pnpm lint`       | eslint                                |
 | `pnpm typecheck`  | tsc --noEmit                          |
-| `pnpm test`       | testes                                |
+| `pnpm test`       | testes (Jest na API, Vitest no web)   |
+
+API (`pnpm --filter api <script>`):
+
+| Comando        | Ação                                     |
+|----------------|------------------------------------------|
+| `db:generate`  | gera migration a partir do schema        |
+| `db:migrate`   | aplica migrations                        |
+| `db:push`      | push direto do schema (só dev)           |
+| `db:studio`    | Drizzle Studio                           |
+| `db:seed`      | seed do tenant de desenvolvimento        |
+| `test:e2e`     | testes e2e (supertest)                   |
 
 ## Estrutura
 
@@ -73,9 +89,20 @@ apps/
     src/modules/        identity, catalog, team, scheduling, notifications
     src/shared/         kernel, tenancy, auth, database (+ schema), health, config
     drizzle/            migrations + seed (schema fica em src/shared/database/schema)
-  admin-web/            (pendente) React 19 + Vite
-packages/               (pendente) api-contracts, eslint-config, tsconfig
+    Dockerfile          imagem usada pelo deploy no Fly.io
+  web/                  React 18 + Vite (painel admin)
+    src/pages/          landing, login, dashboard, appointments, barbers, services
+    src/components/     UI (shadcn/ui)
+    src/store/          Zustand
+docker-compose.yml      Postgres + Redis (+ Evolution API comentado)
+fly.toml                deploy da API (Fly.io)
+vercel.json             deploy do web (Vercel, SPA rewrite)
 ```
+
+## Deploy
+
+- **API** → Fly.io: `fly deploy` na raiz (usa `apps/api/Dockerfile`, healthcheck em `/health`).
+- **Web** → Vercel: build `pnpm --filter web build`, output `apps/web/dist`, rewrite SPA para `index.html`.
 
 ## Regras não-negociáveis
 
