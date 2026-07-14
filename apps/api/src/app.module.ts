@@ -20,6 +20,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { TeamModule } from './modules/team/team.module';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportingModule } from './modules/reporting/reporting.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     TeamModule,
     SchedulingModule,
     NotificationsModule,
+    ReportingModule,
   ],
   providers: [
     TenantContext,
