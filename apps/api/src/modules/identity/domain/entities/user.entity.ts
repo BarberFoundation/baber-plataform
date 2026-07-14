@@ -32,7 +32,7 @@ export class User {
   readonly tenantId: string;
   private _name: string | null;
   readonly role: Role;
-  readonly phone: string | null;
+  private _phone: string | null;
   readonly email: string | null;
   private _firebaseUid: string | null;
   readonly createdAt: Date;
@@ -43,7 +43,7 @@ export class User {
     this.tenantId = props.tenantId;
     this._name = props.name;
     this.role = props.role;
-    this.phone = props.phone;
+    this._phone = props.phone;
     this.email = props.email;
     this._firebaseUid = props.firebaseUid;
     this.createdAt = props.createdAt;
@@ -52,6 +52,10 @@ export class User {
 
   get name(): string | null {
     return this._name;
+  }
+
+  get phone(): string | null {
+    return this._phone;
   }
 
   get firebaseUid(): string | null {
@@ -68,6 +72,10 @@ export class User {
 
   rename(name: string | null): void {
     this._name = name;
+  }
+
+  updatePhone(phone: string | null): void {
+    this._phone = phone;
   }
 
   static reconstitute(props: UserProps): User {

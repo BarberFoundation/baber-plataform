@@ -56,6 +56,12 @@ describe('User entity', () => {
     expect(user.name).toBe('Novo Nome');
   });
 
+  it('allows updating phone via domain method', () => {
+    const user = User.reconstitute(base);
+    user.updatePhone('+5511988887777');
+    expect(user.phone).toBe('+5511988887777');
+  });
+
   describe('User.createClient', () => {
     it('creates a CLIENT user with phone, firebaseUid, and no name', () => {
       const user = User.createClient({
