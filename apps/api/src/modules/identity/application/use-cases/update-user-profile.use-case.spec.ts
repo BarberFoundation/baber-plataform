@@ -1,4 +1,4 @@
-import { UpdateUserNameUseCase } from './update-user-name.use-case';
+import { UpdateUserProfileUseCase } from './update-user-profile.use-case';
 import { IUserRepository } from '../../domain/repositories/user.repository';
 import { User } from '../../domain/entities/user.entity';
 import { UserNotFoundError } from '../../domain/errors/identity.errors';
@@ -6,13 +6,13 @@ import { UserNotFoundError } from '../../domain/errors/identity.errors';
 const TENANT_ID = 'tenant-1';
 const USER_ID = 'user-1';
 
-function makeUser(name: string | null = null): User {
+function makeUser(name: string | null = null, phone: string | null = '+5511999999999'): User {
   return User.reconstitute({
     id: USER_ID,
     tenantId: TENANT_ID,
     name,
     role: 'CLIENT',
-    phone: '+5511999999999',
+    phone,
     email: null,
     firebaseUid: null,
     createdAt: new Date(),
@@ -30,10 +30,10 @@ function makeUserRepo(user: User | null): IUserRepository {
   };
 }
 
-describe('UpdateUserNameUseCase', () => {
+describe('UpdateUserProfileUseCase', () => {
   it('renames the user and saves it', async () => {
     const userRepo = makeUserRepo(makeUser(null));
-    const uc = new UpdateUserNameUseCase(userRepo);
+    const uc = new UpdateUserProfileUseCase(userRepo);
 
     const result = await uc.execute({ userId: USER_ID, tenantId: TENANT_ID, name: 'Gabryel' });
 
@@ -41,8 +41,33 @@ describe('UpdateUserNameUseCase', () => {
     expect(userRepo.save).toHaveBeenCalled();
   });
 
+  it('updates the phone and saves it', async () => {
+    const userRepo = makeUserRepo(makeUser('Gabryel'));
+    const uc = new UpdateUserProfileUseCase(userRepo);
+
+    const result = await uc.execute({ userId: USER_ID, tenantId: TENANT_ID, phone: '+5511988887777' });
+
+    expect(result.phone).toBe('+5511988887777');
+    expect(userRepo.save).toHaveBeenCalled();
+  });
+
+  it('updates both name and phone together', async () => {
+    const userRepo = makeUserRepo(makeUser(null));
+    const uc = new UpdateUserProfileUseCase(userRepo);
+
+    const result = await uc.execute({
+      userId: USER_ID,
+      tenantId: TENANT_ID,
+      name: 'Gabryel',
+      phone: '+5511988887777',
+    });
+
+    expect(result.name).toBe('Gabryel');
+    expect(result.phone).toBe('+5511988887777');
+  });
+
   it('throws UserNotFoundError when user does not exist', async () => {
-    const uc = new UpdateUserNameUseCase(makeUserRepo(null));
+    const uc = new UpdateUserProfileUseCase(makeUserRepo(null));
 
     await expect(
       uc.execute({ userId: USER_ID, tenantId: TENANT_ID, name: 'Gabryel' }),

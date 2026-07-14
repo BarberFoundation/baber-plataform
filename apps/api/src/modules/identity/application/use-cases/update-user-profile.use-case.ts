@@ -5,13 +5,14 @@ import {
 } from '../../domain/repositories/user.repository';
 import { UserNotFoundError } from '../../domain/errors/identity.errors';
 
-export interface UpdateUserNameInput {
+export interface UpdateUserProfileInput {
   userId: string;
   tenantId: string;
-  name: string;
+  name?: string;
+  phone?: string;
 }
 
-export interface UpdateUserNameOutput {
+export interface UpdateUserProfileOutput {
   id: string;
   name: string | null;
   role: string;
@@ -20,19 +21,20 @@ export interface UpdateUserNameOutput {
 }
 
 @Injectable()
-export class UpdateUserNameUseCase {
+export class UpdateUserProfileUseCase {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
   ) {}
 
-  async execute(input: UpdateUserNameInput): Promise<UpdateUserNameOutput> {
+  async execute(input: UpdateUserProfileInput): Promise<UpdateUserProfileOutput> {
     const user = await this.userRepo.findById(input.userId, input.tenantId);
     if (!user) {
       throw new UserNotFoundError();
     }
 
-    user.rename(input.name);
+    if (input.name !== undefined) user.rename(input.name);
+    if (input.phone !== undefined) user.updatePhone(input.phone);
     const saved = await this.userRepo.save(user);
 
     return {
