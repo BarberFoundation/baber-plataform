@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { CalendarDays, Users, Scissors, LayoutDashboard, LogOut } from 'lucide-react';
+import { CalendarDays, Users, Scissors, LayoutDashboard, LogOut, BarChart3 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/app/appointments', label: 'Agendamentos', icon: CalendarDays, end: false },
   { to: '/app/barbers', label: 'Barbeiros', icon: Users, end: false },
   { to: '/app/services', label: 'Serviços', icon: Scissors, end: false },
+  { to: '/app/reports', label: 'Relatórios', icon: BarChart3, end: false },
 ];
 
 export default function AppShell() {
