@@ -13,7 +13,7 @@ function makeAppt(status: Appointment['status'] = 'PENDING') {
   return Appointment.reconstitute({
     id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
     clientName: 'João', clientPhone: '+55', date: '2025-03-10',
-    startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+    startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
     status, notes: null, createdAt: new Date(), updatedAt: new Date(),
   });
 }
@@ -57,7 +57,7 @@ describe('CancelAppointmentUseCase', () => {
     const future = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
       customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
-      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = { findById: jest.fn().mockResolvedValue(future), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn().mockImplementation(async (a) => a) };
@@ -70,7 +70,7 @@ describe('CancelAppointmentUseCase', () => {
     const future = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
       customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
-      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = { findById: jest.fn().mockResolvedValue(future), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn() };
@@ -84,7 +84,7 @@ describe('CancelAppointmentUseCase', () => {
     const past = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
       customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
-      date: '2000-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      date: '2000-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = { findById: jest.fn().mockResolvedValue(past), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn() };
@@ -98,7 +98,7 @@ describe('CancelAppointmentUseCase', () => {
     const future = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
       customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
-      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = { findById: jest.fn().mockResolvedValue(future), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn().mockImplementation(async (a) => a) };

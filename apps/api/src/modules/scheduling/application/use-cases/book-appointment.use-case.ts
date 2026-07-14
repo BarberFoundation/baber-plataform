@@ -53,6 +53,7 @@ export class BookAppointmentUseCase {
       startTime: input.startTime,
       endTime,
       durationMinutes: service.durationMinutes,
+      priceInCents: service.priceInCents,
       notes: input.notes ?? null,
     });
 

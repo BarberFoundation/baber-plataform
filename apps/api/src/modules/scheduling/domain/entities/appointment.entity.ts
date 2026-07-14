@@ -13,6 +13,7 @@ export interface AppointmentProps {
   startTime: string;       // HH:mm
   endTime: string;         // HH:mm (computed: startTime + durationMinutes)
   durationMinutes: number; // cached from service at booking time
+  priceInCents: number;    // snapshot from service at booking time
   status: AppointmentStatus;
   notes: string | null;
   createdAt: Date;
@@ -30,6 +31,7 @@ export interface CreateAppointmentProps {
   startTime: string;
   endTime: string;
   durationMinutes: number;
+  priceInCents: number;
   notes?: string | null;
 }
 
@@ -45,6 +47,7 @@ export class Appointment {
   readonly startTime: string;
   readonly endTime: string;
   readonly durationMinutes: number;
+  readonly priceInCents: number;
   private _status: AppointmentStatus;
   private _notes: string | null;
   readonly createdAt: Date;
@@ -62,6 +65,7 @@ export class Appointment {
     this.startTime = props.startTime;
     this.endTime = props.endTime;
     this.durationMinutes = props.durationMinutes;
+    this.priceInCents = props.priceInCents;
     this._status = props.status;
     this._notes = props.notes;
     this.createdAt = props.createdAt;
@@ -88,6 +92,7 @@ export class Appointment {
       startTime: props.startTime,
       endTime: props.endTime,
       durationMinutes: props.durationMinutes,
+      priceInCents: props.priceInCents,
       status: 'PENDING',
       notes: props.notes ?? null,
       createdAt: now,

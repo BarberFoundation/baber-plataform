@@ -13,7 +13,11 @@ export class ServiceLookupAdapter implements IServiceLookup {
 
   async findById(id: string, tenantId: string): Promise<ServiceLookupResult | null> {
     const rows = await this.db
-      .select({ durationMinutes: schema.services.durationMinutes, isActive: schema.services.isActive })
+      .select({
+        durationMinutes: schema.services.durationMinutes,
+        isActive:        schema.services.isActive,
+        priceInCents:    schema.services.priceInCents,
+      })
       .from(schema.services)
       .where(and(eq(schema.services.id, id), eq(schema.services.tenantId, tenantId)))
       .limit(1);
@@ -21,6 +25,7 @@ export class ServiceLookupAdapter implements IServiceLookup {
     return {
       durationMinutes: rows[0].durationMinutes,
       isActive:        rows[0].isActive,
+      priceInCents:    rows[0].priceInCents,
     };
   }
 }

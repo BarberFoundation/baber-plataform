@@ -15,7 +15,7 @@ const ACTIVE_BARBER = {
   workSchedule: defaultWorkSchedule(),
 };
 
-const ACTIVE_SERVICE = { durationMinutes: 30, isActive: true };
+const ACTIVE_SERVICE = { durationMinutes: 30, isActive: true, priceInCents: 5000 };
 
 function makeRepo(overrides?: Partial<ISchedulingRepository>): ISchedulingRepository {
   return {
@@ -60,6 +60,13 @@ describe('BookAppointmentUseCase', () => {
     expect(repo.save).toHaveBeenCalledWith(expect.any(Appointment));
   });
 
+  it('snapshots service price onto the appointment', async () => {
+    const repo = makeRepo();
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
+    const result = await uc.execute(INPUT);
+    expect(result.priceInCents).toBe(5000);
+  });
+
   it('stores customerId on the created appointment when provided', async () => {
     const repo = makeRepo();
     const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
@@ -89,7 +96,7 @@ describe('BookAppointmentUseCase', () => {
     const existing = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+5511888888888',
-      date: MONDAY, startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      date: MONDAY, startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = makeRepo({ findByBarberAndDate: jest.fn().mockResolvedValue([existing]) });
@@ -113,7 +120,7 @@ describe('BookAppointmentUseCase', () => {
     const busyOnBarber1 = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
-      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = makeRepo({
@@ -152,7 +159,7 @@ describe('BookAppointmentUseCase', () => {
     const busy = (bId: string) => Appointment.reconstitute({
       id: `appt-${bId}`, tenantId: 'tenant-1', barberId: bId, serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
-      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo = makeRepo({

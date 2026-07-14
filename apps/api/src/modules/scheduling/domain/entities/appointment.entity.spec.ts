@@ -10,6 +10,7 @@ const BASE: Parameters<typeof Appointment.create>[0] = {
   startTime: '09:00',
   endTime: '09:30',
   durationMinutes: 30,
+  priceInCents: 3000,
 };
 
 describe('Appointment entity', () => {
@@ -34,14 +35,14 @@ describe('Appointment entity', () => {
       const withoutCustomer = Appointment.create({
         tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
         clientName: 'Ana', clientPhone: '+55', date: '2025-03-10',
-        startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+        startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       });
       expect(withoutCustomer.customerId).toBeNull();
 
       const withCustomer = Appointment.create({
         tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
         clientName: 'Ana', clientPhone: '+55', date: '2025-03-10',
-        startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+        startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
         customerId: 'user-1',
       });
       expect(withCustomer.customerId).toBe('user-1');

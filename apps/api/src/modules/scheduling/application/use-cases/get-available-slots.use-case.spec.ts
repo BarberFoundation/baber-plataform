@@ -29,7 +29,7 @@ function makeBarberLookup(result = ACTIVE_BARBER, activeList: any[] = [{ id: 'ba
 }
 
 function makeServiceLookup(durationMinutes = 30): IServiceLookup {
-  return { findById: jest.fn().mockResolvedValue({ durationMinutes, isActive: true }) };
+  return { findById: jest.fn().mockResolvedValue({ durationMinutes, isActive: true, priceInCents: 5000 }) };
 }
 
 const INPUT: GetAvailableSlotsInput = {
@@ -64,7 +64,7 @@ describe('GetAvailableSlotsUseCase', () => {
     const existing = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
-      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const uc = new GetAvailableSlotsUseCase(makeRepo([existing]), makeBarberLookup(), makeServiceLookup(30));
@@ -78,7 +78,7 @@ describe('GetAvailableSlotsUseCase', () => {
     const existing = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
-      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const uc = new GetAvailableSlotsUseCase(makeRepo([existing]), makeBarberLookup(), makeServiceLookup(30));
@@ -93,7 +93,7 @@ describe('GetAvailableSlotsUseCase', () => {
     const busyA = Appointment.reconstitute({
       id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-a', serviceId: 'service-1', customerId: null,
       clientName: 'Ana', clientPhone: '+55', date: MONDAY,
-      startTime: '09:00', endTime: '09:30', durationMinutes: 30,
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
       status: 'CONFIRMED', notes: null, createdAt: new Date(), updatedAt: new Date(),
     });
     const repo: ISchedulingRepository = {
