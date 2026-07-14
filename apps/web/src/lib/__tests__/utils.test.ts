@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn } from '../utils';
+import { cn, formatBRL } from '../utils';
 
 describe('cn', () => {
   it('merges class names', () => {
@@ -12,5 +12,16 @@ describe('cn', () => {
 
   it('ignores falsy values', () => {
     expect(cn('a', false, undefined, null, 'b')).toBe('a b');
+  });
+});
+
+describe('formatBRL', () => {
+  it('formats cents as BRL', () => {
+    // Intl usa espaço não-quebrável entre R$ e o número
+    expect(formatBRL(123456)).toBe('R$ 1.234,56');
+  });
+
+  it('formats zero', () => {
+    expect(formatBRL(0)).toBe('R$ 0,00');
   });
 });

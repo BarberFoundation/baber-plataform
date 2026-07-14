@@ -53,3 +53,35 @@ export interface Appointment {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RevenueByDay { date: string; totalInCents: number; count: number }
+export interface RevenueByService { serviceId: string; serviceName: string; totalInCents: number; count: number }
+export interface RevenueByBarber { barberId: string; barberName: string; totalInCents: number; count: number }
+
+export interface RevenueReport {
+  totalInCents: number;
+  appointmentCount: number;
+  averageTicketInCents: number;
+  byDay: RevenueByDay[];
+  byService: RevenueByService[];
+  byBarber: RevenueByBarber[];
+}
+
+export interface OccupancyByBarber {
+  barberId: string;
+  barberName: string;
+  rate: number;
+  scheduledMinutes: number;
+  availableMinutes: number;
+}
+
+export interface HeatmapCell { weekday: number; hour: number; count: number }
+
+export interface OccupancyReport {
+  overallRate: number;
+  scheduledMinutes: number;
+  availableMinutes: number;
+  byBarber: OccupancyByBarber[];
+  heatmap: HeatmapCell[];
+  cancellation: { cancelled: number; total: number; rate: number };
+}
