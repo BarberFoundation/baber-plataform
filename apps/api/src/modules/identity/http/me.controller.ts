@@ -1,22 +1,28 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
-import { UpdateUserNameUseCase } from '../application/use-cases/update-user-name.use-case';
+import { UpdateUserProfileUseCase } from '../application/use-cases/update-user-profile.use-case';
 import { GetUserProfileUseCase } from '../application/use-cases/get-user-profile.use-case';
 
-export class UpdateNameDto {
+export class UpdateProfileDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @IsNotEmpty()
-  name!: string;
+  @IsOptional()
+  name?: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @IsOptional()
+  phone?: string;
 }
 
 @Controller('me')
 export class MeController {
   constructor(
-    private readonly updateUserNameUseCase: UpdateUserNameUseCase,
+    private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
   ) {}
 
@@ -26,11 +32,12 @@ export class MeController {
   }
 
   @Patch()
-  async updateName(@CurrentUser() user: JwtPayload, @Body() dto: UpdateNameDto) {
-    return this.updateUserNameUseCase.execute({
+  async updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
+    return this.updateUserProfileUseCase.execute({
       userId: user.userId,
       tenantId: user.tenantId,
       name: dto.name,
+      phone: dto.phone,
     });
   }
 }
