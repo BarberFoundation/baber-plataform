@@ -32,6 +32,7 @@ export function BusinessHoursEditor({ value, onChange }: BusinessHoursEditorProp
         return (
           <div key={day} className="flex items-center gap-3">
             <Switch
+              id={`business-hours-${day}`}
               checked={schedule.isWorking}
               onCheckedChange={(checked) =>
                 updateDay(day, {
@@ -41,7 +42,9 @@ export function BusinessHoursEditor({ value, onChange }: BusinessHoursEditorProp
                 })
               }
             />
-            <Label className="w-20 shrink-0">{DAY_LABELS[day]}</Label>
+            <Label htmlFor={`business-hours-${day}`} className="w-20 shrink-0">
+              {DAY_LABELS[day]}
+            </Label>
             {schedule.isWorking ? (
               <div className="flex items-center gap-2">
                 <Input
@@ -49,6 +52,7 @@ export function BusinessHoursEditor({ value, onChange }: BusinessHoursEditorProp
                   value={schedule.startTime ?? ''}
                   onChange={(e) => updateDay(day, { startTime: e.target.value })}
                   className="w-28"
+                  aria-label={`${DAY_LABELS[day]} - Hora de início`}
                 />
                 <span className="text-muted-foreground text-sm">até</span>
                 <Input
@@ -56,6 +60,7 @@ export function BusinessHoursEditor({ value, onChange }: BusinessHoursEditorProp
                   value={schedule.endTime ?? ''}
                   onChange={(e) => updateDay(day, { endTime: e.target.value })}
                   className="w-28"
+                  aria-label={`${DAY_LABELS[day]} - Hora de término`}
                 />
               </div>
             ) : (
