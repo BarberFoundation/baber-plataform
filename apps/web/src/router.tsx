@@ -7,6 +7,8 @@ import AppointmentsPage from '@/pages/appointments';
 import BarbersPage from '@/pages/barbers';
 import ServicesPage from '@/pages/services';
 import ReportsPage from '@/pages/reports';
+import ProfilePage from '@/pages/profile';
+import SettingsPage from '@/pages/settings';
 import LandingPage from '@/pages/landing';
 
 const router = createBrowserRouter([
@@ -25,6 +27,8 @@ const router = createBrowserRouter([
       { path: 'barbers', element: <BarbersPage /> },
       { path: 'services', element: <ServicesPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'settings', element: <SettingsPage /> },
     ],
   },
 ]);
