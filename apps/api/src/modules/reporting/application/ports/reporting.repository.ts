@@ -17,10 +17,26 @@ export interface RevenueAggregates {
 export interface HeatmapCell { weekday: number; hour: number; count: number }
 export interface ActiveBarberSchedule { id: string; name: string; workSchedule: WorkSchedule }
 
+export interface NewReturningByDay { date: string; newCount: number; returningCount: number }
+export interface NewReturningCounts {
+  newCount: number;
+  returningCount: number;
+  byDay: NewReturningByDay[];
+}
+
+export interface InactiveClient {
+  customerId: string;
+  name: string | null;
+  phone: string | null;
+  lastVisitDate: string;
+}
+
 export interface IReportingRepository {
   revenueAggregates(tenantId: string, from: string, to: string): Promise<RevenueAggregates>;
   scheduledMinutesByBarber(tenantId: string, from: string, to: string): Promise<Array<{ barberId: string; minutes: number }>>;
   activeBarbers(tenantId: string): Promise<ActiveBarberSchedule[]>;
   heatmap(tenantId: string, from: string, to: string): Promise<HeatmapCell[]>;
   cancellationCounts(tenantId: string, from: string, to: string): Promise<{ cancelled: number; total: number }>;
+  newReturningCounts(tenantId: string, from: string, to: string): Promise<NewReturningCounts>;
+  inactiveClients(tenantId: string, days: number): Promise<InactiveClient[]>;
 }
