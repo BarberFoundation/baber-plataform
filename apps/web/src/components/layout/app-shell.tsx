@@ -74,7 +74,7 @@ export default function AppShell() {
         <Separator />
         <div className="p-2">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+            <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
               <UserIcon className="h-4 w-4" />
               <span className="flex-1 truncate text-left">{profile?.name ?? 'Conta'}</span>
               <ChevronDown className="h-4 w-4" />
