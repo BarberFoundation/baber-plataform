@@ -20,6 +20,8 @@ function makeRepo(overrides: Partial<IReportingRepository> = {}): IReportingRepo
     activeBarbers: jest.fn().mockResolvedValue([{ id: 'b1', name: 'João', workSchedule: mondayOnly }]),
     heatmap: jest.fn().mockResolvedValue([{ weekday: 1, hour: 10, count: 3 }]),
     cancellationCounts: jest.fn().mockResolvedValue({ cancelled: 2, total: 10 }),
+    newReturningCounts: jest.fn(),
+    inactiveClients: jest.fn(),
     ...overrides,
   };
 }

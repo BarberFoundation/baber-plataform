@@ -8,6 +8,8 @@ function makeRepo(aggregates: RevenueAggregates): IReportingRepository {
     activeBarbers: jest.fn(),
     heatmap: jest.fn(),
     cancellationCounts: jest.fn(),
+    newReturningCounts: jest.fn(),
+    inactiveClients: jest.fn(),
   };
 }
 
