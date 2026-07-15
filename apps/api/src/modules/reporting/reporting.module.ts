@@ -4,6 +4,8 @@ import { REPORTING_REPOSITORY } from './application/ports/reporting.repository';
 import { ReportingDrizzleRepository } from './infra/repositories/reporting-drizzle.repository';
 import { RevenueReportService } from './application/revenue-report.service';
 import { OccupancyReportService } from './application/occupancy-report.service';
+import { NewReturningClientsService } from './application/new-returning-clients.service';
+import { InactiveClientsService } from './application/inactive-clients.service';
 import { ReportingController } from './http/reporting.controller';
 
 @Module({
@@ -13,6 +15,8 @@ import { ReportingController } from './http/reporting.controller';
     { provide: REPORTING_REPOSITORY, useClass: ReportingDrizzleRepository },
     RevenueReportService,
     OccupancyReportService,
+    NewReturningClientsService,
+    InactiveClientsService,
   ],
 })
 export class ReportingModule {}

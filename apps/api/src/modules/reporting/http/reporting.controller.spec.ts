@@ -5,11 +5,15 @@ import request from 'supertest';
 import { ReportingController } from './reporting.controller';
 import { RevenueReportService } from '../application/revenue-report.service';
 import { OccupancyReportService } from '../application/occupancy-report.service';
+import { NewReturningClientsService } from '../application/new-returning-clients.service';
+import { InactiveClientsService } from '../application/inactive-clients.service';
 
 describe('ReportingController (http)', () => {
   let app: INestApplication;
   const revenue = { execute: jest.fn().mockResolvedValue({ totalInCents: 0 }) };
   const occupancy = { execute: jest.fn().mockResolvedValue({ overallRate: 0 }) };
+  const newReturning = { execute: jest.fn().mockResolvedValue({ newCount: 0, returningCount: 0, byDay: [] }) };
+  const inactive = { execute: jest.fn().mockResolvedValue([]) };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -17,6 +21,8 @@ describe('ReportingController (http)', () => {
       providers: [
         { provide: RevenueReportService, useValue: revenue },
         { provide: OccupancyReportService, useValue: occupancy },
+        { provide: NewReturningClientsService, useValue: newReturning },
+        { provide: InactiveClientsService, useValue: inactive },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -33,6 +39,8 @@ describe('ReportingController (http)', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  afterEach(() => jest.clearAllMocks());
 
   it('400 when from is malformed', async () => {
     await request(app.getHttpServer()).get('/reports/revenue?from=07-01-2026&to=2026-07-31').expect(400);
@@ -52,5 +60,27 @@ describe('ReportingController (http)', () => {
 
   it('200 with valid range on occupancy', async () => {
     await request(app.getHttpServer()).get('/reports/occupancy?from=2026-07-01&to=2026-07-31').expect(200);
+  });
+
+  it('200 with valid range on clients/new-returning', async () => {
+    await request(app.getHttpServer()).get('/reports/clients/new-returning?from=2026-07-01&to=2026-07-31').expect(200);
+  });
+
+  it('400 when clients/new-returning range is malformed', async () => {
+    await request(app.getHttpServer()).get('/reports/clients/new-returning?from=07-01-2026&to=2026-07-31').expect(400);
+  });
+
+  it('400 when clients/inactive days is not 30/60/90', async () => {
+    await request(app.getHttpServer()).get('/reports/clients/inactive?days=45').expect(400);
+  });
+
+  it('200 with default days (60) on clients/inactive', async () => {
+    await request(app.getHttpServer()).get('/reports/clients/inactive').expect(200);
+    expect(inactive.execute).toHaveBeenCalledWith('t1', 60);
+  });
+
+  it('200 with explicit valid days on clients/inactive', async () => {
+    await request(app.getHttpServer()).get('/reports/clients/inactive?days=90').expect(200);
+    expect(inactive.execute).toHaveBeenCalledWith('t1', 90);
   });
 });
