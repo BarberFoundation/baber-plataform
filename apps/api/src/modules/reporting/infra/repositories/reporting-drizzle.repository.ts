@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, eq, gte, lte, ne, sql } from 'drizzle-orm';
+import { and, count, eq, gte, isNotNull, lt, lte, ne, sql } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
@@ -9,6 +9,8 @@ import {
   RevenueAggregates,
   HeatmapCell,
   ActiveBarberSchedule,
+  NewReturningCounts,
+  InactiveClient,
 } from '../../application/ports/reporting.repository';
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -136,5 +138,83 @@ export class ReportingDrizzleRepository implements IReportingRepository {
         lte(schema.appointments.date, to),
       ));
     return { cancelled: row?.cancelled ?? 0, total: row?.total ?? 0 };
+  }
+
+  async newReturningCounts(tenantId: string, from: string, to: string): Promise<NewReturningCounts> {
+    const firstVisit = this.db
+      .select({
+        customerId: schema.appointments.customerId,
+        firstDate: sql<string>`min(${schema.appointments.date})`.as('first_date'),
+      })
+      .from(schema.appointments)
+      .where(and(
+        eq(schema.appointments.tenantId, tenantId),
+        eq(schema.appointments.status, 'COMPLETED'),
+        isNotNull(schema.appointments.customerId),
+      ))
+      .groupBy(schema.appointments.customerId)
+      .as('first_visit');
+
+    const byDay = await this.db
+      .select({
+        date: schema.appointments.date,
+        newCount: sql<number>`count(*) filter (where ${firstVisit.firstDate} >= ${from})::int`,
+        returningCount: sql<number>`count(*) filter (where ${firstVisit.firstDate} < ${from})::int`,
+      })
+      .from(schema.appointments)
+      .innerJoin(firstVisit, eq(schema.appointments.customerId, firstVisit.customerId))
+      .where(and(
+        eq(schema.appointments.tenantId, tenantId),
+        eq(schema.appointments.status, 'COMPLETED'),
+        isNotNull(schema.appointments.customerId),
+        gte(schema.appointments.date, from),
+        lte(schema.appointments.date, to),
+      ))
+      .groupBy(schema.appointments.date)
+      .orderBy(schema.appointments.date);
+
+    const newCount = byDay.reduce((sum, d) => sum + d.newCount, 0);
+    const returningCount = byDay.reduce((sum, d) => sum + d.returningCount, 0);
+
+    return { newCount, returningCount, byDay };
+  }
+
+  async inactiveClients(tenantId: string, days: number): Promise<InactiveClient[]> {
+    const cutoff = new Date();
+    cutoff.setUTCDate(cutoff.getUTCDate() - days);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+
+    const lastVisit = this.db
+      .select({
+        customerId: schema.appointments.customerId,
+        lastVisitDate: sql<string>`max(${schema.appointments.date})`.as('last_visit_date'),
+      })
+      .from(schema.appointments)
+      .where(and(
+        eq(schema.appointments.tenantId, tenantId),
+        eq(schema.appointments.status, 'COMPLETED'),
+        isNotNull(schema.appointments.customerId),
+      ))
+      .groupBy(schema.appointments.customerId)
+      .as('last_visit');
+
+    const rows = await this.db
+      .select({
+        customerId: lastVisit.customerId,
+        name: schema.users.name,
+        phone: schema.users.phone,
+        lastVisitDate: lastVisit.lastVisitDate,
+      })
+      .from(lastVisit)
+      .innerJoin(schema.users, eq(lastVisit.customerId, schema.users.id))
+      .where(lt(lastVisit.lastVisitDate, cutoffDate))
+      .orderBy(lastVisit.lastVisitDate);
+
+    return rows.map((r) => ({
+      customerId: r.customerId as string,
+      name: r.name,
+      phone: r.phone,
+      lastVisitDate: r.lastVisitDate,
+    }));
   }
 }
