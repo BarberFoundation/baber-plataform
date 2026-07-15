@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   BarChart3,
+  UserCheck,
   User as UserIcon,
   Settings,
   ChevronDown,
@@ -30,6 +31,7 @@ const NAV = [
   { to: '/app/barbers', label: 'Barbeiros', icon: Users, end: false },
   { to: '/app/services', label: 'Serviços', icon: Scissors, end: false },
   { to: '/app/reports', label: 'Relatórios', icon: BarChart3, end: false },
+  { to: '/app/clients', label: 'Clientes', icon: UserCheck, end: false },
 ];
 
 export default function AppShell() {
