@@ -17,13 +17,15 @@ export default function ProfilePage() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !hasLoaded) {
       setName(profile.name ?? '');
       setPhone(profile.phone ?? '');
+      setHasLoaded(true);
     }
-  }, [profile]);
+  }, [profile, hasLoaded]);
 
   const updateMutation = useMutation({
     mutationFn: (data: { name: string; phone: string }) =>
