@@ -86,6 +86,21 @@ export interface OccupancyReport {
   cancellation: { cancelled: number; total: number; rate: number };
 }
 
+export interface NewReturningByDay { date: string; newCount: number; returningCount: number }
+export interface NewReturningCounts {
+  newCount: number;
+  returningCount: number;
+  byDay: NewReturningByDay[];
+}
+
+export interface InactiveClient {
+  customerId: string;
+  name: string | null;
+  phone: string | null;
+  lastVisitDate: string;
+  daysSinceLastVisit: number;
+}
+
 export interface AdminProfile {
   id: string;
   name: string | null;
