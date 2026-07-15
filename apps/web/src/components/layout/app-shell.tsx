@@ -1,7 +1,27 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { CalendarDays, Users, Scissors, LayoutDashboard, LogOut, BarChart3 } from 'lucide-react';
+import {
+  CalendarDays,
+  Users,
+  Scissors,
+  LayoutDashboard,
+  LogOut,
+  BarChart3,
+  User as UserIcon,
+  Settings,
+  ChevronDown,
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { apiFetch } from '@/lib/api';
+import type { AdminProfile } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -15,6 +35,11 @@ const NAV = [
 export default function AppShell() {
   const navigate = useNavigate();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+
+  const { data: profile } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => apiFetch<AdminProfile>('/me'),
+  });
 
   function handleLogout() {
     clearAuth();
@@ -48,13 +73,28 @@ export default function AppShell() {
         </nav>
         <Separator />
         <div className="p-2">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+              <UserIcon className="h-4 w-4" />
+              <span className="flex-1 truncate text-left">{profile?.name ?? 'Conta'}</span>
+              <ChevronDown className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/app/profile')}>
+                <UserIcon className="h-4 w-4" />
+                Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/app/settings')}>
+                <Settings className="h-4 w-4" />
+                Config. Barbearia
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto p-6">
