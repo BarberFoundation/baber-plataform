@@ -22,10 +22,12 @@ import { ExchangeFirebaseTokenUseCase } from './application/use-cases/exchange-f
 import { ExchangeFirebaseClientTokenUseCase } from './application/use-cases/exchange-firebase-client-token.use-case';
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
-import { UpdateUserNameUseCase } from './application/use-cases/update-user-name.use-case';
+import { UpdateUserProfileUseCase } from './application/use-cases/update-user-profile.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { ListTenantsUseCase } from './application/use-cases/list-tenants.use-case';
 import { FindTenantBySlugUseCase } from './application/use-cases/find-tenant-by-slug.use-case';
+import { GetTenantSettingsUseCase } from './application/use-cases/get-tenant-settings.use-case';
+import { UpdateTenantSettingsUseCase } from './application/use-cases/update-tenant-settings.use-case';
 
 // Controllers
 import { AdminAuthController } from './http/admin-auth.controller';
@@ -61,10 +63,12 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     ExchangeFirebaseClientTokenUseCase,
     RefreshTokenUseCase,
     LogoutUseCase,
-    UpdateUserNameUseCase,
+    UpdateUserProfileUseCase,
     GetUserProfileUseCase,
     ListTenantsUseCase,
     FindTenantBySlugUseCase,
+    GetTenantSettingsUseCase,
+    UpdateTenantSettingsUseCase,
   ],
 })
 export class IdentityModule {}
