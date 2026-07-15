@@ -48,3 +48,4 @@ Handoff.md
 .claude/
 *.postman_collection.json
 *.postman_environment.json
+.superpowers/
