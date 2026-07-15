@@ -85,3 +85,22 @@ export interface OccupancyReport {
   heatmap: HeatmapCell[];
   cancellation: { cancelled: number; total: number; rate: number };
 }
+
+export interface AdminProfile {
+  id: string;
+  name: string | null;
+  role: string;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface TenantSettings {
+  id: string;
+  name: string;
+  slug: string;
+  phone: string | null;
+  address: string | null;
+  timezone: string;
+  logoUrl: string | null;
+  businessHours: Record<DayOfWeek, DaySchedule>;
+}
