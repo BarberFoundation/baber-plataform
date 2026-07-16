@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
@@ -55,7 +55,10 @@ export class UserDrizzleRepository implements IUserRepository {
     const rows = await this.db
       .select()
       .from(schema.users)
-      .where(and(eq(schema.users.tenantId, tenantId), ne(schema.users.role, 'CLIENT')));
+      .where(
+        and(eq(schema.users.tenantId, tenantId), inArray(schema.users.role, ['ADMIN', 'RECEPTIONIST'])),
+      )
+      .orderBy(schema.users.createdAt);
     return rows.map((row) => this.toEntity(row));
   }
 
