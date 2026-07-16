@@ -131,7 +131,7 @@ export class TeamController {
     return barbers.map(serializeBarber);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   @Get('admin')
   async listAdmin(
     @CurrentUser() user: JwtPayload,

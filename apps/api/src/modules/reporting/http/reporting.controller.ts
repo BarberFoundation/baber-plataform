@@ -56,14 +56,14 @@ export class ReportingController {
   }
 
   @Get('clients/new-returning')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   getNewReturningClients(@CurrentUser() user: JwtPayload, @Query() query: ReportRangeQueryDto) {
     assertValidRange(query.from, query.to);
     return this.newReturningClients.execute(user.tenantId, query.from, query.to);
   }
 
   @Get('clients/inactive')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   getInactiveClients(@CurrentUser() user: JwtPayload, @Query() query: ClientsInactiveQueryDto) {
     const days = Number(query.days ?? '60');
     return this.inactiveClients.execute(user.tenantId, days);

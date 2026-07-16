@@ -145,7 +145,7 @@ export class SchedulingController {
     return serializeAppointment(appt);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   @Get()
   async list(
     @CurrentUser() user: JwtPayload,
@@ -165,7 +165,7 @@ export class SchedulingController {
     return appts.map(serializeAppointment);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   @Get(':id')
   async findOne(
     @CurrentUser() user: JwtPayload,
@@ -175,7 +175,7 @@ export class SchedulingController {
     return serializeAppointment(appt);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   @Patch(':id/confirm')
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirm(
@@ -185,7 +185,7 @@ export class SchedulingController {
     await this.confirmAppointment.execute({ id, tenantId: user.tenantId });
   }
 
-  @Roles('ADMIN', 'CLIENT')
+  @Roles('ADMIN', 'RECEPTIONIST', 'CLIENT')
   @Patch(':id/cancel')
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancel(
@@ -199,7 +199,7 @@ export class SchedulingController {
     });
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECEPTIONIST')
   @Patch(':id/complete')
   @HttpCode(HttpStatus.NO_CONTENT)
   async complete(
