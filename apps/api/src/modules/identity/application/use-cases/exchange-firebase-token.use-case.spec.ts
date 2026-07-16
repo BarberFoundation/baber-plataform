@@ -109,4 +109,58 @@ describe('ExchangeFirebaseTokenUseCase', () => {
       InvalidFirebaseTokenError,
     );
   });
+
+  it('claims a legacy invited user by phone on first login', async () => {
+    const legacy = User.createInvited({ tenantId: TENANT_ID, name: 'Recepção', phone: '+5511988887777', role: 'RECEPTIONIST' });
+    const userRepo = makeUserRepo();
+    (userRepo.findByPhone as jest.Mock).mockResolvedValue(legacy);
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: '+5511988887777', name: 'Recepção' }),
+    });
+    const uc = new ExchangeFirebaseTokenUseCase(validator, userRepo, makeIssuer(makeRefreshRepo()));
+
+    const result = await uc.execute({ idToken: 'tok', tenantId: TENANT_ID });
+
+    expect(result.user.role).toBe('RECEPTIONIST');
+    expect(userRepo.save).toHaveBeenCalledTimes(1);
+    const saved = (userRepo.save as jest.Mock).mock.calls[0][0] as User;
+    expect(saved.firebaseUid).toBe(FIREBASE_UID);
+  });
+
+  it('does not claim a phone match that already has a firebaseUid (falls through to not found)', async () => {
+    const alreadyLinked = makeExistingUser({ firebaseUid: 'some-other-uid' });
+    const userRepo = makeUserRepo();
+    (userRepo.findByPhone as jest.Mock).mockResolvedValue(alreadyLinked);
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: '+5511988887777', name: 'X' }),
+    });
+    const uc = new ExchangeFirebaseTokenUseCase(validator, userRepo, makeIssuer(makeRefreshRepo()));
+
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(AdminAccountNotFoundError);
+    expect(userRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('does not claim a CLIENT-role phone match', async () => {
+    const legacyClientNoFirebase = User.reconstitute({
+      id: 'legacy-client', tenantId: TENANT_ID, name: null, role: 'CLIENT', phone: '+5511988887777',
+      email: null, firebaseUid: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const userRepo = makeUserRepo();
+    (userRepo.findByPhone as jest.Mock).mockResolvedValue(legacyClientNoFirebase);
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: '+5511988887777', name: 'X' }),
+    });
+    const uc = new ExchangeFirebaseTokenUseCase(validator, userRepo, makeIssuer(makeRefreshRepo()));
+
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(AdminAccountNotFoundError);
+    expect(userRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('throws AdminAccountNotFoundError when the user is deactivated', async () => {
+    const inactiveAdmin = makeExistingUser({ isActive: false });
+    const userRepo = makeUserRepo(inactiveAdmin);
+    const uc = new ExchangeFirebaseTokenUseCase(makeValidator(), userRepo, makeIssuer(makeRefreshRepo()));
+
+    await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(AdminAccountNotFoundError);
+  });
 });

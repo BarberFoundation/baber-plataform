@@ -41,7 +41,7 @@ export class RefreshTokenUseCase {
     }
 
     const user = await this.userRepo.findById(record.userId, record.tenantId);
-    if (!user) {
+    if (!user || !user.isActive) {
       throw new InvalidRefreshTokenError();
     }
 

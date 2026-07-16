@@ -118,6 +118,20 @@ describe('RefreshTokenUseCase', () => {
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
   });
 
+  it('throws InvalidRefreshTokenError when the user is deactivated', async () => {
+    const record = makeRecord();
+    const refreshRepo = makeRefreshRepo(record);
+    const inactiveUser = User.reconstitute({
+      id: USER_ID, tenantId: TENANT_ID, name: 'Test User', role: 'ADMIN', phone: null,
+      email: 'test@example.com', firebaseUid: 'fb-uid', isActive: false,
+      createdAt: new Date(), updatedAt: new Date(),
+    });
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(inactiveUser), makeIssuer(refreshRepo));
+    await expect(
+      uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
+    ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
+  });
+
   it('throws InvalidRefreshTokenError when token belongs to different tenant', async () => {
     const record = makeRecord(); // record.tenantId = TENANT_ID
     const refreshRepo = makeRefreshRepo(record);

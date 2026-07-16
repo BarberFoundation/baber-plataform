@@ -42,9 +42,17 @@ export class ExchangeFirebaseTokenUseCase {
       throw new InvalidFirebaseTokenError();
     });
 
-    const user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
+    let user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
 
-    if (!user || user.role === 'CLIENT' || user.tenantId !== input.tenantId) {
+    if (!user && firebasePayload.phone) {
+      const legacy = await this.userRepo.findByPhone(firebasePayload.phone, input.tenantId);
+      if (legacy && !legacy.firebaseUid && legacy.role !== 'CLIENT') {
+        legacy.linkFirebaseUid(firebasePayload.uid);
+        user = await this.userRepo.save(legacy);
+      }
+    }
+
+    if (!user || user.role === 'CLIENT' || user.tenantId !== input.tenantId || !user.isActive) {
       throw new AdminAccountNotFoundError();
     }
 
