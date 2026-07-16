@@ -75,6 +75,7 @@ export class UserDrizzleRepository implements IUserRepository {
           phone: user.phone,
           email: user.email,
           firebaseUid: user.firebaseUid,
+          isActive: user.isActive,
           createdAt: user.createdAt,
           updatedAt: now,
         })
@@ -88,6 +89,7 @@ export class UserDrizzleRepository implements IUserRepository {
             name: user.name,
             phone: user.phone,
             firebaseUid: user.firebaseUid,
+            isActive: user.isActive,
             updatedAt: now,
           },
         })
@@ -112,6 +114,7 @@ export class UserDrizzleRepository implements IUserRepository {
       phone: row.phone,
       email: row.email,
       firebaseUid: row.firebaseUid,
+      isActive: row.isActive,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
