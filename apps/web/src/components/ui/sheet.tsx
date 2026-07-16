@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sheet = SheetPrimitive.Root;
+const SheetTrigger = SheetPrimitive.Trigger;
 const SheetPortal = SheetPrimitive.Portal;
 
 const SheetOverlay = React.forwardRef<
@@ -59,4 +60,4 @@ const SheetContent = React.forwardRef<
 ));
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-export { Sheet, SheetContent };
+export { Sheet, SheetTrigger, SheetContent };

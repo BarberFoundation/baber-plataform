@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,12 +135,13 @@ export default function AppShell() {
   return (
     <div className="flex h-screen flex-col overflow-hidden md:flex-row">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-4 md:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(true)} aria-label="Abrir menu">
-          <Menu className="h-5 w-5" />
-        </Button>
-        <span className="font-bold text-lg">✂ Baber Admin</span>
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-          <SheetContent side="left" className="flex w-64 flex-col p-0">
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Abrir menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex w-64 flex-col p-0" aria-label="Menu de navegação">
             <div className="flex h-14 items-center px-4 font-bold text-lg">✂ Baber Admin</div>
             <Separator />
             <SidebarNav profile={profile} onNavigate={() => setMobileNavOpen(false)} />
@@ -148,6 +149,7 @@ export default function AppShell() {
             <AccountMenu profile={profile} onNavigate={navigateAndCloseMobile} onLogout={handleLogout} />
           </SheetContent>
         </Sheet>
+        <span className="font-bold text-lg">✂ Baber Admin</span>
       </header>
 
       <aside className="hidden w-56 flex-col border-r bg-card md:flex">
