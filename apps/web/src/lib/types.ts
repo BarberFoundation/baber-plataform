@@ -119,3 +119,12 @@ export interface TenantSettings {
   logoUrl: string | null;
   businessHours: Record<DayOfWeek, DaySchedule>;
 }
+
+export interface TeamMember {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  role: 'ADMIN' | 'RECEPTIONIST';
+  isActive: boolean;
+  createdAt: string;
+}
