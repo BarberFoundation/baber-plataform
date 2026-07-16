@@ -15,6 +15,7 @@ describe('GetUserProfileUseCase', () => {
       findByFirebaseUidAnyTenant: jest.fn(),
       findByPhone: jest.fn(),
       findById: jest.fn().mockResolvedValue(user),
+      findStaffByTenant: jest.fn().mockResolvedValue([]),
       save: jest.fn(),
     };
     const uc = new GetUserProfileUseCase(repo);
@@ -28,6 +29,7 @@ describe('GetUserProfileUseCase', () => {
       findByFirebaseUidAnyTenant: jest.fn(),
       findByPhone: jest.fn(),
       findById: jest.fn().mockResolvedValue(null),
+      findStaffByTenant: jest.fn().mockResolvedValue([]),
       save: jest.fn(),
     };
     const uc = new GetUserProfileUseCase(repo);

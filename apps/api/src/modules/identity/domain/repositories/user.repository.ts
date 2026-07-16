@@ -7,5 +7,6 @@ export interface IUserRepository {
   findByFirebaseUidAnyTenant(firebaseUid: string): Promise<User | null>;
   findByPhone(phone: string, tenantId: string): Promise<User | null>;
   findById(id: string, tenantId: string): Promise<User | null>;
+  findStaffByTenant(tenantId: string): Promise<User[]>;
   save(user: User): Promise<User>;
 }
