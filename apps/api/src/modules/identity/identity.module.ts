@@ -28,6 +28,9 @@ import { ListTenantsUseCase } from './application/use-cases/list-tenants.use-cas
 import { FindTenantBySlugUseCase } from './application/use-cases/find-tenant-by-slug.use-case';
 import { GetTenantSettingsUseCase } from './application/use-cases/get-tenant-settings.use-case';
 import { UpdateTenantSettingsUseCase } from './application/use-cases/update-tenant-settings.use-case';
+import { InviteTeamMemberUseCase } from './application/use-cases/invite-team-member.use-case';
+import { ListTeamMembersUseCase } from './application/use-cases/list-team-members.use-case';
+import { DeactivateTeamMemberUseCase } from './application/use-cases/deactivate-team-member.use-case';
 
 // Controllers
 import { AdminAuthController } from './http/admin-auth.controller';
@@ -35,6 +38,7 @@ import { ClientAuthController } from './http/client-auth.controller';
 import { AuthController } from './http/auth.controller';
 import { MeController } from './http/me.controller';
 import { TenantsController } from './http/tenants.controller';
+import { TeamMembersController } from './http/team-members.controller';
 
 // Shared
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
@@ -47,6 +51,7 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     AuthController,
     MeController,
     TenantsController,
+    TeamMembersController,
   ],
   providers: [
     {
@@ -69,6 +74,9 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     FindTenantBySlugUseCase,
     GetTenantSettingsUseCase,
     UpdateTenantSettingsUseCase,
+    InviteTeamMemberUseCase,
+    ListTeamMembersUseCase,
+    DeactivateTeamMemberUseCase,
   ],
 })
 export class IdentityModule {}
