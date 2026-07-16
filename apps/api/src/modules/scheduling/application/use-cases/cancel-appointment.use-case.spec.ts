@@ -106,4 +106,17 @@ describe('CancelAppointmentUseCase', () => {
     const result = await uc.execute({ id: 'appt-1', tenantId: 'tenant-1', requestedBy: { userId: 'admin-1', role: 'ADMIN' } });
     expect(result.status).toBe('CANCELLED');
   });
+
+  it('allows RECEPTIONIST to cancel regardless of ownership', async () => {
+    const future = Appointment.reconstitute({
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
+      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
+      status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo = { findById: jest.fn().mockResolvedValue(future), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn().mockImplementation(async (a) => a) };
+    const uc = new CancelAppointmentUseCase(repo as any, MOCK_EMITTER);
+    const result = await uc.execute({ id: 'appt-1', tenantId: 'tenant-1', requestedBy: { userId: 'recep-1', role: 'RECEPTIONIST' } });
+    expect(result.status).toBe('CANCELLED');
+  });
 });

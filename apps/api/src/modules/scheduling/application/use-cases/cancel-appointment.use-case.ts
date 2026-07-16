@@ -27,7 +27,7 @@ export class CancelAppointmentUseCase {
     const appt = await this.repo.findById(input.id, input.tenantId);
     if (!appt) throw new AppointmentNotFoundError();
 
-    if (input.requestedBy.role !== 'ADMIN') {
+    if (input.requestedBy.role !== 'ADMIN' && input.requestedBy.role !== 'RECEPTIONIST') {
       if (appt.customerId !== input.requestedBy.userId) {
         throw new ForbiddenCancellationError();
       }
