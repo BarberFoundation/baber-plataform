@@ -7,9 +7,11 @@ import {
   LogOut,
   BarChart3,
   UserCheck,
+  UsersRound,
   User as UserIcon,
   Settings,
   ChevronDown,
+  type LucideIcon,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
@@ -25,13 +27,22 @@ import { apiFetch } from '@/lib/api';
 import type { AdminProfile } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const NAV = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end: boolean;
+  adminOnly?: boolean;
+}
+
+const NAV: NavItem[] = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/app/appointments', label: 'Agendamentos', icon: CalendarDays, end: false },
   { to: '/app/barbers', label: 'Barbeiros', icon: Users, end: false },
   { to: '/app/services', label: 'Serviços', icon: Scissors, end: false },
   { to: '/app/reports', label: 'Relatórios', icon: BarChart3, end: false },
   { to: '/app/clients', label: 'Clientes', icon: UserCheck, end: false },
+  { to: '/app/team', label: 'Equipe', icon: UsersRound, end: false, adminOnly: true },
 ];
 
 export default function AppShell() {
@@ -54,7 +65,7 @@ export default function AppShell() {
         <div className="flex h-14 items-center px-4 font-bold text-lg">✂ Baber Admin</div>
         <Separator />
         <nav className="flex-1 space-y-1 p-2">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
+          {NAV.filter((item) => !item.adminOnly || profile?.role === 'ADMIN').map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
