@@ -48,3 +48,17 @@ export class AdminAccountNotFoundError extends DomainError {
     super(message);
   }
 }
+
+export class CannotDeactivateSelfError extends DomainError {
+  readonly code = 'CANNOT_DEACTIVATE_SELF';
+  constructor(message = 'Você não pode desativar sua própria conta.') {
+    super(message);
+  }
+}
+
+export class LastActiveAdminError extends DomainError {
+  readonly code = 'LAST_ACTIVE_ADMIN';
+  constructor(message = 'Não é possível desativar o último administrador ativo da barbearia.') {
+    super(message);
+  }
+}
