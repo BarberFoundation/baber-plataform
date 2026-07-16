@@ -111,4 +111,40 @@ describe('User entity', () => {
       expect(() => user.linkFirebaseUid('fb-other')).toThrow();
     });
   });
+
+  describe('isActive', () => {
+    it('defaults to true when not provided', () => {
+      const user = User.reconstitute(base);
+      expect(user.isActive).toBe(true);
+    });
+
+    it('respects an explicit false value', () => {
+      const user = User.reconstitute({ ...base, isActive: false });
+      expect(user.isActive).toBe(false);
+    });
+
+    it('deactivate() flips isActive to false', () => {
+      const user = User.reconstitute(base);
+      user.deactivate();
+      expect(user.isActive).toBe(false);
+    });
+  });
+
+  describe('User.createInvited', () => {
+    it('creates a pending staff user with no firebaseUid, active by default', () => {
+      const user = User.createInvited({
+        tenantId: base.tenantId,
+        name: 'Recepção Nova',
+        phone: '+5511988887777',
+        role: 'RECEPTIONIST',
+      });
+      expect(user.role).toBe('RECEPTIONIST');
+      expect(user.name).toBe('Recepção Nova');
+      expect(user.phone).toBe('+5511988887777');
+      expect(user.firebaseUid).toBeNull();
+      expect(user.isActive).toBe(true);
+      expect(user.email).toBeNull();
+      expect(user.id).toBeDefined();
+    });
+  });
 });

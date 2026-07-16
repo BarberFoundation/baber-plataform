@@ -9,6 +9,7 @@ export interface UserProps {
   phone: string | null;
   email: string | null;
   firebaseUid: string | null;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,13 @@ export interface CreateClientUserProps {
   firebaseUid: string;
 }
 
+export interface CreateInvitedUserProps {
+  tenantId: string;
+  name: string;
+  phone: string;
+  role: Extract<Role, 'ADMIN' | 'RECEPTIONIST'>;
+}
+
 export class User {
   readonly id: string;
   readonly tenantId: string;
@@ -35,6 +43,7 @@ export class User {
   private _phone: string | null;
   readonly email: string | null;
   private _firebaseUid: string | null;
+  private _isActive: boolean;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
@@ -46,6 +55,7 @@ export class User {
     this._phone = props.phone;
     this.email = props.email;
     this._firebaseUid = props.firebaseUid;
+    this._isActive = props.isActive ?? true;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -62,6 +72,10 @@ export class User {
     return this._firebaseUid;
   }
 
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
   /** Vincula conta Firebase a um usuário legado (criado sem login). Uid existente nunca é sobrescrito. */
   linkFirebaseUid(firebaseUid: string): void {
     if (this._firebaseUid) {
@@ -76,6 +90,10 @@ export class User {
 
   updatePhone(phone: string | null): void {
     this._phone = phone;
+  }
+
+  deactivate(): void {
+    this._isActive = false;
   }
 
   static reconstitute(props: UserProps): User {
@@ -107,6 +125,22 @@ export class User {
       phone: props.phone,
       email: null,
       firebaseUid: props.firebaseUid,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  static createInvited(props: CreateInvitedUserProps): User {
+    const now = new Date();
+    return new User({
+      id: randomUUID(),
+      tenantId: props.tenantId,
+      name: props.name,
+      role: props.role,
+      phone: props.phone,
+      email: null,
+      firebaseUid: null,
+      isActive: true,
       createdAt: now,
       updatedAt: now,
     });
