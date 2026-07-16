@@ -60,4 +60,12 @@ const SheetContent = React.forwardRef<
 ));
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-export { Sheet, SheetTrigger, SheetContent };
+const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Title ref={ref} className={cn('sr-only', className)} {...props} />
+));
+SheetTitle.displayName = SheetPrimitive.Title.displayName;
+
+export { Sheet, SheetTrigger, SheetContent, SheetTitle };

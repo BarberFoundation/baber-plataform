@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -141,7 +141,8 @@ export default function AppShell() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="flex w-64 flex-col p-0" aria-label="Menu de navegação">
+          <SheetContent side="left" className="flex w-64 flex-col p-0">
+            <SheetTitle>Menu de navegação</SheetTitle>
             <div className="flex h-14 items-center px-4 font-bold text-lg">✂ Baber Admin</div>
             <Separator />
             <SidebarNav profile={profile} onNavigate={() => setMobileNavOpen(false)} />
