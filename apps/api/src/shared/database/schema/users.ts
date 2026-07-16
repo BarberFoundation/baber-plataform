@@ -1,7 +1,7 @@
-import { pgTable, uuid, text, timestamp, pgEnum, unique } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum, unique, boolean } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
 
-export const roleEnum = pgEnum('role', ['CLIENT', 'BARBER', 'ADMIN']);
+export const roleEnum = pgEnum('role', ['CLIENT', 'BARBER', 'ADMIN', 'RECEPTIONIST']);
 
 export const users = pgTable(
   'users',
@@ -15,6 +15,7 @@ export const users = pgTable(
     phone: text('phone'),
     email: text('email'),
     firebaseUid: text('firebase_uid').unique(),
+    isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
