@@ -96,9 +96,10 @@ export default function TeamPage() {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const { data: members = [], isLoading } = useQuery({
+  const { data: members = [], isLoading, isError } = useQuery({
     queryKey: ['team-members'],
     queryFn: () => apiFetch<TeamMember[]>('/team-members'),
+    retry: false,
   });
 
   const activeCount = members.filter((m) => m.isActive).length;
@@ -127,6 +128,15 @@ export default function TeamPage() {
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Equipe</h1>
+        <p className="text-muted-foreground text-sm">Você não tem permissão para acessar esta página.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

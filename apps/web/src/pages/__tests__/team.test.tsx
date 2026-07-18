@@ -84,4 +84,15 @@ describe('TeamPage', () => {
       );
     });
   });
+
+  it('shows an access-denied message instead of an empty table when the request is forbidden', async () => {
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path === '/team-members') return Promise.reject(new Error('Forbidden'));
+      return Promise.resolve(undefined);
+    });
+    renderPage();
+    expect(await screen.findByText('Você não tem permissão para acessar esta página.')).toBeInTheDocument();
+    expect(screen.queryByText('0 membro(s)')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /convidar/i })).not.toBeInTheDocument();
+  });
 });
