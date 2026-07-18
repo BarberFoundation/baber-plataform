@@ -5,7 +5,7 @@ const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://
 
 async function refreshToken(): Promise<string | null> {
   try {
-    const res = await fetch(`${API_URL}/auth/admin/refresh`, {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
