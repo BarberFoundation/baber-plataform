@@ -31,6 +31,9 @@ import { UpdateTenantSettingsUseCase } from './application/use-cases/update-tena
 import { InviteTeamMemberUseCase } from './application/use-cases/invite-team-member.use-case';
 import { ListTeamMembersUseCase } from './application/use-cases/list-team-members.use-case';
 import { DeactivateTeamMemberUseCase } from './application/use-cases/deactivate-team-member.use-case';
+import { ListActiveSessionsUseCase } from './application/use-cases/list-active-sessions.use-case';
+import { RevokeSessionUseCase } from './application/use-cases/revoke-session.use-case';
+import { RevokeOtherSessionsUseCase } from './application/use-cases/revoke-other-sessions.use-case';
 
 // Controllers
 import { AdminAuthController } from './http/admin-auth.controller';
@@ -77,6 +80,9 @@ import { JwtTokenService } from '@shared/auth/jwt-token.service';
     InviteTeamMemberUseCase,
     ListTeamMembersUseCase,
     DeactivateTeamMemberUseCase,
+    ListActiveSessionsUseCase,
+    RevokeSessionUseCase,
+    RevokeOtherSessionsUseCase,
   ],
 })
 export class IdentityModule {}
