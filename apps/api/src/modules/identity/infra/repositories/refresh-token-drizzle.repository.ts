@@ -35,16 +35,7 @@ export class RefreshTokenDrizzleRepository implements IRefreshTokenRepository {
       .where(eq(schema.refreshTokens.tokenHash, hash))
       .limit(1);
     if (!rows[0]) return null;
-    const row = rows[0];
-    return {
-      id: row.id,
-      userId: row.userId,
-      tenantId: row.tenantId,
-      tokenHash: row.tokenHash,
-      expiresAt: row.expiresAt,
-      revokedAt: row.revokedAt,
-      createdAt: row.createdAt,
-    };
+    return this.toRecord(rows[0]);
   }
 
   async revokeByHash(hash: string): Promise<void> {
@@ -65,15 +56,7 @@ export class RefreshTokenDrizzleRepository implements IRefreshTokenRepository {
           gt(schema.refreshTokens.expiresAt, new Date()),
         ),
       );
-    return rows.map((row) => ({
-      id: row.id,
-      userId: row.userId,
-      tenantId: row.tenantId,
-      tokenHash: row.tokenHash,
-      expiresAt: row.expiresAt,
-      revokedAt: row.revokedAt,
-      createdAt: row.createdAt,
-    }));
+    return rows.map((row) => this.toRecord(row));
   }
 
   async revokeById(id: string, userId: string): Promise<number> {
@@ -102,5 +85,17 @@ export class RefreshTokenDrizzleRepository implements IRefreshTokenRepository {
           isNull(schema.refreshTokens.revokedAt),
         ),
       );
+  }
+
+  private toRecord(row: typeof schema.refreshTokens.$inferSelect): RefreshTokenRecord {
+    return {
+      id: row.id,
+      userId: row.userId,
+      tenantId: row.tenantId,
+      tokenHash: row.tokenHash,
+      expiresAt: row.expiresAt,
+      revokedAt: row.revokedAt,
+      createdAt: row.createdAt,
+    };
   }
 }
