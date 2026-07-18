@@ -23,6 +23,7 @@ vi.mock('firebase/auth', () => ({
   EmailAuthProvider: { credential: vi.fn(() => 'mock-credential') },
   reauthenticateWithCredential: vi.fn(),
   updatePassword: vi.fn(),
+  onAuthStateChanged: vi.fn(() => () => {}),
 }));
 
 const profileFixture: AdminProfile = {
@@ -163,6 +164,33 @@ describe('ProfilePage — change password card', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Senha atual incorreta.');
+    });
+  });
+
+  it('shows a distinct message when the password changes but session revocation fails', async () => {
+    vi.mocked(reauthenticateWithCredential).mockResolvedValue(undefined as never);
+    vi.mocked(updatePassword).mockResolvedValue(undefined as never);
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path === '/me') return Promise.resolve(profileFixture);
+      if (path === '/auth/sessions') return Promise.reject(new Error('Unauthorized'));
+      return Promise.resolve(undefined);
+    });
+    const { toast } = await import('sonner');
+    renderPage();
+    await screen.findByText('Trocar senha');
+
+    fireEvent.change(screen.getByLabelText('Senha atual'), { target: { value: 'old-pass' } });
+    fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'new-pass-123' } });
+    fireEvent.change(screen.getByLabelText('Confirmar nova senha'), { target: { value: 'new-pass-123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Senha alterada.');
+    });
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Senha alterada, mas não foi possível encerrar as outras sessões. Encerre-as manualmente abaixo, se necessário.',
+      );
     });
   });
 

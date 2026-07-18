@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   EmailAuthProvider,
+  onAuthStateChanged,
   reauthenticateWithCredential,
   updatePassword,
 } from 'firebase/auth';
@@ -120,13 +121,16 @@ function passwordErrorMessage(err: unknown): string {
 
 function ChangePasswordCard() {
   const qc = useQueryClient();
+  const [firebaseUser, setFirebaseUser] = useState(firebaseAuth.currentUser);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const user = firebaseAuth.currentUser;
-  const hasPasswordProvider = user?.providerData.some((p) => p.providerId === 'password') ?? false;
+  useEffect(() => onAuthStateChanged(firebaseAuth, setFirebaseUser), []);
+
+  const hasPasswordProvider =
+    firebaseUser?.providerData.some((p) => p.providerId === 'password') ?? false;
   if (!hasPasswordProvider) return null;
 
   async function handleSubmit(e: FormEvent) {
@@ -135,22 +139,35 @@ function ChangePasswordCard() {
       toast.error('As senhas não coincidem.');
       return;
     }
+    if (!firebaseUser?.email) {
+      toast.error('Não foi possível identificar seu e-mail. Tente novamente.');
+      return;
+    }
     setSubmitting(true);
+
     try {
-      const credential = EmailAuthProvider.credential(user!.email!, currentPassword);
-      await reauthenticateWithCredential(user!, credential);
-      await updatePassword(user!, newPassword);
-      await apiFetch<void>('/auth/sessions', { method: 'DELETE' });
-      void qc.invalidateQueries({ queryKey: ['sessions'] });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      toast.success('Senha alterada. Outras sessões foram encerradas.');
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, newPassword);
     } catch (err) {
       toast.error(passwordErrorMessage(err));
-    } finally {
+      setCurrentPassword('');
       setSubmitting(false);
+      return;
     }
+
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    toast.success('Senha alterada.');
+
+    try {
+      await apiFetch<void>('/auth/sessions', { method: 'DELETE' });
+      void qc.invalidateQueries({ queryKey: ['sessions'] });
+    } catch {
+      toast.error('Senha alterada, mas não foi possível encerrar as outras sessões. Encerre-as manualmente abaixo, se necessário.');
+    }
+    setSubmitting(false);
   }
 
   return (
@@ -165,6 +182,7 @@ function ChangePasswordCard() {
             <Input
               id="p-current-password"
               type="password"
+              autoComplete="current-password"
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -175,6 +193,7 @@ function ChangePasswordCard() {
             <Input
               id="p-new-password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={6}
               value={newPassword}
@@ -186,6 +205,7 @@ function ChangePasswordCard() {
             <Input
               id="p-confirm-password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={6}
               value={confirmPassword}
