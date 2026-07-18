@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReportsPage from '../reports';
 import { formatBRL } from '@/lib/utils';
-import type { RevenueReport, OccupancyReport } from '@/lib/types';
+import type { RevenueReport, OccupancyReport, BarberRankingEntry } from '@/lib/types';
 
 // ResponsiveContainer mede o DOM real; em happy-dom a largura é 0 e o chart não
 // renderiza — substitui por um wrapper de tamanho fixo.
@@ -36,12 +36,17 @@ const occupancyFixture: OccupancyReport = {
   cancellation: { cancelled: 8, total: 50, rate: 0.16 },
 };
 
+const rankingFixture: BarberRankingEntry[] = [
+  { barberId: 'b1', barberName: 'João', totalInCents: 70000, appointmentCount: 25, averageTicketInCents: 2800, occupancyRate: 0.5 },
+  { barberId: 'b2', barberName: 'Maria', totalInCents: 90000, appointmentCount: 10, averageTicketInCents: 9000, occupancyRate: 0.8 },
+];
+
 vi.mock('@/lib/api', () => ({
-  apiFetch: vi.fn((path: string) =>
-    path.startsWith('/reports/revenue')
-      ? Promise.resolve(revenueFixture)
-      : Promise.resolve(occupancyFixture),
-  ),
+  apiFetch: vi.fn((path: string) => {
+    if (path.startsWith('/reports/revenue')) return Promise.resolve(revenueFixture);
+    if (path.startsWith('/reports/barbers/ranking')) return Promise.resolve(rankingFixture);
+    return Promise.resolve(occupancyFixture);
+  }),
 }));
 
 // Intl usa NBSP entre "R$" e o número; o normalizer do testing-library
@@ -83,5 +88,40 @@ describe('ReportsPage', () => {
     expect(screen.getByText('16%')).toBeInTheDocument();               // cancelamento
     expect(screen.getByText(/3720 de 6000/)).toBeInTheDocument();      // minutos agendados/disponíveis
     expect(screen.getByText(/8 de 50 agendamentos/)).toBeInTheDocument(); // contagem de cancelados
+  });
+
+  it('has a Ranking tab', async () => {
+    renderPage();
+    expect(await screen.findByRole('tab', { name: /ranking/i })).toBeInTheDocument();
+  });
+
+  it('shows the ranking table sorted by revenue by default', async () => {
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    const rows = await screen.findAllByRole('row');
+    // rows[0] é o cabeçalho; maior faturamento (Maria, 90000) vem primeiro
+    expect(within(rows[1]).getByText('Maria')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('João')).toBeInTheDocument();
+  });
+
+  it('re-sorts when a different column header is clicked', async () => {
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    await screen.findAllByRole('row');
+    fireEvent.click(screen.getByRole('button', { name: /atendimentos/i }));
+    const rows = await screen.findAllByRole('row');
+    // João tem mais atendimentos (25 vs 10)
+    expect(within(rows[1]).getByText('João')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('Maria')).toBeInTheDocument();
+  });
+
+  it('toggles sort direction on a second click of the same header', async () => {
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    await screen.findAllByRole('row');
+    fireEvent.click(screen.getByRole('button', { name: /faturamento/i })); // já ativo em desc → alterna pra asc
+    const rows = await screen.findAllByRole('row');
+    expect(within(rows[1]).getByText('João')).toBeInTheDocument(); // 70000 < 90000, ascendente
+    expect(within(rows[2]).getByText('Maria')).toBeInTheDocument();
   });
 });

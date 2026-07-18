@@ -2,6 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PeriodSelector from '@/components/reports/period-selector';
 import RevenueTab from '@/components/reports/revenue-tab';
 import OccupancyTab from '@/components/reports/occupancy-tab';
+import RankingTab from '@/components/reports/ranking-tab';
 import { useReportRange } from '@/lib/report-range';
 
 export default function ReportsPage() {
@@ -18,12 +19,16 @@ export default function ReportsPage() {
         <TabsList>
           <TabsTrigger value="revenue">Faturamento</TabsTrigger>
           <TabsTrigger value="occupancy">Ocupação</TabsTrigger>
+          <TabsTrigger value="ranking">Ranking</TabsTrigger>
         </TabsList>
         <TabsContent value="revenue">
           <RevenueTab from={from} to={to} />
         </TabsContent>
         <TabsContent value="occupancy">
           <OccupancyTab from={from} to={to} />
+        </TabsContent>
+        <TabsContent value="ranking">
+          <RankingTab from={from} to={to} />
         </TabsContent>
       </Tabs>
     </div>
