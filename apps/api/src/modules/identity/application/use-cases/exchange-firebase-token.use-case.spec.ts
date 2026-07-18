@@ -36,6 +36,9 @@ function makeRefreshRepo(): IRefreshTokenRepository {
     save: jest.fn().mockResolvedValue(undefined),
     findByHash: jest.fn().mockResolvedValue(null),
     revokeByHash: jest.fn().mockResolvedValue(undefined),
+    findActiveByUserId: jest.fn().mockResolvedValue([]),
+    revokeById: jest.fn().mockResolvedValue(0),
+    revokeAllExceptHash: jest.fn().mockResolvedValue(undefined),
   };
 }
 
