@@ -42,6 +42,7 @@ describe('ListActiveSessionsUseCase', () => {
       { id: 's1', createdAt: expect.any(Date), expiresAt: expect.any(Date), isCurrent: false },
       { id: 's2', createdAt: expect.any(Date), expiresAt: expect.any(Date), isCurrent: true },
     ]);
+    expect(repo.findActiveByUserId).toHaveBeenCalledWith('u1');
   });
 
   it('marks nothing as current when currentTokenHash is null', async () => {
