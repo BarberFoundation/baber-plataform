@@ -62,3 +62,17 @@ export class LastActiveAdminError extends DomainError {
     super(message);
   }
 }
+
+export class SessionNotFoundError extends DomainError {
+  readonly code = 'SESSION_NOT_FOUND';
+  constructor(message = 'Sessão não encontrada.') {
+    super(message);
+  }
+}
+
+export class CannotRevokeCurrentSessionError extends DomainError {
+  readonly code = 'CANNOT_REVOKE_CURRENT_SESSION';
+  constructor(message = 'Não é possível encerrar a sessão atual por aqui. Use "Sair".') {
+    super(message);
+  }
+}
