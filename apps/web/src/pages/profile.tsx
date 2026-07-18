@@ -156,7 +156,7 @@ function ChangePasswordCard() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Segurança da conta</CardTitle>
+        <CardTitle>Trocar senha</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,7 +194,7 @@ function ChangePasswordCard() {
           </div>
           <div className="flex justify-end">
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Trocando...' : 'Trocar senha'}
+              {submitting ? 'Salvando...' : 'Salvar nova senha'}
             </Button>
           </div>
         </form>

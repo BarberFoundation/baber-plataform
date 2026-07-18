@@ -128,7 +128,7 @@ describe('ProfilePage — change password card', () => {
     fireEvent.change(screen.getByLabelText('Senha atual'), { target: { value: 'old-pass' } });
     fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'new-pass-123' } });
     fireEvent.change(screen.getByLabelText('Confirmar nova senha'), { target: { value: 'new-pass-123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
 
     await waitFor(() => {
       expect(updatePassword).toHaveBeenCalledWith(expect.anything(), 'new-pass-123');
@@ -145,7 +145,7 @@ describe('ProfilePage — change password card', () => {
     fireEvent.change(screen.getByLabelText('Senha atual'), { target: { value: 'old-pass' } });
     fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'new-pass-123' } });
     fireEvent.change(screen.getByLabelText('Confirmar nova senha'), { target: { value: 'different' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
 
     expect(reauthenticateWithCredential).not.toHaveBeenCalled();
   });
@@ -159,7 +159,7 @@ describe('ProfilePage — change password card', () => {
     fireEvent.change(screen.getByLabelText('Senha atual'), { target: { value: 'wrong' } });
     fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'new-pass-123' } });
     fireEvent.change(screen.getByLabelText('Confirmar nova senha'), { target: { value: 'new-pass-123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Senha atual incorreta.');
