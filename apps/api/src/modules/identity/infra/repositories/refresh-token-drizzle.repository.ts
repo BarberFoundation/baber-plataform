@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, isNull, ne } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
@@ -52,5 +52,55 @@ export class RefreshTokenDrizzleRepository implements IRefreshTokenRepository {
       .update(schema.refreshTokens)
       .set({ revokedAt: new Date() })
       .where(eq(schema.refreshTokens.tokenHash, hash));
+  }
+
+  async findActiveByUserId(userId: string): Promise<RefreshTokenRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(schema.refreshTokens)
+      .where(
+        and(
+          eq(schema.refreshTokens.userId, userId),
+          isNull(schema.refreshTokens.revokedAt),
+          gt(schema.refreshTokens.expiresAt, new Date()),
+        ),
+      );
+    return rows.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      tenantId: row.tenantId,
+      tokenHash: row.tokenHash,
+      expiresAt: row.expiresAt,
+      revokedAt: row.revokedAt,
+      createdAt: row.createdAt,
+    }));
+  }
+
+  async revokeById(id: string, userId: string): Promise<number> {
+    const result = await this.db
+      .update(schema.refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(schema.refreshTokens.id, id),
+          eq(schema.refreshTokens.userId, userId),
+          isNull(schema.refreshTokens.revokedAt),
+        ),
+      )
+      .returning({ id: schema.refreshTokens.id });
+    return result.length;
+  }
+
+  async revokeAllExceptHash(userId: string, exceptHash: string): Promise<void> {
+    await this.db
+      .update(schema.refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(schema.refreshTokens.userId, userId),
+          ne(schema.refreshTokens.tokenHash, exceptHash),
+          isNull(schema.refreshTokens.revokedAt),
+        ),
+      );
   }
 }
