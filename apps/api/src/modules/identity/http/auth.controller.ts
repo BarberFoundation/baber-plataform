@@ -6,18 +6,19 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { createHash } from 'crypto';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '@shared/auth/public.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
+import { hashToken } from '@shared/auth/hash-token';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { ListActiveSessionsUseCase } from '../application/use-cases/list-active-sessions.use-case';
@@ -87,7 +88,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async revokeSession(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Req() req: Request,
   ) {
     await this.revokeSessionUseCase.execute({
@@ -109,7 +110,7 @@ export class AuthController {
 
   private currentTokenHash(req: Request): string | null {
     const raw = (req.cookies as Record<string, string> | undefined)?.refreshToken;
-    return raw ? createHash('sha256').update(raw).digest('hex') : null;
+    return raw ? hashToken(raw) : null;
   }
 
   private setRefreshCookie(res: Response, token: string): void {

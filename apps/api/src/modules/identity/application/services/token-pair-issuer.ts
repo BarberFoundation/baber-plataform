@@ -1,10 +1,11 @@
-import { randomBytes, createHash, randomUUID } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { Injectable, Inject } from '@nestjs/common';
 import {
   REFRESH_TOKEN_REPOSITORY,
   IRefreshTokenRepository,
 } from '../../domain/repositories/refresh-token.repository';
 import { JwtTokenService } from '@shared/auth/jwt-token.service';
+import { hashToken } from '@shared/auth/hash-token';
 import { User } from '../../domain/entities/user.entity';
 import { AuthResult } from '../dto/auth-token-pair';
 
@@ -22,7 +23,7 @@ export class TokenPairIssuer {
     const jwtPayload = { userId: user.id, tenantId: user.tenantId, role: user.role };
     const accessToken = this.jwtTokenService.signAccess(jwtPayload);
     const rawRefresh = randomBytes(48).toString('base64url');
-    const tokenHash = createHash('sha256').update(rawRefresh).digest('hex');
+    const tokenHash = hashToken(rawRefresh);
 
     await this.refreshRepo.save({
       id: randomUUID(),

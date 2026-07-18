@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { hashToken } from '@shared/auth/hash-token';
 import {
   REFRESH_TOKEN_REPOSITORY,
   IRefreshTokenRepository,
@@ -28,7 +28,7 @@ export class RefreshTokenUseCase {
   ) {}
 
   async execute(input: RefreshTokenInput): Promise<AuthResult> {
-    const hash = createHash('sha256').update(input.rawRefreshToken).digest('hex');
+    const hash = hashToken(input.rawRefreshToken);
 
     const record = await this.refreshRepo.findByHash(hash);
 
