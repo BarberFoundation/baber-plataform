@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+} from 'firebase/auth';
+import { firebaseAuth } from '@/lib/firebase';
 import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,6 +104,105 @@ function SessionsCard() {
   );
 }
 
+const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
+  'auth/wrong-password': 'Senha atual incorreta.',
+  'auth/invalid-credential': 'Senha atual incorreta.',
+  'auth/weak-password': 'Senha muito fraca. Use pelo menos 6 caracteres.',
+  'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+};
+
+function passwordErrorMessage(err: unknown): string {
+  const code = (err as { code?: string })?.code;
+  if (code && PASSWORD_ERROR_MESSAGES[code]) return PASSWORD_ERROR_MESSAGES[code];
+  if (code?.startsWith('auth/')) return 'Erro ao trocar senha. Tente novamente.';
+  return err instanceof Error ? err.message : 'Erro ao trocar senha. Tente novamente.';
+}
+
+function ChangePasswordCard() {
+  const qc = useQueryClient();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const user = firebaseAuth.currentUser;
+  const hasPasswordProvider = user?.providerData.some((p) => p.providerId === 'password') ?? false;
+  if (!hasPasswordProvider) return null;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const credential = EmailAuthProvider.credential(user!.email!, currentPassword);
+      await reauthenticateWithCredential(user!, credential);
+      await updatePassword(user!, newPassword);
+      await apiFetch<void>('/auth/sessions', { method: 'DELETE' });
+      void qc.invalidateQueries({ queryKey: ['sessions'] });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      toast.success('Senha alterada. Outras sessões foram encerradas.');
+    } catch (err) {
+      toast.error(passwordErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Segurança da conta</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="p-current-password">Senha atual</Label>
+            <Input
+              id="p-current-password"
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="p-new-password">Nova senha</Label>
+            <Input
+              id="p-new-password"
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="p-confirm-password">Confirmar nova senha</Label>
+            <Input
+              id="p-confirm-password"
+              type="password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Trocando...' : 'Trocar senha'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProfilePage() {
   const qc = useQueryClient();
   const { data: profile, isLoading } = useQuery({
@@ -178,6 +283,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       <SessionsCard />
+      <ChangePasswordCard />
     </div>
   );
 }
