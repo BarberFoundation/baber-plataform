@@ -128,3 +128,10 @@ export interface TeamMember {
   isActive: boolean;
   createdAt: string;
 }
+
+export interface Session {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
