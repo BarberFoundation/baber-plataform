@@ -7,6 +7,7 @@ import { RevenueReportService } from '../application/revenue-report.service';
 import { OccupancyReportService } from '../application/occupancy-report.service';
 import { NewReturningClientsService } from '../application/new-returning-clients.service';
 import { InactiveClientsService } from '../application/inactive-clients.service';
+import { BarberRankingService } from '../application/barber-ranking.service';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 366;
@@ -39,6 +40,7 @@ export class ReportingController {
     private readonly occupancyReport: OccupancyReportService,
     private readonly newReturningClients: NewReturningClientsService,
     private readonly inactiveClients: InactiveClientsService,
+    private readonly barberRanking: BarberRankingService,
   ) {}
 
   @Get('revenue')
@@ -53,6 +55,13 @@ export class ReportingController {
   getOccupancy(@CurrentUser() user: JwtPayload, @Query() query: ReportRangeQueryDto) {
     assertValidRange(query.from, query.to);
     return this.occupancyReport.execute(user.tenantId, query.from, query.to);
+  }
+
+  @Get('barbers/ranking')
+  @Roles('ADMIN')
+  getBarberRanking(@CurrentUser() user: JwtPayload, @Query() query: ReportRangeQueryDto) {
+    assertValidRange(query.from, query.to);
+    return this.barberRanking.execute(user.tenantId, query.from, query.to);
   }
 
   @Get('clients/new-returning')

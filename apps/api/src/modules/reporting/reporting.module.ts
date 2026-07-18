@@ -6,6 +6,7 @@ import { RevenueReportService } from './application/revenue-report.service';
 import { OccupancyReportService } from './application/occupancy-report.service';
 import { NewReturningClientsService } from './application/new-returning-clients.service';
 import { InactiveClientsService } from './application/inactive-clients.service';
+import { BarberRankingService } from './application/barber-ranking.service';
 import { ReportingController } from './http/reporting.controller';
 
 @Module({
@@ -17,6 +18,7 @@ import { ReportingController } from './http/reporting.controller';
     OccupancyReportService,
     NewReturningClientsService,
     InactiveClientsService,
+    BarberRankingService,
   ],
 })
 export class ReportingModule {}

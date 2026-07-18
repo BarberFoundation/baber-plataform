@@ -7,6 +7,7 @@ import { RevenueReportService } from '../application/revenue-report.service';
 import { OccupancyReportService } from '../application/occupancy-report.service';
 import { NewReturningClientsService } from '../application/new-returning-clients.service';
 import { InactiveClientsService } from '../application/inactive-clients.service';
+import { BarberRankingService } from '../application/barber-ranking.service';
 
 describe('ReportingController (http)', () => {
   let app: INestApplication;
@@ -14,6 +15,7 @@ describe('ReportingController (http)', () => {
   const occupancy = { execute: jest.fn().mockResolvedValue({ overallRate: 0 }) };
   const newReturning = { execute: jest.fn().mockResolvedValue({ newCount: 0, returningCount: 0, byDay: [] }) };
   const inactive = { execute: jest.fn().mockResolvedValue([]) };
+  const barberRanking = { execute: jest.fn().mockResolvedValue([]) };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -23,6 +25,7 @@ describe('ReportingController (http)', () => {
         { provide: OccupancyReportService, useValue: occupancy },
         { provide: NewReturningClientsService, useValue: newReturning },
         { provide: InactiveClientsService, useValue: inactive },
+        { provide: BarberRankingService, useValue: barberRanking },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -60,6 +63,10 @@ describe('ReportingController (http)', () => {
 
   it('200 with valid range on occupancy', async () => {
     await request(app.getHttpServer()).get('/reports/occupancy?from=2026-07-01&to=2026-07-31').expect(200);
+  });
+
+  it('200 with valid range on barbers/ranking', async () => {
+    await request(app.getHttpServer()).get('/reports/barbers/ranking?from=2026-07-01&to=2026-07-31').expect(200);
   });
 
   it('200 with valid range on clients/new-returning', async () => {
