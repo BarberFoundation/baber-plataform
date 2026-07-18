@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
-import { formatBRL } from '@/lib/utils';
+import { formatBRL, formatPct } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { BarberRankingEntry } from '@/lib/types';
@@ -15,8 +15,6 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'averageTicketInCents', label: 'Ticket médio' },
   { key: 'occupancyRate', label: 'Ocupação' },
 ];
-
-const pct = (rate: number) => `${Math.round(rate * 100)}%`;
 
 export default function RankingTab({ from, to }: { from: string; to: string }) {
   const [sortBy, setSortBy] = useState<SortKey>('totalInCents');
@@ -41,7 +39,8 @@ export default function RankingTab({ from, to }: { from: string; to: string }) {
 
   const sorted = [...data].sort((a, b) => {
     const diff = a[sortBy] - b[sortBy];
-    return sortDir === 'desc' ? -diff : diff;
+    if (diff !== 0) return sortDir === 'desc' ? -diff : diff;
+    return a.barberName.localeCompare(b.barberName);
   });
 
   return (
@@ -56,7 +55,10 @@ export default function RankingTab({ from, to }: { from: string; to: string }) {
               <TableHead>#</TableHead>
               <TableHead>Barbeiro</TableHead>
               {COLUMNS.map((col) => (
-                <TableHead key={col.key}>
+                <TableHead
+                  key={col.key}
+                  aria-sort={sortBy === col.key ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}
+                >
                   <button
                     type="button"
                     className="flex items-center gap-1 font-medium"
@@ -78,7 +80,7 @@ export default function RankingTab({ from, to }: { from: string; to: string }) {
                 <TableCell>{formatBRL(entry.totalInCents)}</TableCell>
                 <TableCell>{entry.appointmentCount}</TableCell>
                 <TableCell>{formatBRL(entry.averageTicketInCents)}</TableCell>
-                <TableCell>{pct(entry.occupancyRate)}</TableCell>
+                <TableCell>{formatPct(entry.occupancyRate)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

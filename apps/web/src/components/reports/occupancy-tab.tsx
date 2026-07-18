@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { apiFetch } from '@/lib/api';
+import { formatPct } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Heatmap from './heatmap';
 import type { OccupancyReport } from '@/lib/types';
 
 const SERIES_COLOR = 'hsl(var(--primary))';
-
-const pct = (rate: number) => `${Math.round(rate * 100)}%`;
 
 export default function OccupancyTab({ from, to }: { from: string; to: string }) {
   const { data, isLoading } = useQuery({
@@ -28,7 +27,7 @@ export default function OccupancyTab({ from, to }: { from: string; to: string })
             <CardTitle className="text-muted-foreground text-sm font-medium">Ocupação geral</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{pct(data.overallRate)}</p>
+            <p className="text-2xl font-bold">{formatPct(data.overallRate)}</p>
             <p className="text-muted-foreground text-xs">
               {data.scheduledMinutes} de {data.availableMinutes} minutos
             </p>
@@ -39,7 +38,7 @@ export default function OccupancyTab({ from, to }: { from: string; to: string })
             <CardTitle className="text-muted-foreground text-sm font-medium">Taxa de cancelamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{pct(data.cancellation.rate)}</p>
+            <p className="text-2xl font-bold">{formatPct(data.cancellation.rate)}</p>
             <p className="text-muted-foreground text-xs">
               {data.cancellation.cancelled} de {data.cancellation.total} agendamentos
             </p>

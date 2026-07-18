@@ -3,6 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReportsPage from '../reports';
+import { apiFetch } from '@/lib/api';
 import { formatBRL } from '@/lib/utils';
 import type { RevenueReport, OccupancyReport, BarberRankingEntry } from '@/lib/types';
 
@@ -123,5 +124,55 @@ describe('ReportsPage', () => {
     const rows = await screen.findAllByRole('row');
     expect(within(rows[1]).getByText('João')).toBeInTheDocument(); // 70000 < 90000, ascendente
     expect(within(rows[2]).getByText('Maria')).toBeInTheDocument();
+  });
+
+  it('shows formatted currency and percentage values in the ranking row', async () => {
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    await screen.findAllByRole('row');
+    expect(screen.getByText(brl(90000))).toBeInTheDocument(); // faturamento da Maria
+    expect(screen.getByText(brl(9000))).toBeInTheDocument(); // ticket médio da Maria
+    expect(screen.getByText('80%')).toBeInTheDocument(); // ocupação da Maria
+  });
+
+  it('sorts by ticket médio and by ocupação when their headers are clicked', async () => {
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    await screen.findAllByRole('row');
+
+    fireEvent.click(screen.getByRole('button', { name: /ticket médio/i }));
+    let rows = await screen.findAllByRole('row');
+    expect(within(rows[1]).getByText('Maria')).toBeInTheDocument(); // ticket médio maior (9000 vs 2800)
+
+    fireEvent.click(screen.getByRole('button', { name: /ocupação/i }));
+    rows = await screen.findAllByRole('row');
+    expect(within(rows[1]).getByText('Maria')).toBeInTheDocument(); // ocupação maior (0.8 vs 0.5)
+  });
+
+  it('shows an empty message when there is no ranking data', async () => {
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path.startsWith('/reports/revenue')) return Promise.resolve(revenueFixture);
+      if (path.startsWith('/reports/barbers/ranking')) return Promise.resolve([]);
+      return Promise.resolve(occupancyFixture);
+    });
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    expect(await screen.findByText('Sem dados no período.')).toBeInTheDocument();
+  });
+
+  it('shows a loading message before ranking data resolves', async () => {
+    let resolveRanking!: (value: BarberRankingEntry[]) => void;
+    const pending = new Promise<BarberRankingEntry[]>((resolve) => {
+      resolveRanking = resolve;
+    });
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path.startsWith('/reports/revenue')) return Promise.resolve(revenueFixture);
+      if (path.startsWith('/reports/barbers/ranking')) return pending;
+      return Promise.resolve(occupancyFixture);
+    });
+    renderPage();
+    fireEvent.mouseDown(await screen.findByRole('tab', { name: /ranking/i }), { button: 0 });
+    expect(await screen.findByText('Carregando...')).toBeInTheDocument();
+    resolveRanking([]);
   });
 });
