@@ -126,6 +126,25 @@ describe('BarberRankingService', () => {
     expect(result[0].averageTicketInCents).toBe(3333); // 10000/3 = 3333.33 → arredonda pra baixo
   });
 
+  it('excludes a barber that has revenue but is no longer active (occupancy list is authoritative)', async () => {
+    const revenue = makeRevenueReport(
+      jest.fn().mockResolvedValue({
+        totalInCents: 50000,
+        appointmentCount: 20,
+        averageTicketInCents: 2500,
+        byDay: [],
+        byService: [],
+        byBarber: [{ barberId: 'b-deactivated', barberName: 'Ex-barbeiro', totalInCents: 50000, count: 20 }],
+      }),
+    );
+    const occupancy = makeOccupancyReport(); // byBarber: [] — barbeiro não está mais ativo
+    const service = new BarberRankingService(revenue, occupancy);
+
+    const result = await service.execute('t1', '2026-07-01', '2026-07-31');
+
+    expect(result).toEqual([]);
+  });
+
   it('returns empty array when tenant has no active barbers', async () => {
     const service = new BarberRankingService(makeRevenueReport(), makeOccupancyReport());
     const result = await service.execute('t1', '2026-07-01', '2026-07-31');

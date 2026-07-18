@@ -25,6 +25,11 @@ export class BarberRankingService {
     ]);
     const revenueByBarberId = new Map(revenue.byBarber.map((b) => [b.barberId, b]));
 
+    // Lista-base é occupancy.byBarber (todo barbeiro ATIVO do tenant), não
+    // revenue.byBarber (só quem teve agendamento no período). Consequência:
+    // um barbeiro desativado no meio do período some do ranking mesmo tendo
+    // gerado receita — mesma simplificação já assumida no OccupancyReportService
+    // (sem histórico de ativação, ver comentário em occupancy-report.service.ts).
     return occupancy.byBarber.map((o) => {
       const rev = revenueByBarberId.get(o.barberId);
       const totalInCents = rev?.totalInCents ?? 0;
