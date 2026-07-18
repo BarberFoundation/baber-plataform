@@ -104,7 +104,7 @@ export interface InactiveClient {
 export interface AdminProfile {
   id: string;
   name: string | null;
-  role: string;
+  role: 'ADMIN' | 'RECEPTIONIST';
   phone: string | null;
   email: string | null;
 }
