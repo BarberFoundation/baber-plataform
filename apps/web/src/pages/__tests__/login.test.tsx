@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import LoginPage from '../login';
 
 const mockSignInWithPhoneNumber = vi.fn();
@@ -128,5 +129,38 @@ describe('LoginPage — Google', () => {
     fireEvent.click(screen.getByRole('button', { name: /continuar com google/i }));
 
     await waitFor(() => expect(mockSignInWithPopup).toHaveBeenCalled());
+  });
+
+  it('shows a toast when the user closes the Google popup', async () => {
+    mockSignInWithPopup.mockRejectedValue({ code: 'auth/popup-closed-by-user' });
+
+    render(
+      <MemoryRouter>
+        <Toaster />
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /continuar com google/i }));
+
+    await waitFor(() => expect(mockSignInWithPopup).toHaveBeenCalled());
+    expect(await screen.findByText('Login cancelado.')).toBeInTheDocument();
+  });
+
+  it('shows a toast when the Google popup is blocked', async () => {
+    mockSignInWithPopup.mockRejectedValue({ code: 'auth/popup-blocked' });
+
+    render(
+      <MemoryRouter>
+        <Toaster />
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /continuar com google/i }));
+
+    expect(
+      await screen.findByText('Pop-up bloqueado pelo navegador. Permita pop-ups e tente novamente.'),
+    ).toBeInTheDocument();
   });
 });

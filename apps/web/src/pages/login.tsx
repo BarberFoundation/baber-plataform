@@ -28,6 +28,10 @@ const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
   'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
   'auth/invalid-verification-code': 'Código de verificação inválido.',
   'auth/code-expired': 'Código expirado. Solicite um novo.',
+  'auth/popup-closed-by-user': 'Login cancelado.',
+  'auth/popup-blocked': 'Pop-up bloqueado pelo navegador. Permita pop-ups e tente novamente.',
+  'auth/account-exists-with-different-credential':
+    'Já existe uma conta com este e-mail usando outro método de login.',
 };
 
 function firebaseErrorMessage(err: unknown): string {
