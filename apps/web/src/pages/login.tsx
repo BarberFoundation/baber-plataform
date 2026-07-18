@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
+  signInWithPopup,
+  GoogleAuthProvider,
   RecaptchaVerifier,
   type ConfirmationResult,
 } from 'firebase/auth';
@@ -16,6 +18,7 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import type { User } from '@/lib/types';
 
 type Method = 'email' | 'phone';
@@ -47,6 +50,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [method, setMethod] = useState<Method>('email');
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -119,6 +123,21 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    try {
+      const credential = await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+      const idToken = await credential.user.getIdToken();
+      const result = await exchangeIdToken(idToken);
+      setAuth(result.accessToken, result.expiresIn, result.user);
+      void navigate('/app');
+    } catch (err) {
+      toast.error(firebaseErrorMessage(err));
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
     if (!recaptchaContainerRef.current) return;
@@ -185,7 +204,40 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">Entrar</h1>
           <p className="mt-1 text-sm text-muted-foreground">Acesse o painel administrativo.</p>
 
-          <div className="mt-6 flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-6 w-full gap-2"
+            disabled={googleLoading}
+            onClick={() => void handleGoogleSignIn()}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.27 14.28A7.2 7.2 0 0 1 4.87 12c0-.79.14-1.56.4-2.28V6.63H1.29A11.98 11.98 0 0 0 0 12c0 1.93.46 3.76 1.29 5.37z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.76 0 3.34.6 4.59 1.79l3.44-3.44C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.63l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"
+              />
+            </svg>
+            {googleLoading ? 'Entrando...' : 'Continuar com Google'}
+          </Button>
+          <div className="my-6 flex items-center gap-3">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">ou</span>
+            <Separator className="flex-1" />
+          </div>
+
+          <div className="flex gap-2">
             <Button
               type="button"
               variant={method === 'email' ? 'default' : 'outline'}

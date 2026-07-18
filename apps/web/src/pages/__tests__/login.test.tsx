@@ -7,6 +7,7 @@ const mockSignInWithPhoneNumber = vi.fn();
 const mockConfirm = vi.fn();
 const mockRecaptchaClear = vi.fn();
 const mockRecaptchaVerifier = vi.fn().mockImplementation(() => ({ clear: mockRecaptchaClear }));
+const mockSignInWithPopup = vi.fn();
 
 vi.mock('firebase/auth', async () => {
   const actual = await vi.importActual<typeof import('firebase/auth')>('firebase/auth');
@@ -14,6 +15,7 @@ vi.mock('firebase/auth', async () => {
     ...actual,
     signInWithEmailAndPassword: vi.fn(),
     signInWithPhoneNumber: (...args: unknown[]) => mockSignInWithPhoneNumber(...args),
+    signInWithPopup: (...args: unknown[]) => mockSignInWithPopup(...args),
     RecaptchaVerifier: function (...args: unknown[]) {
       return mockRecaptchaVerifier(...args);
     },
@@ -40,6 +42,7 @@ beforeEach(() => {
   mockConfirm.mockReset();
   mockRecaptchaVerifier.mockClear();
   mockRecaptchaClear.mockClear();
+  mockSignInWithPopup.mockReset();
 });
 
 describe('LoginPage — telefone tab', () => {
@@ -107,5 +110,23 @@ describe('LoginPage — telefone tab', () => {
     fireEvent.click(screen.getByRole('button', { name: /trocar número/i }));
     expect(screen.queryByLabelText(/c(o|ó)digo/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/telefone/i)).not.toBeDisabled();
+  });
+});
+
+describe('LoginPage — Google', () => {
+  it('signs in with a Google popup and exchanges the resulting idToken', async () => {
+    mockSignInWithPopup.mockResolvedValue({
+      user: { getIdToken: vi.fn().mockResolvedValue('id-token-google') },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /continuar com google/i }));
+
+    await waitFor(() => expect(mockSignInWithPopup).toHaveBeenCalled());
   });
 });
