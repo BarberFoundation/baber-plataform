@@ -1,4 +1,4 @@
-import { WorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 import { dayOfWeekFromDate, timeToMinutes, timesOverlap } from '../utils/time.utils';
 import { AppointmentConflictError, InvalidAppointmentTimeError } from '../errors/scheduling.errors';
 

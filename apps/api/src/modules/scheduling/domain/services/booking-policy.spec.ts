@@ -1,6 +1,6 @@
 import { BookingPolicy, BarberScheduleInfo } from './booking-policy';
 import { AppointmentConflictError, InvalidAppointmentTimeError } from '../errors/scheduling.errors';
-import { defaultWorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const ACTIVE_BARBER: BarberScheduleInfo = {
   isActive: true,
