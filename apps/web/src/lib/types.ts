@@ -135,3 +135,12 @@ export interface Session {
   expiresAt: string;
   isCurrent: boolean;
 }
+
+export interface BarberRankingEntry {
+  barberId: string;
+  barberName: string;
+  totalInCents: number;
+  appointmentCount: number;
+  averageTicketInCents: number;
+  occupancyRate: number;
+}
