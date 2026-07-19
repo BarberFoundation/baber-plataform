@@ -6,4 +6,5 @@ export * from './refresh-tokens';
 export * from './services';
 export * from './barbers';
 export * from './appointments';
+export * from './loyalty';
 export * from './notification-logs';
