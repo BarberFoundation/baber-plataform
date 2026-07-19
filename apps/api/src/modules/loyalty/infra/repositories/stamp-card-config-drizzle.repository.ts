@@ -22,12 +22,13 @@ export class StampCardConfigDrizzleRepository implements IStampCardConfigReposit
   }
 
   async upsert(config: StampCardConfig): Promise<StampCardConfig> {
-    await this.db
+    const eligibleServiceIds = [...config.eligibleServiceIds];
+    const [row] = await this.db
       .insert(schema.stampCardConfigs)
       .values({
         id: config.id,
         tenantId: config.tenantId,
-        eligibleServiceIds: [...config.eligibleServiceIds],
+        eligibleServiceIds,
         stampsRequired: config.stampsRequired,
         creditValueInCents: config.creditValueInCents,
         isActive: config.isActive,
@@ -37,14 +38,15 @@ export class StampCardConfigDrizzleRepository implements IStampCardConfigReposit
       .onConflictDoUpdate({
         target: schema.stampCardConfigs.tenantId,
         set: {
-          eligibleServiceIds: [...config.eligibleServiceIds],
+          eligibleServiceIds,
           stampsRequired: config.stampsRequired,
           creditValueInCents: config.creditValueInCents,
           isActive: config.isActive,
           updatedAt: config.updatedAt,
         },
-      });
-    return config;
+      })
+      .returning();
+    return this.toEntity(row);
   }
 
   private toEntity(row: typeof schema.stampCardConfigs.$inferSelect): StampCardConfig {

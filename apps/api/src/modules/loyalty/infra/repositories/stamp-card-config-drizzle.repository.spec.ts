@@ -11,6 +11,7 @@ function makeChain(result: unknown, error?: unknown) {
   chain.insert = jest.fn(self);
   chain.values = jest.fn(self);
   chain.onConflictDoUpdate = jest.fn(self);
+  chain.returning = jest.fn(self);
   chain.then = (resolve: (v: unknown) => void, reject: (e: unknown) => void) =>
     error ? reject(error) : resolve(result);
   return chain;
@@ -53,8 +54,10 @@ describe('StampCardConfigDrizzleRepository', () => {
   });
 
   describe('upsert', () => {
-    it('returns the same config it was given', async () => {
-      const db = { insert: jest.fn(() => makeChain(undefined)) };
+    it('returns a reconstituted entity from the actual DB row, not the input config', async () => {
+      // Mock row has a different id than the input config, proving we return DB truth
+      const dbRow = makeRow({ id: 'cfg-db-actual-id' });
+      const db = { insert: jest.fn(() => makeChain([dbRow])) };
       const repo = new StampCardConfigDrizzleRepository(db as never);
       const config = StampCardConfig.create({
         tenantId: 't1',
@@ -66,7 +69,11 @@ describe('StampCardConfigDrizzleRepository', () => {
 
       const result = await repo.upsert(config);
 
-      expect(result).toBe(config);
+      // Result should reflect the DB row's id, not the input config's id
+      expect(result.id).toBe('cfg-db-actual-id');
+      expect(result.id).not.toBe(config.id);
+      expect(result.tenantId).toBe('t1');
+      expect(result.stampsRequired).toBe(10);
       expect(db.insert).toHaveBeenCalled();
     });
   });
