@@ -21,22 +21,46 @@ function makeRepo(appt: Appointment | null = makeAppt()): ISchedulingRepository 
   };
 }
 
+function makeEmitter() {
+  return {
+    emit: jest.fn(),
+  };
+}
+
 describe('CompleteAppointmentUseCase', () => {
   it('completes a CONFIRMED appointment', async () => {
     const repo = makeRepo();
-    const uc = new CompleteAppointmentUseCase(repo);
+    const emitter = makeEmitter();
+    const uc = new CompleteAppointmentUseCase(repo, emitter as never);
     const result = await uc.execute({ id: 'appt-1', tenantId: 'tenant-1' });
     expect(result.status).toBe('COMPLETED');
     expect(repo.save).toHaveBeenCalled();
   });
 
   it('throws AppointmentNotFoundError when not found', async () => {
-    const uc = new CompleteAppointmentUseCase(makeRepo(null));
+    const repo = makeRepo(null);
+    const emitter = makeEmitter();
+    const uc = new CompleteAppointmentUseCase(repo, emitter as never);
     await expect(uc.execute({ id: 'x', tenantId: 'tenant-1' })).rejects.toBeInstanceOf(AppointmentNotFoundError);
   });
 
   it('throws InvalidStatusTransitionError when appointment is not CONFIRMED', async () => {
-    const uc = new CompleteAppointmentUseCase(makeRepo(makeAppt('PENDING')));
+    const repo = makeRepo(makeAppt('PENDING'));
+    const emitter = makeEmitter();
+    const uc = new CompleteAppointmentUseCase(repo, emitter as never);
     await expect(uc.execute({ id: 'appt-1', tenantId: 'tenant-1' })).rejects.toBeInstanceOf(InvalidStatusTransitionError);
+  });
+
+  it('emits appointment.completed with the appointment data', async () => {
+    const repo = makeRepo();
+    const emitter = makeEmitter();
+    const uc = new CompleteAppointmentUseCase(repo, emitter as never);
+
+    await uc.execute({ id: 'appt-1', tenantId: 'tenant-1' });
+
+    expect(emitter.emit).toHaveBeenCalledWith(
+      'appointment.completed',
+      expect.objectContaining({ appointmentId: 'appt-1', tenantId: 'tenant-1' }),
+    );
   });
 });
