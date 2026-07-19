@@ -26,6 +26,7 @@ export class ConfirmAppointmentUseCase {
     const payload: AppointmentEventPayload = {
       appointmentId: saved.id,
       tenantId:      saved.tenantId,
+      customerId:    saved.customerId,
       clientName:    saved.clientName,
       clientPhone:   saved.clientPhone,
       barberId:      saved.barberId,

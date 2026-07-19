@@ -41,4 +41,20 @@ describe('ConfirmAppointmentUseCase', () => {
     const uc = new ConfirmAppointmentUseCase(makeRepo(makeAppt('CANCELLED')), MOCK_EMITTER);
     await expect(uc.execute({ id: 'appt-1', tenantId: 'tenant-1' })).rejects.toBeInstanceOf(InvalidStatusTransitionError);
   });
+
+  it('emits appointment.confirmed with customerId from appointment', async () => {
+    const appt = Appointment.reconstitute({
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1', customerId: 'customer-1',
+      clientName: 'João', clientPhone: '+55', date: '2025-03-10',
+      startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
+      status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo = makeRepo(appt);
+    const uc = new ConfirmAppointmentUseCase(repo, MOCK_EMITTER);
+    await uc.execute({ id: 'appt-1', tenantId: 'tenant-1' });
+    expect(MOCK_EMITTER.emit).toHaveBeenCalledWith(
+      'appointment.confirmed',
+      expect.objectContaining({ customerId: 'customer-1' }),
+    );
+  });
 });
