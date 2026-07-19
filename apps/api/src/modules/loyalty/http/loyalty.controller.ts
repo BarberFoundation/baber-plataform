@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put } from '@nestjs/common';
-import { ArrayMinSize, IsArray, IsBoolean, IsInt, IsString, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { Roles } from '@shared/auth/roles.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
@@ -13,6 +13,7 @@ class UpsertStampCardConfigDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   eligibleServiceIds!: string[];
 
   @IsInt()
