@@ -21,6 +21,7 @@ import { TeamModule } from './modules/team/team.module';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ReportingModule } from './modules/reporting/reporting.module';
     SchedulingModule,
     NotificationsModule,
     ReportingModule,
+    LoyaltyModule,
   ],
   providers: [
     TenantContext,
