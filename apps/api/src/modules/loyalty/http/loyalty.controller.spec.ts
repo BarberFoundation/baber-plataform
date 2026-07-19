@@ -70,6 +70,24 @@ describe('LoyaltyController', () => {
     });
   });
 
+  it('GET /loyalty/stamp-card/config returns the serialized config', async () => {
+    app = await buildApp('ADMIN');
+    const config = StampCardConfig.create({
+      tenantId: 't1',
+      eligibleServiceIds: ['svc-1'],
+      stampsRequired: 10,
+      creditValueInCents: 5000,
+      isActive: true,
+    });
+    getConfig.execute.mockResolvedValue(config);
+
+    const res = await request(app.getHttpServer()).get('/loyalty/stamp-card/config');
+
+    expect(res.status).toBe(200);
+    expect(res.body.stampsRequired).toBe(10);
+    expect(getConfig.execute).toHaveBeenCalledWith({ tenantId: 't1' });
+  });
+
   it('GET /loyalty/stamp-card/me returns the client progress view', async () => {
     app = await buildApp('CLIENT');
     getMyCard.execute.mockResolvedValue({ currentStamps: 3, stampsRequired: 10, creditBalanceInCents: 0 });
