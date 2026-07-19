@@ -74,6 +74,16 @@ describe('BookAppointmentUseCase', () => {
     expect(result.customerId).toBe('user-1');
   });
 
+  it('emits appointment.booked with customerId from input', async () => {
+    const repo = makeRepo();
+    const uc = new BookAppointmentUseCase(repo, makeBarberLookup(), makeServiceLookup(), MOCK_EMITTER);
+    await uc.execute({ ...INPUT, customerId: 'client-1' });
+    expect(MOCK_EMITTER.emit).toHaveBeenCalledWith(
+      'appointment.booked',
+      expect.objectContaining({ customerId: 'client-1' }),
+    );
+  });
+
   it('throws InvalidAppointmentTimeError when barber not found', async () => {
     const repo = makeRepo();
     const uc = new BookAppointmentUseCase(repo, makeBarberLookup(null as any), makeServiceLookup(), MOCK_EMITTER);
