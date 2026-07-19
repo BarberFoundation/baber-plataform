@@ -4,7 +4,7 @@ import { InvalidStampCardConfigError } from '../errors/loyalty.errors';
 export interface StampCardConfigProps {
   id: string;
   tenantId: string;
-  eligibleServiceIds: string[];
+  eligibleServiceIds: readonly string[];
   stampsRequired: number;
   creditValueInCents: number;
   isActive: boolean;
@@ -16,7 +16,7 @@ export interface UpsertStampCardConfigProps {
   id?: string;
   createdAt?: Date;
   tenantId: string;
-  eligibleServiceIds: string[];
+  eligibleServiceIds: readonly string[];
   stampsRequired: number;
   creditValueInCents: number;
   isActive: boolean;
@@ -25,7 +25,7 @@ export interface UpsertStampCardConfigProps {
 export class StampCardConfig {
   readonly id: string;
   readonly tenantId: string;
-  readonly eligibleServiceIds: string[];
+  readonly eligibleServiceIds: readonly string[];
   readonly stampsRequired: number;
   readonly creditValueInCents: number;
   readonly isActive: boolean;
@@ -35,7 +35,7 @@ export class StampCardConfig {
   private constructor(props: StampCardConfigProps) {
     this.id = props.id;
     this.tenantId = props.tenantId;
-    this.eligibleServiceIds = props.eligibleServiceIds;
+    this.eligibleServiceIds = [...props.eligibleServiceIds];
     this.stampsRequired = props.stampsRequired;
     this.creditValueInCents = props.creditValueInCents;
     this.isActive = props.isActive;
