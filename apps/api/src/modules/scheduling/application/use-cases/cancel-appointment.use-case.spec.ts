@@ -119,4 +119,20 @@ describe('CancelAppointmentUseCase', () => {
     const result = await uc.execute({ id: 'appt-1', tenantId: 'tenant-1', requestedBy: { userId: 'recep-1', role: 'RECEPTIONIST' } });
     expect(result.status).toBe('CANCELLED');
   });
+
+  it('emits appointment.cancelled with customerId from appointment', async () => {
+    const appt = Appointment.reconstitute({
+      id: 'appt-1', tenantId: 'tenant-1', barberId: 'barber-1', serviceId: 'service-1',
+      customerId: 'user-1', clientName: 'Ana', clientPhone: '+55',
+      date: '2999-01-01', startTime: '09:00', endTime: '09:30', durationMinutes: 30, priceInCents: 3000,
+      status: 'PENDING', notes: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+    const repo = { findById: jest.fn().mockResolvedValue(appt), findAll: jest.fn(), findByBarberAndDate: jest.fn(), save: jest.fn().mockImplementation(async (a) => a) };
+    const uc = new CancelAppointmentUseCase(repo as any, MOCK_EMITTER);
+    await uc.execute({ id: 'appt-1', tenantId: 'tenant-1', requestedBy: ADMIN });
+    expect(MOCK_EMITTER.emit).toHaveBeenCalledWith(
+      'appointment.cancelled',
+      expect.objectContaining({ customerId: 'user-1' }),
+    );
+  });
 });
