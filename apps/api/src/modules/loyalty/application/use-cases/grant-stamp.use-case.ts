@@ -34,12 +34,12 @@ export class GrantStampUseCase {
     const card = existing ?? StampCard.createNew(input.tenantId, input.clientId);
 
     const result = card.addStamp(config.stampsRequired, config.creditValueInCents);
-    const saved = await this.cardRepo.save(card);
+    await this.cardRepo.save(card);
 
     const addedPayload: StampCardStampAddedPayload = {
       tenantId: input.tenantId,
       clientId: input.clientId,
-      currentStamps: saved.currentStamps,
+      currentStamps: card.currentStamps,
       stampsRequired: config.stampsRequired,
     };
     this.emitter.emit(LOYALTY_EVENTS.STAMP_ADDED, addedPayload);
@@ -49,7 +49,7 @@ export class GrantStampUseCase {
         tenantId: input.tenantId,
         clientId: input.clientId,
         creditEarnedInCents: result.creditEarnedInCents,
-        totalCreditBalanceInCents: saved.creditBalanceInCents,
+        totalCreditBalanceInCents: card.creditBalanceInCents,
       };
       this.emitter.emit(LOYALTY_EVENTS.STAMP_CARD_COMPLETED, completedPayload);
     }
