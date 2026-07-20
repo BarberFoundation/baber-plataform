@@ -1,10 +1,10 @@
-# baber-platform
+# barber-platform
 
-Monorepo da plataforma de barbearia (multi-tenant). Backend NestJS + Drizzle, painel admin React, mobile Flutter em repo separado (`baber-mobile`).
+Monorepo da plataforma de barbearia (multi-tenant). Backend NestJS + Drizzle, painel admin React, mobile Flutter em repo separado (`barber-mobile`).
 
 ## Stack
 
-- **API** (`apps/api`) — NestJS 11 + TypeScript + Drizzle ORM + PostgreSQL 16 + Redis 7. Deploy: Fly.io (`baber-api`, região `gru`).
+- **API** (`apps/api`) — NestJS 11 + TypeScript + Drizzle ORM + PostgreSQL 16 + Redis 7. Deploy: Fly.io (`barber-api`, região `gru`).
 - **Admin web** (`apps/web`) — React 18 + Vite 6 + Tailwind + shadcn/ui + TanStack Query + Zustand. Auth admin via Firebase. Deploy: Vercel.
 - **Dev local** — Docker Compose (Postgres + Redis; Evolution API opcional para WhatsApp).
 - **Monorepo** — pnpm workspaces + Turborepo. CI no GitHub Actions (`ci.yml`, `release.yml` com Changesets).
