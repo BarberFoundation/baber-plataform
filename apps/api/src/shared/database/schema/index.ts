@@ -8,3 +8,4 @@ export * from './barbers';
 export * from './appointments';
 export * from './loyalty';
 export * from './notification-logs';
+export * from './club-subscriptions';
