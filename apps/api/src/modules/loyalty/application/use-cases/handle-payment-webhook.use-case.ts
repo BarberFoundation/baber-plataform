@@ -14,6 +14,7 @@ import {
   ClubSubscriptionRenewedPayload,
   SubscriptionPaymentFailedPayload,
 } from '@shared/events/club-subscription-events';
+import { toLocalDateString } from '../../domain/utils/date.utils';
 
 export interface PaymentWebhookInput {
   event: string;
@@ -22,13 +23,6 @@ export interface PaymentWebhookInput {
 
 const RENEWAL_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']);
 const FAILURE_EVENTS = new Set(['PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED']);
-
-function toLocalDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 @Injectable()
 export class HandlePaymentWebhookUseCase {

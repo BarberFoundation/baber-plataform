@@ -65,4 +65,30 @@ describe('HandlePaymentWebhookUseCase', () => {
     expect(clubSubRepo.save).toHaveBeenCalledWith(sub);
     expect(emitter.emit).toHaveBeenCalledWith('loyalty.club_subscription.payment_failed', expect.objectContaining({ asaasSubscriptionId: 'asaas_sub_1' }));
   });
+
+  it('does nothing if no club subscription is found for the Asaas subscription id', async () => {
+    const clubSubRepo = { findByAsaasSubscriptionId: jest.fn().mockResolvedValue(null), save: jest.fn() };
+    const tierRepo = { findById: jest.fn() };
+    const emitter = { emit: jest.fn() };
+    const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
+
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_unknown' });
+
+    expect(clubSubRepo.save).not.toHaveBeenCalled();
+    expect(emitter.emit).not.toHaveBeenCalled();
+  });
+
+  it('does nothing on renewal if the subscription tier can no longer be found', async () => {
+    const sub = makeSub();
+    const clubSubRepo = { findByAsaasSubscriptionId: jest.fn().mockResolvedValue(sub), save: jest.fn() };
+    const tierRepo = { findById: jest.fn().mockResolvedValue(null) };
+    const emitter = { emit: jest.fn() };
+    const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
+
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+
+    expect(sub.renew).not.toHaveBeenCalled();
+    expect(clubSubRepo.save).not.toHaveBeenCalled();
+    expect(emitter.emit).not.toHaveBeenCalled();
+  });
 });
