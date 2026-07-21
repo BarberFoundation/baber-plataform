@@ -17,8 +17,9 @@ describe('GrantStampUseCase', () => {
   it('does nothing when the tenant has no stamp card config', async () => {
     const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(null) };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
-    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, { emit } as never);
+    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, clubSubRepo as never, { emit } as never);
 
     await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-1' });
 
@@ -29,8 +30,9 @@ describe('GrantStampUseCase', () => {
   it('does nothing when the completed service is not eligible', async () => {
     const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
-    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, { emit } as never);
+    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, clubSubRepo as never, { emit } as never);
 
     await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-not-eligible' });
 
@@ -41,8 +43,9 @@ describe('GrantStampUseCase', () => {
   it('creates a new card, adds a stamp, saves it and emits STAMP_ADDED', async () => {
     const cardRepo = { findByClientId: jest.fn().mockResolvedValue(null), save: jest.fn((c) => Promise.resolve(c)) };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
-    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, { emit } as never);
+    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, clubSubRepo as never, { emit } as never);
 
     await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-1' });
 
@@ -58,8 +61,9 @@ describe('GrantStampUseCase', () => {
     existing.addStamp(2, 5000); // one stamp already, threshold=2
     const cardRepo = { findByClientId: jest.fn().mockResolvedValue(existing), save: jest.fn((c) => Promise.resolve(c)) };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
-    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, { emit } as never);
+    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, clubSubRepo as never, { emit } as never);
 
     await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-1' });
 
@@ -68,5 +72,18 @@ describe('GrantStampUseCase', () => {
       'loyalty.stamp_card.completed',
       expect.objectContaining({ tenantId: 't1', clientId: 'client-1', creditEarnedInCents: 5000 }),
     );
+  });
+
+  it('does nothing if the client has an ACTIVE club subscription', async () => {
+    const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
+    const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue({ status: 'ACTIVE' }) };
+    const emit = jest.fn();
+    const useCase = new GrantStampUseCase(cardRepo as never, configRepo as never, clubSubRepo as never, { emit } as never);
+
+    await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-1' });
+
+    expect(cardRepo.save).not.toHaveBeenCalled();
+    expect(emit).not.toHaveBeenCalled();
   });
 });

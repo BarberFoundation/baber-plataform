@@ -5,6 +5,10 @@ import {
   STAMP_CARD_CONFIG_REPOSITORY,
   IStampCardConfigRepository,
 } from '../../domain/repositories/stamp-card-config.repository';
+import {
+  CLUB_SUBSCRIPTION_REPOSITORY,
+  IClubSubscriptionRepository,
+} from '../../domain/repositories/club-subscription.repository';
 import { StampCard } from '../../domain/entities/stamp-card.entity';
 import {
   LOYALTY_EVENTS,
@@ -23,10 +27,14 @@ export class GrantStampUseCase {
   constructor(
     @Inject(STAMP_CARD_REPOSITORY) private readonly cardRepo: IStampCardRepository,
     @Inject(STAMP_CARD_CONFIG_REPOSITORY) private readonly configRepo: IStampCardConfigRepository,
+    @Inject(CLUB_SUBSCRIPTION_REPOSITORY) private readonly clubSubRepo: IClubSubscriptionRepository,
     @Inject(EventEmitter2) private readonly emitter: EventEmitter2,
   ) {}
 
   async execute(input: GrantStampInput): Promise<void> {
+    const activeSubscription = await this.clubSubRepo.findByClientId(input.tenantId, input.clientId);
+    if (activeSubscription && activeSubscription.status === 'ACTIVE') return;
+
     const config = await this.configRepo.findByTenantId(input.tenantId);
     if (!config || !config.isServiceEligible(input.serviceId)) return;
 
