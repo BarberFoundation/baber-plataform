@@ -71,4 +71,25 @@ describe('ActivateClubSubscriptionUseCase', () => {
     expect(deps.clubSubRepo.save).toHaveBeenCalled();
     expect(deps.emitter.emit).toHaveBeenCalledWith('loyalty.club_subscription.activated', expect.objectContaining({ tenantId: 't1', clientId: 'client-1' }));
   });
+
+  describe('timezone handling', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('uses the local calendar date, not the UTC-shifted date, for dueDate and currentCycleStart near midnight UTC rollover', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-07-15T23:30:00-03:00'));
+
+      const deps = makeDeps();
+      const useCase = makeUseCase(deps);
+      await useCase.execute(input);
+
+      expect(deps.paymentGateway.createOneOffCharge).toHaveBeenCalledWith(
+        expect.objectContaining({ dueDate: '2026-07-15' }),
+      );
+
+      const savedSubscription = deps.clubSubRepo.save.mock.calls[0][0];
+      expect(savedSubscription.currentCycleStart).toBe('2026-07-15');
+    });
+  });
 });

@@ -35,6 +35,13 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 @Injectable()
 export class ActivateClubSubscriptionUseCase {
   constructor(
@@ -79,13 +86,13 @@ export class ActivateClubSubscriptionUseCase {
         customerId,
         billingType: 'PIX',
         valueInCents: proratedInCents,
-        dueDate: now.toISOString().slice(0, 10),
+        dueDate: toLocalDateString(now),
         description: `Adesão pro-rata — clube ${tier.tier}`,
       });
     }
 
     const nextMonthFirstDay = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextDueDate = nextMonthFirstDay.toISOString().slice(0, 10);
+    const nextDueDate = toLocalDateString(nextMonthFirstDay);
     const { subscriptionId } = await this.paymentGateway.createSubscription({
       customerId,
       billingType: 'PIX',
@@ -97,18 +104,29 @@ export class ActivateClubSubscriptionUseCase {
     const cycleEnd = new Date(nextMonthFirstDay.getFullYear(), nextMonthFirstDay.getMonth() + 1, 0);
     const quotas = tier.services.map((s) => ({ serviceId: s.serviceId, quantityTotal: s.quantity, quantityConsumed: 0 }));
 
-    const subscription = existing
-      ? (existing.reactivate(tier.id, customerId, subscriptionId, now.toISOString().slice(0, 10), cycleEnd.toISOString().slice(0, 10), quotas), existing)
-      : ClubSubscription.createNew({
-          tenantId: input.tenantId,
-          clientId: input.clientId,
-          tierId: tier.id,
-          asaasCustomerId: customerId,
-          asaasSubscriptionId: subscriptionId,
-          currentCycleStart: now.toISOString().slice(0, 10),
-          currentCycleEnd: cycleEnd.toISOString().slice(0, 10),
-          quotas,
-        });
+    let subscription: ClubSubscription;
+    if (existing) {
+      existing.reactivate(
+        tier.id,
+        customerId,
+        subscriptionId,
+        toLocalDateString(now),
+        toLocalDateString(cycleEnd),
+        quotas,
+      );
+      subscription = existing;
+    } else {
+      subscription = ClubSubscription.createNew({
+        tenantId: input.tenantId,
+        clientId: input.clientId,
+        tierId: tier.id,
+        asaasCustomerId: customerId,
+        asaasSubscriptionId: subscriptionId,
+        currentCycleStart: toLocalDateString(now),
+        currentCycleEnd: toLocalDateString(cycleEnd),
+        quotas,
+      });
+    }
 
     const saved = await this.clubSubRepo.save(subscription);
 
