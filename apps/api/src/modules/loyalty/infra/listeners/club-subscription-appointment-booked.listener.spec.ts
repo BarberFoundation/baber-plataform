@@ -1,4 +1,5 @@
 import { ClubSubscriptionAppointmentBookedListener } from './club-subscription-appointment-booked.listener';
+import { SubscriptionQuotaExhaustedError } from '../../domain/errors/loyalty.errors';
 
 describe('ClubSubscriptionAppointmentBookedListener', () => {
   const payload = {
@@ -35,5 +36,18 @@ describe('ClubSubscriptionAppointmentBookedListener', () => {
     const listener = new ClubSubscriptionAppointmentBookedListener(clubSubRepo as never);
     await listener.handle(payload);
     expect(sub.consumeQuota).not.toHaveBeenCalled();
+  });
+
+  it('swallows a quota-exhausted error instead of letting it reject handle() (appointment.booked is fire-and-forget)', async () => {
+    const sub = {
+      status: 'ACTIVE',
+      consumeQuota: jest.fn(() => {
+        throw new SubscriptionQuotaExhaustedError();
+      }),
+    };
+    const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(sub), save: jest.fn() };
+    const listener = new ClubSubscriptionAppointmentBookedListener(clubSubRepo as never);
+    await expect(listener.handle(payload)).resolves.toBeUndefined();
+    expect(clubSubRepo.save).not.toHaveBeenCalled();
   });
 });
