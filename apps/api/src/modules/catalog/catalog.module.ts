@@ -20,5 +20,6 @@ import { CatalogController } from './http/catalog.controller';
     GetServiceUseCase,
     ListServicesUseCase,
   ],
+  exports: [CATALOG_REPOSITORY],
 })
 export class CatalogModule {}
