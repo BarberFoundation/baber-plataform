@@ -14,7 +14,7 @@ import {
   ClubSubscriptionRenewedPayload,
   SubscriptionPaymentFailedPayload,
 } from '@shared/events/club-subscription-events';
-import { toLocalDateString } from '../../domain/utils/date.utils';
+import { nextRenewalCycle } from '../../domain/utils/date.utils';
 
 export interface PaymentWebhookInput {
   event: string;
@@ -51,13 +51,11 @@ export class HandlePaymentWebhookUseCase {
         return;
       }
 
-      const cycleStart = new Date(subscription.currentCycleEnd);
-      cycleStart.setDate(cycleStart.getDate() + 1);
-      const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 0);
+      const { cycleStart, cycleEnd } = nextRenewalCycle(subscription.currentCycleEnd);
 
       subscription.renew(
-        toLocalDateString(cycleStart),
-        toLocalDateString(cycleEnd),
+        cycleStart,
+        cycleEnd,
         tier.services.map((s) => ({ serviceId: s.serviceId, quantityTotal: s.quantity })),
       );
       await this.clubSubRepo.save(subscription);

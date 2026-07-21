@@ -47,9 +47,33 @@ describe('HandlePaymentWebhookUseCase', () => {
 
     await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
 
-    expect(sub.renew).toHaveBeenCalled();
+    expect(sub.renew).toHaveBeenCalledWith(
+      '2026-08-01',
+      '2026-08-31',
+      [{ serviceId: 'svc-1', quantityTotal: 2 }],
+    );
     expect(clubSubRepo.save).toHaveBeenCalledWith(sub);
     expect(emitter.emit).toHaveBeenCalledWith('loyalty.club_subscription.renewed', expect.objectContaining({ tenantId: 't1', clientId: 'client-1' }));
+  });
+
+  it('regression: renewing an end-of-month cycle does not collapse cycleStart/cycleEnd into the same day', async () => {
+    // Found via live Asaas sandbox webhook testing: currentCycleEnd '2026-08-31'
+    // renewed into cycleStart === cycleEnd === '2026-08-31' instead of '2026-09-01'/'2026-09-30',
+    // because new Date('2026-08-31') is UTC midnight and mixing it with local
+    // getDate()/setDate() silently rolls the day back in America/Sao_Paulo (UTC-3).
+    const sub = { ...makeSub(), currentCycleEnd: '2026-08-31' };
+    const clubSubRepo = { findByAsaasSubscriptionId: jest.fn().mockResolvedValue(sub), save: jest.fn((s) => s) };
+    const tierRepo = { findById: jest.fn().mockResolvedValue(makeTier()) };
+    const emitter = { emit: jest.fn() };
+    const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
+
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+
+    expect(sub.renew).toHaveBeenCalledWith(
+      '2026-09-01',
+      '2026-09-30',
+      [{ serviceId: 'svc-1', quantityTotal: 2 }],
+    );
   });
 
   it('PAYMENT_OVERDUE marks PAST_DUE, saves, and emits PAYMENT_FAILED', async () => {
