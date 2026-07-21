@@ -57,6 +57,9 @@ export const clubSubscriptionQuotas = pgTable(
     subscriptionId: uuid('subscription_id')
       .notNull()
       .references(() => clubSubscriptions.id),
+    // Snapshot reference, not live FK: quotas capture the tier's combo at
+    // activation/renewal time; Catalog services can be edited/deactivated
+    // independently (mirrors stamp_card_configs.eligible_service_ids as jsonb).
     serviceId: uuid('service_id').notNull(),
     quantityTotal: integer('quantity_total').notNull(),
     quantityConsumed: integer('quantity_consumed').notNull().default(0),
