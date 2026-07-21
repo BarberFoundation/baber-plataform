@@ -49,3 +49,4 @@ Handoff.md
 *.postman_collection.json
 *.postman_environment.json
 .superpowers/
+sandbox_asaas.txt
