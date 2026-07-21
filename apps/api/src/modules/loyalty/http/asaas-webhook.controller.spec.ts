@@ -29,6 +29,15 @@ describe('AsaasWebhookController', () => {
     await app.close();
   });
 
+  it('returns 401 when the access token header is missing entirely', async () => {
+    const app = await buildApp('correct-token');
+    await request(app.getHttpServer())
+      .post('/loyalty/club-subscription/webhooks/asaas')
+      .send({ event: 'PAYMENT_RECEIVED', payment: { subscription: 'asaas_sub_1' } })
+      .expect(401);
+    await app.close();
+  });
+
   it('processes the event and returns 200 when the token matches', async () => {
     const execute = jest.fn();
     const moduleRef = await Test.createTestingModule({
