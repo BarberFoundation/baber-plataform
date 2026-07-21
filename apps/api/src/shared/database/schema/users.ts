@@ -14,6 +14,7 @@ export const users = pgTable(
     role: roleEnum('role').notNull(),
     phone: text('phone'),
     email: text('email'),
+    cpf: text('cpf'),
     firebaseUid: text('firebase_uid').unique(),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

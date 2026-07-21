@@ -54,6 +54,18 @@ export class EnvVars {
 
   @IsOptional()
   @IsString()
+  ASAAS_API_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  ASAAS_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  ASAAS_WEBHOOK_TOKEN?: string;
+
+  @IsOptional()
+  @IsString()
   FIREBASE_PROJECT_ID?: string;
 
   @IsOptional()
