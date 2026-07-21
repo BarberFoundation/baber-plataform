@@ -85,5 +85,7 @@ describe('GrantStampUseCase', () => {
 
     expect(cardRepo.save).not.toHaveBeenCalled();
     expect(emit).not.toHaveBeenCalled();
+    expect(configRepo.findByTenantId).not.toHaveBeenCalled();
+    expect(cardRepo.findByClientId).not.toHaveBeenCalled();
   });
 });

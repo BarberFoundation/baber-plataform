@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { STAMP_CARD_REPOSITORY, IStampCardRepository } from '../../domain/repositories/stamp-card.repository';
 import {
@@ -24,6 +24,8 @@ export interface GrantStampInput {
 
 @Injectable()
 export class GrantStampUseCase {
+  private readonly logger = new Logger(GrantStampUseCase.name);
+
   constructor(
     @Inject(STAMP_CARD_REPOSITORY) private readonly cardRepo: IStampCardRepository,
     @Inject(STAMP_CARD_CONFIG_REPOSITORY) private readonly configRepo: IStampCardConfigRepository,
@@ -33,7 +35,12 @@ export class GrantStampUseCase {
 
   async execute(input: GrantStampInput): Promise<void> {
     const activeSubscription = await this.clubSubRepo.findByClientId(input.tenantId, input.clientId);
-    if (activeSubscription && activeSubscription.status === 'ACTIVE') return;
+    if (activeSubscription && activeSubscription.status === 'ACTIVE') {
+      this.logger.debug(
+        `Skipping stamp accrual: client ${input.clientId} has an active club subscription`,
+      );
+      return;
+    }
 
     const config = await this.configRepo.findByTenantId(input.tenantId);
     if (!config || !config.isServiceEligible(input.serviceId)) return;
