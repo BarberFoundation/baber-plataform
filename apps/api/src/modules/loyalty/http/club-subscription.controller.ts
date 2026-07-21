@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, Post, Put } from '@nestjs/common';
 import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Roles } from '@shared/auth/roles.decorator';
@@ -11,6 +11,8 @@ import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-cl
 import { CancelClubSubscriptionUseCase } from '../application/use-cases/cancel-club-subscription.use-case';
 import { SubscriptionTier, SubscriptionTierName } from '../domain/entities/subscription-tier.entity';
 import { ClubSubscription } from '../domain/entities/club-subscription.entity';
+
+const SUBSCRIPTION_TIER_NAMES: SubscriptionTierName[] = ['ESSENCIAL', 'JOGADOR', 'LENDARIO'];
 
 class TierServiceItemDto {
   @IsString()
@@ -38,7 +40,7 @@ class UpsertSubscriptionTierDto {
 }
 
 class ActivateClubSubscriptionDto {
-  @IsIn(['ESSENCIAL', 'JOGADOR', 'LENDARIO'])
+  @IsIn(SUBSCRIPTION_TIER_NAMES)
   tier!: SubscriptionTierName;
 
   @IsString()
@@ -93,7 +95,7 @@ export class ClubSubscriptionController {
   @Put('tiers/:tier')
   async upsert(
     @CurrentUser() user: JwtPayload,
-    @Param('tier') tier: SubscriptionTierName,
+    @Param('tier', new ParseEnumPipe(SUBSCRIPTION_TIER_NAMES)) tier: SubscriptionTierName,
     @Body() dto: UpsertSubscriptionTierDto,
   ) {
     const result = await this.upsertTier.execute({ tenantId: user.tenantId, tier, ...dto });

@@ -75,6 +75,17 @@ describe('ClubSubscriptionController', () => {
     });
   });
 
+  it('PUT /loyalty/club-subscription/tiers/BOGUS rejects an invalid tier param with 400', async () => {
+    app = await buildApp('ADMIN');
+
+    const res = await request(app.getHttpServer())
+      .put('/loyalty/club-subscription/tiers/BOGUS')
+      .send({ services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 15, isActive: true });
+
+    expect(res.status).toBe(400);
+    expect(upsertTier.execute).not.toHaveBeenCalled();
+  });
+
   it('GET /loyalty/club-subscription/tiers returns serialized tiers as ADMIN', async () => {
     app = await buildApp('ADMIN');
     const tier = SubscriptionTier.create({
