@@ -77,7 +77,10 @@ describe('ActivateClubSubscriptionUseCase', () => {
       jest.useRealTimers();
     });
 
-    it('uses the local calendar date, not the UTC-shifted date, for dueDate and currentCycleStart near midnight UTC rollover', async () => {
+    it('uses the São Paulo calendar date, not the server/CI-runner local date, for dueDate and currentCycleStart near midnight UTC rollover', async () => {
+      // 23:30 in São Paulo (UTC-3) is already 2026-07-16 in UTC — this instant must
+      // still resolve to 2026-07-15 regardless of which timezone the test runner
+      // (or a production server defaulting to UTC) happens to be in.
       jest.useFakeTimers().setSystemTime(new Date('2026-07-15T23:30:00-03:00'));
 
       const deps = makeDeps();

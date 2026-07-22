@@ -6,6 +6,39 @@ export function toLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+const fmtUTCDateOnly = (d: Date): string =>
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+
+/**
+ * Returns 'today' as 'YYYY-MM-DD' in the America/Sao_Paulo calendar, regardless
+ * of the process/OS timezone the server happens to run under (prod containers
+ * commonly default to UTC; CI runners too). Business is Brazil-only, so "today"
+ * must always mean the Brazilian calendar date, not the server's local date —
+ * using process-local Date getters here previously made this value depend on
+ * wherever the code happened to run (green on a dev machine set to
+ * America/Sao_Paulo, wrong by a day on a UTC server/CI runner).
+ */
+export function todayInSaoPaulo(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+/** Given a date-only 'YYYY-MM-DD', returns the 'YYYY-MM-DD' of the 1st of the following month. Pure calendar arithmetic via Date.UTC — see nextRenewalCycle for why local getters are unsafe here. */
+export function firstDayOfNextMonth(dateOnly: string): string {
+  const [year, month] = dateOnly.split('-').map(Number);
+  return fmtUTCDateOnly(new Date(Date.UTC(year, month, 1)));
+}
+
+/** Given a date-only 'YYYY-MM-DD', returns the 'YYYY-MM-DD' of the last day of that same month. Pure calendar arithmetic via Date.UTC — see nextRenewalCycle for why local getters are unsafe here. */
+export function endOfMonth(dateOnly: string): string {
+  const [year, month] = dateOnly.split('-').map(Number);
+  return fmtUTCDateOnly(new Date(Date.UTC(year, month, 0)));
+}
+
 /**
  * Given a date-only 'YYYY-MM-DD' cycle end, returns the day after it (new cycle
  * start) and the last day of the following month (new cycle end).
@@ -21,7 +54,5 @@ export function nextRenewalCycle(cycleEndDateOnly: string): { cycleStart: string
   const [year, month, day] = cycleEndDateOnly.split('-').map(Number);
   const start = new Date(Date.UTC(year, month - 1, day + 1));
   const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
-  const fmt = (d: Date) =>
-    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  return { cycleStart: fmt(start), cycleEnd: fmt(end) };
+  return { cycleStart: fmtUTCDateOnly(start), cycleEnd: fmtUTCDateOnly(end) };
 }

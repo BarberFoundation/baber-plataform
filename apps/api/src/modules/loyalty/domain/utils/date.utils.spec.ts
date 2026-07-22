@@ -1,4 +1,4 @@
-import { nextRenewalCycle, toLocalDateString } from './date.utils';
+import { nextRenewalCycle, toLocalDateString, todayInSaoPaulo, firstDayOfNextMonth, endOfMonth } from './date.utils';
 
 describe('nextRenewalCycle', () => {
   it('advances to the next day and the end of that day\'s month', () => {
@@ -24,5 +24,37 @@ describe('nextRenewalCycle', () => {
 describe('toLocalDateString', () => {
   it('formats using local calendar components', () => {
     expect(toLocalDateString(new Date(2026, 6, 5))).toBe('2026-07-05');
+  });
+});
+
+describe('todayInSaoPaulo', () => {
+  it('resolves to the São Paulo calendar date even for a UTC instant already past midnight there', () => {
+    // 2026-07-16T02:30:00Z is 2026-07-15T23:30:00-03:00 in São Paulo.
+    expect(todayInSaoPaulo(new Date('2026-07-16T02:30:00Z'))).toBe('2026-07-15');
+  });
+
+  it('resolves to the next São Paulo calendar day just after local midnight', () => {
+    // 2026-07-16T03:00:00Z is 2026-07-16T00:00:00-03:00 in São Paulo.
+    expect(todayInSaoPaulo(new Date('2026-07-16T03:00:00Z'))).toBe('2026-07-16');
+  });
+});
+
+describe('firstDayOfNextMonth', () => {
+  it('returns the 1st of the following month', () => {
+    expect(firstDayOfNextMonth('2026-07-15')).toBe('2026-08-01');
+  });
+
+  it('rolls over into January of the next year', () => {
+    expect(firstDayOfNextMonth('2026-12-05')).toBe('2027-01-01');
+  });
+});
+
+describe('endOfMonth', () => {
+  it('returns the last day of the given date\'s month', () => {
+    expect(endOfMonth('2026-08-01')).toBe('2026-08-31');
+  });
+
+  it('handles February in a leap year', () => {
+    expect(endOfMonth('2028-02-10')).toBe('2028-02-29');
   });
 });

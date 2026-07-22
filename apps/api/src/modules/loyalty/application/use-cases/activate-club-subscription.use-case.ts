@@ -20,7 +20,7 @@ import {
   ClubSubscriptionBlockedByStampCardError,
 } from '../../domain/errors/loyalty.errors';
 import { CLUB_SUBSCRIPTION_EVENTS, ClubSubscriptionActivatedPayload } from '@shared/events/club-subscription-events';
-import { toLocalDateString } from '../../domain/utils/date.utils';
+import { todayInSaoPaulo, firstDayOfNextMonth, endOfMonth } from '../../domain/utils/date.utils';
 
 export interface ActivateClubSubscriptionInput {
   tenantId: string;
@@ -66,9 +66,10 @@ export class ActivateClubSubscriptionUseCase {
     }
     const monthlyPriceInCents = tier.calculatePriceInCents(catalogPrices);
 
-    const now = new Date();
-    const totalDays = daysInMonth(now.getFullYear(), now.getMonth());
-    const daysRemaining = totalDays - now.getDate() + 1;
+    const todayStr = todayInSaoPaulo();
+    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number);
+    const totalDays = daysInMonth(todayYear, todayMonth - 1);
+    const daysRemaining = totalDays - todayDay + 1;
     const proratedInCents = Math.round((monthlyPriceInCents * daysRemaining) / totalDays);
 
     const { customerId } = await this.paymentGateway.createCustomer({
@@ -80,13 +81,12 @@ export class ActivateClubSubscriptionUseCase {
         customerId,
         billingType: 'PIX',
         valueInCents: proratedInCents,
-        dueDate: toLocalDateString(now),
+        dueDate: todayStr,
         description: `Adesão pro-rata — clube ${tier.tier}`,
       });
     }
 
-    const nextMonthFirstDay = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextDueDate = toLocalDateString(nextMonthFirstDay);
+    const nextDueDate = firstDayOfNextMonth(todayStr);
     const { subscriptionId } = await this.paymentGateway.createSubscription({
       customerId,
       billingType: 'PIX',
@@ -95,19 +95,12 @@ export class ActivateClubSubscriptionUseCase {
       description: `Clube ${tier.tier}`,
     });
 
-    const cycleEnd = new Date(nextMonthFirstDay.getFullYear(), nextMonthFirstDay.getMonth() + 1, 0);
+    const cycleEnd = endOfMonth(nextDueDate);
     const quotas = tier.services.map((s) => ({ serviceId: s.serviceId, quantityTotal: s.quantity, quantityConsumed: 0 }));
 
     let subscription: ClubSubscription;
     if (existing) {
-      existing.reactivate(
-        tier.id,
-        customerId,
-        subscriptionId,
-        toLocalDateString(now),
-        toLocalDateString(cycleEnd),
-        quotas,
-      );
+      existing.reactivate(tier.id, customerId, subscriptionId, todayStr, cycleEnd, quotas);
       subscription = existing;
     } else {
       subscription = ClubSubscription.createNew({
@@ -116,8 +109,8 @@ export class ActivateClubSubscriptionUseCase {
         tierId: tier.id,
         asaasCustomerId: customerId,
         asaasSubscriptionId: subscriptionId,
-        currentCycleStart: toLocalDateString(now),
-        currentCycleEnd: toLocalDateString(cycleEnd),
+        currentCycleStart: todayStr,
+        currentCycleEnd: cycleEnd,
         quotas,
       });
     }
