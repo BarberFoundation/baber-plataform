@@ -26,6 +26,7 @@ import { GetSubscriptionTiersUseCase } from './application/use-cases/get-subscri
 import { ActivateClubSubscriptionUseCase } from './application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from './application/use-cases/get-my-club-subscription.use-case';
 import { CancelClubSubscriptionUseCase } from './application/use-cases/cancel-club-subscription.use-case';
+import { GetAvailableSubscriptionTiersUseCase } from './application/use-cases/get-available-subscription-tiers.use-case';
 import { HandlePaymentWebhookUseCase } from './application/use-cases/handle-payment-webhook.use-case';
 
 import { AppointmentCompletedListener } from './infra/listeners/appointment-completed.listener';
@@ -62,6 +63,7 @@ import { AsaasWebhookController } from './http/asaas-webhook.controller';
     ActivateClubSubscriptionUseCase,
     GetMyClubSubscriptionUseCase,
     CancelClubSubscriptionUseCase,
+    GetAvailableSubscriptionTiersUseCase,
     HandlePaymentWebhookUseCase,
     AppointmentCompletedListener,
     ClubSubscriptionAppointmentBookedListener,

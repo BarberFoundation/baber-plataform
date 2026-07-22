@@ -9,6 +9,7 @@ import { GetSubscriptionTiersUseCase } from '../application/use-cases/get-subscr
 import { ActivateClubSubscriptionUseCase } from '../application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-club-subscription.use-case';
 import { CancelClubSubscriptionUseCase } from '../application/use-cases/cancel-club-subscription.use-case';
+import { GetAvailableSubscriptionTiersUseCase } from '../application/use-cases/get-available-subscription-tiers.use-case';
 import { SubscriptionTier, SubscriptionTierName } from '../domain/entities/subscription-tier.entity';
 import { ClubSubscription } from '../domain/entities/club-subscription.entity';
 
@@ -89,6 +90,7 @@ export class ClubSubscriptionController {
     private readonly activate: ActivateClubSubscriptionUseCase,
     private readonly getMySubscription: GetMyClubSubscriptionUseCase,
     private readonly cancelSubscription: CancelClubSubscriptionUseCase,
+    private readonly getAvailableTiers: GetAvailableSubscriptionTiersUseCase,
   ) {}
 
   @Roles('ADMIN')
@@ -107,6 +109,12 @@ export class ClubSubscriptionController {
   async tiers(@CurrentUser() user: JwtPayload) {
     const result = await this.getTiers.execute({ tenantId: user.tenantId });
     return result.map(serializeTier);
+  }
+
+  @Roles('CLIENT')
+  @Get('tiers/available')
+  async availableTiers(@CurrentUser() user: JwtPayload) {
+    return this.getAvailableTiers.execute({ tenantId: user.tenantId });
   }
 
   @Roles('CLIENT')

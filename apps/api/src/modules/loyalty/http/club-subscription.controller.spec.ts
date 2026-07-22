@@ -1,12 +1,15 @@
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { RolesGuard } from '@shared/auth/roles.guard';
 import { ClubSubscriptionController } from './club-subscription.controller';
 import { UpsertSubscriptionTierUseCase } from '../application/use-cases/upsert-subscription-tier.use-case';
 import { GetSubscriptionTiersUseCase } from '../application/use-cases/get-subscription-tiers.use-case';
 import { ActivateClubSubscriptionUseCase } from '../application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-club-subscription.use-case';
 import { CancelClubSubscriptionUseCase } from '../application/use-cases/cancel-club-subscription.use-case';
+import { GetAvailableSubscriptionTiersUseCase } from '../application/use-cases/get-available-subscription-tiers.use-case';
 import { SubscriptionTier } from '../domain/entities/subscription-tier.entity';
 import { ClubSubscription } from '../domain/entities/club-subscription.entity';
 
@@ -24,6 +27,7 @@ describe('ClubSubscriptionController', () => {
   const activate = { execute: jest.fn() };
   const getMySubscription = { execute: jest.fn() };
   const cancelSubscription = { execute: jest.fn() };
+  const getAvailableTiers = { execute: jest.fn() };
 
   async function buildApp(role: 'ADMIN' | 'CLIENT') {
     const moduleRef = await Test.createTestingModule({
@@ -34,6 +38,9 @@ describe('ClubSubscriptionController', () => {
         { provide: ActivateClubSubscriptionUseCase, useValue: activate },
         { provide: GetMyClubSubscriptionUseCase, useValue: getMySubscription },
         { provide: CancelClubSubscriptionUseCase, useValue: cancelSubscription },
+        { provide: GetAvailableSubscriptionTiersUseCase, useValue: getAvailableTiers },
+        Reflector,
+        { provide: APP_GUARD, useClass: RolesGuard },
       ],
     }).compile();
     const nestApp = moduleRef.createNestApplication();
@@ -103,6 +110,34 @@ describe('ClubSubscriptionController', () => {
     expect(res.body).toHaveLength(1);
     expect(res.body[0].tier).toBe('JOGADOR');
     expect(getTiers.execute).toHaveBeenCalledWith({ tenantId: 't1' });
+  });
+
+  it('GET /loyalty/club-subscription/tiers/available returns tiers with computed price as CLIENT', async () => {
+    app = await buildApp('CLIENT');
+    getAvailableTiers.execute.mockResolvedValue([
+      {
+        id: 'tier-1',
+        tier: 'ESSENCIAL',
+        services: [{ serviceId: 'svc-1', quantity: 2, priceInCents: 3500 }],
+        monthlyPriceInCents: 7000,
+        discountPercentage: 0,
+      },
+    ]);
+
+    const res = await request(app.getHttpServer()).get('/loyalty/club-subscription/tiers/available');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].monthlyPriceInCents).toBe(7000);
+    expect(getAvailableTiers.execute).toHaveBeenCalledWith({ tenantId: 't1' });
+  });
+
+  it('GET /loyalty/club-subscription/tiers/available rejects ADMIN with 403', async () => {
+    app = await buildApp('ADMIN');
+
+    const res = await request(app.getHttpServer()).get('/loyalty/club-subscription/tiers/available');
+
+    expect(res.status).toBe(403);
   });
 
   it('POST /loyalty/club-subscription/activate as CLIENT', async () => {
