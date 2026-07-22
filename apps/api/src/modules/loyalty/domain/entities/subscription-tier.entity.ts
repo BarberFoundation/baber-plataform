@@ -82,10 +82,11 @@ export class SubscriptionTier {
     return new SubscriptionTier(props);
   }
 
-  calculatePriceInCents(serviceCatalog: Map<string, number>): number {
+  calculatePriceInCents(serviceCatalog: Map<string, number>, opts?: { tolerateMissing?: boolean }): number {
     const base = this._services.reduce((sum, item) => {
       const unitPriceInCents = serviceCatalog.get(item.serviceId);
       if (unitPriceInCents === undefined) {
+        if (opts?.tolerateMissing) return sum;
         throw new InvalidSubscriptionTierError(`Serviço ${item.serviceId} não encontrado no catálogo.`);
       }
       return sum + unitPriceInCents * item.quantity;

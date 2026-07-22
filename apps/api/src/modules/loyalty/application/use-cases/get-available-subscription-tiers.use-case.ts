@@ -38,26 +38,20 @@ export class GetAvailableSubscriptionTiersUseCase {
 
     const views: AvailableSubscriptionTierView[] = [];
     for (const tier of activeTiers) {
+      const catalogPrices = new Map<string, number>();
       const services: AvailableSubscriptionTierServiceView[] = [];
-      let baseInCents = 0;
       for (const item of tier.services) {
         const service = await this.catalogRepo.findById(item.serviceId, input.tenantId);
         if (service) {
+          catalogPrices.set(item.serviceId, service.priceInCents);
           services.push({ serviceId: item.serviceId, quantity: item.quantity, priceInCents: service.priceInCents });
-          baseInCents += service.priceInCents * item.quantity;
         }
       }
-      // Deliberately not calling tier.calculatePriceInCents() here: that method throws if ANY of the
-      // tier's original services is missing from the catalog map, even when only a subset is missing.
-      // For client-facing browsing we want to silently drop deleted services from the price instead of
-      // failing the whole listing, so the discount math (base - round(base * discount / 100)) is
-      // duplicated here using only the services actually found in the catalog.
-      const monthlyPriceInCents = baseInCents - Math.round((baseInCents * tier.discountPercentage) / 100);
       views.push({
         id: tier.id,
         tier: tier.tier,
         services,
-        monthlyPriceInCents,
+        monthlyPriceInCents: tier.calculatePriceInCents(catalogPrices, { tolerateMissing: true }),
         discountPercentage: tier.discountPercentage,
       });
     }

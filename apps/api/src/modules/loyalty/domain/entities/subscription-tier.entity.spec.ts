@@ -52,6 +52,24 @@ describe('SubscriptionTier', () => {
     expect(() => tier.calculatePriceInCents(new Map([['svc-1', 3500]]))).toThrow(InvalidSubscriptionTierError);
   });
 
+  it('still throws if a combo service is missing from the catalog when tolerateMissing is explicitly false', () => {
+    const tier = SubscriptionTier.create({
+      tenantId: 't1', tier: 'ESSENCIAL', services: validServices, discountPercentage: 15, isActive: true,
+    });
+    expect(() =>
+      tier.calculatePriceInCents(new Map([['svc-1', 3500]]), { tolerateMissing: false }),
+    ).toThrow(InvalidSubscriptionTierError);
+  });
+
+  it('skips a missing combo service instead of throwing when tolerateMissing is true', () => {
+    const tier = SubscriptionTier.create({
+      tenantId: 't1', tier: 'ESSENCIAL', services: validServices, discountPercentage: 15, isActive: true,
+    });
+    // Only svc-1 found (2×3500 = 7000); svc-2 skipped entirely. 15% off = 5950.
+    const catalog = new Map([['svc-1', 3500]]);
+    expect(tier.calculatePriceInCents(catalog, { tolerateMissing: true })).toBe(5950);
+  });
+
   it('services getter returns a defensive copy', () => {
     const tier = SubscriptionTier.create({
       tenantId: 't1', tier: 'ESSENCIAL', services: validServices, discountPercentage: 15, isActive: true,
