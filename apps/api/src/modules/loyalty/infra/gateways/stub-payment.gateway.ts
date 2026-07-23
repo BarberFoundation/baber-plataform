@@ -9,6 +9,7 @@ import {
   CreateSubscriptionInput,
   CreateSubscriptionOutput,
   PixQrCode,
+  PaymentStatusOutput,
 } from '../../domain/ports/payment-gateway.port';
 
 @Injectable()
@@ -37,5 +38,10 @@ export class StubPaymentGateway implements IPaymentGateway {
   async getPixQrCode(paymentId: string): Promise<PixQrCode> {
     this.logger.warn(`[stub] getPixQrCode ${paymentId}`);
     return { encodedImage: '', payload: 'stub-pix-payload', expirationDate: new Date().toISOString() };
+  }
+
+  async getPaymentStatus(paymentId: string): Promise<PaymentStatusOutput> {
+    this.logger.warn(`[stub] getPaymentStatus ${paymentId}`);
+    return { status: 'CONFIRMED' };
   }
 }

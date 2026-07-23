@@ -69,6 +69,20 @@ describe('AsaasPaymentGateway', () => {
     );
   });
 
+  it('getPaymentStatus GETs /payments/{id} and returns the status', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'pay_123', status: 'RECEIVED' }),
+    });
+    const gateway = new AsaasPaymentGateway(makeConfig());
+    const result = await gateway.getPaymentStatus('pay_123');
+    expect(result).toEqual({ status: 'RECEIVED' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api-sandbox.asaas.com/v3/payments/pay_123',
+      expect.objectContaining({ method: 'GET', headers: expect.objectContaining({ access_token: 'test-key' }) }),
+    );
+  });
+
   it('cancelSubscription DELETEs /subscriptions/{id}', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
     const gateway = new AsaasPaymentGateway(makeConfig());

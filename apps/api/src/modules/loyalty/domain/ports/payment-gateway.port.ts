@@ -43,10 +43,15 @@ export interface PixQrCode {
   expirationDate: string;
 }
 
+export interface PaymentStatusOutput {
+  status: string;
+}
+
 export interface IPaymentGateway {
   createCustomer(input: CreateCustomerInput): Promise<CreateCustomerOutput>;
   createOneOffCharge(input: CreateOneOffChargeInput): Promise<CreateOneOffChargeOutput>;
   createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionOutput>;
   cancelSubscription(subscriptionId: string): Promise<void>;
   getPixQrCode(paymentId: string): Promise<PixQrCode>;
+  getPaymentStatus(paymentId: string): Promise<PaymentStatusOutput>;
 }

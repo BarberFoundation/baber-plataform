@@ -9,6 +9,7 @@ import {
   CreateSubscriptionInput,
   CreateSubscriptionOutput,
   PixQrCode,
+  PaymentStatusOutput,
 } from '../../domain/ports/payment-gateway.port';
 
 @Injectable()
@@ -79,5 +80,10 @@ export class AsaasPaymentGateway implements IPaymentGateway {
 
   async getPixQrCode(paymentId: string): Promise<PixQrCode> {
     return this.request<PixQrCode>(`/payments/${paymentId}/pixQrCode`, { method: 'GET' });
+  }
+
+  async getPaymentStatus(paymentId: string): Promise<PaymentStatusOutput> {
+    const result = await this.request<{ status: string }>(`/payments/${paymentId}`, { method: 'GET' });
+    return { status: result.status };
   }
 }
