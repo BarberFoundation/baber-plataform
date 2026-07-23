@@ -1,6 +1,6 @@
 export const PAYMENT_GATEWAY = Symbol('IPaymentGateway');
 
-export type BillingType = 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+export type BillingType = 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
 
 export interface CreateCustomerInput {
   name: string;

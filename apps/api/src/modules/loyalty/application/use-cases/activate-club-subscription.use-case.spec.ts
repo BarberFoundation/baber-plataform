@@ -64,9 +64,11 @@ describe('ActivateClubSubscriptionUseCase', () => {
     expect(deps.paymentGateway.createCustomer).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Fulano', cpfCnpj: '12345678900' }),
     );
-    expect(deps.paymentGateway.createOneOffCharge).toHaveBeenCalled();
+    expect(deps.paymentGateway.createOneOffCharge).toHaveBeenCalledWith(
+      expect.objectContaining({ billingType: 'UNDEFINED' }),
+    );
     expect(deps.paymentGateway.createSubscription).toHaveBeenCalledWith(
-      expect.objectContaining({ customerId: 'cus_1' }),
+      expect.objectContaining({ customerId: 'cus_1', billingType: 'UNDEFINED' }),
     );
     expect(deps.clubSubRepo.save).toHaveBeenCalled();
     expect(deps.emitter.emit).toHaveBeenCalledWith('loyalty.club_subscription.activated', expect.objectContaining({ tenantId: 't1', clientId: 'client-1' }));

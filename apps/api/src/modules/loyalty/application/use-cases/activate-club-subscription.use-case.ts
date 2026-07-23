@@ -79,7 +79,7 @@ export class ActivateClubSubscriptionUseCase {
     if (proratedInCents > 0) {
       await this.paymentGateway.createOneOffCharge({
         customerId,
-        billingType: 'PIX',
+        billingType: 'UNDEFINED',
         valueInCents: proratedInCents,
         dueDate: todayStr,
         description: `Adesão pro-rata — clube ${tier.tier}`,
@@ -89,7 +89,7 @@ export class ActivateClubSubscriptionUseCase {
     const nextDueDate = firstDayOfNextMonth(todayStr);
     const { subscriptionId } = await this.paymentGateway.createSubscription({
       customerId,
-      billingType: 'PIX',
+      billingType: 'UNDEFINED',
       valueInCents: monthlyPriceInCents,
       nextDueDate,
       description: `Clube ${tier.tier}`,
