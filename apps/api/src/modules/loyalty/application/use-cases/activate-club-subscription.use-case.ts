@@ -1,5 +1,5 @@
 // apps/api/src/modules/loyalty/application/use-cases/activate-club-subscription.use-case.ts
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   SUBSCRIPTION_TIER_REPOSITORY,
@@ -11,7 +11,7 @@ import {
 } from '../../domain/repositories/club-subscription.repository';
 import { STAMP_CARD_REPOSITORY, IStampCardRepository } from '../../domain/repositories/stamp-card.repository';
 import { CATALOG_REPOSITORY, ICatalogRepository } from '../../../catalog/domain/repositories/catalog.repository';
-import { PAYMENT_GATEWAY, IPaymentGateway } from '../../domain/ports/payment-gateway.port';
+import { PAYMENT_GATEWAY, IPaymentGateway, PixQrCode } from '../../domain/ports/payment-gateway.port';
 import { ClubSubscription } from '../../domain/entities/club-subscription.entity';
 import { SubscriptionTierName } from '../../domain/entities/subscription-tier.entity';
 import {
@@ -32,12 +32,19 @@ export interface ActivateClubSubscriptionInput {
   phone?: string;
 }
 
+export interface ActivateClubSubscriptionOutput {
+  subscription: ClubSubscription;
+  payment: { paymentId: string; pix: PixQrCode } | null;
+}
+
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
 @Injectable()
 export class ActivateClubSubscriptionUseCase {
+  private readonly logger = new Logger(ActivateClubSubscriptionUseCase.name);
+
   constructor(
     @Inject(SUBSCRIPTION_TIER_REPOSITORY) private readonly tierRepo: ISubscriptionTierRepository,
     @Inject(CLUB_SUBSCRIPTION_REPOSITORY) private readonly clubSubRepo: IClubSubscriptionRepository,
@@ -47,7 +54,7 @@ export class ActivateClubSubscriptionUseCase {
     @Inject(EventEmitter2) private readonly emitter: EventEmitter2,
   ) {}
 
-  async execute(input: ActivateClubSubscriptionInput): Promise<ClubSubscription> {
+  async execute(input: ActivateClubSubscriptionInput): Promise<ActivateClubSubscriptionOutput> {
     const tier = await this.tierRepo.findByTenantIdAndTier(input.tenantId, input.tier);
     if (!tier || !tier.isActive) throw new SubscriptionTierNotFoundError();
 
@@ -76,14 +83,21 @@ export class ActivateClubSubscriptionUseCase {
       name: input.name, cpfCnpj: input.cpfCnpj, email: input.email, phone: input.phone,
     });
 
+    let payment: { paymentId: string; pix: PixQrCode } | null = null;
     if (proratedInCents > 0) {
-      await this.paymentGateway.createOneOffCharge({
+      const { paymentId } = await this.paymentGateway.createOneOffCharge({
         customerId,
         billingType: 'UNDEFINED',
         valueInCents: proratedInCents,
         dueDate: todayStr,
         description: `Adesão pro-rata — clube ${tier.tier}`,
       });
+      try {
+        const pix = await this.paymentGateway.getPixQrCode(paymentId);
+        payment = { paymentId, pix };
+      } catch (err) {
+        this.logger.warn(`Failed to fetch PIX QR code for payment ${paymentId}: ${(err as Error).message}`);
+      }
     }
 
     const nextDueDate = firstDayOfNextMonth(todayStr);
@@ -122,6 +136,6 @@ export class ActivateClubSubscriptionUseCase {
     };
     this.emitter.emit(CLUB_SUBSCRIPTION_EVENTS.ACTIVATED, payload);
 
-    return saved;
+    return { subscription: saved, payment };
   }
 }

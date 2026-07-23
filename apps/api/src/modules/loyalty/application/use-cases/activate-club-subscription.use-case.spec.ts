@@ -26,6 +26,7 @@ describe('ActivateClubSubscriptionUseCase', () => {
         createCustomer: jest.fn().mockResolvedValue({ customerId: 'cus_1' }),
         createOneOffCharge: jest.fn().mockResolvedValue({ paymentId: 'pay_1' }),
         createSubscription: jest.fn().mockResolvedValue({ subscriptionId: 'asaas_sub_1' }),
+        getPixQrCode: jest.fn().mockResolvedValue({ encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01' }),
       },
       emitter: { emit: jest.fn() },
       ...overrides,
@@ -59,7 +60,7 @@ describe('ActivateClubSubscriptionUseCase', () => {
   it('creates Asaas customer + one-off pro-rata charge + subscription, then saves and emits', async () => {
     const deps = makeDeps();
     const useCase = makeUseCase(deps);
-    await useCase.execute(input);
+    const result = await useCase.execute(input);
 
     expect(deps.paymentGateway.createCustomer).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Fulano', cpfCnpj: '12345678900' }),
@@ -72,6 +73,44 @@ describe('ActivateClubSubscriptionUseCase', () => {
     );
     expect(deps.clubSubRepo.save).toHaveBeenCalled();
     expect(deps.emitter.emit).toHaveBeenCalledWith('loyalty.club_subscription.activated', expect.objectContaining({ tenantId: 't1', clientId: 'client-1' }));
+
+    expect(result.subscription).toBe(deps.clubSubRepo.save.mock.results[0].value);
+    expect(deps.paymentGateway.getPixQrCode).toHaveBeenCalledWith('pay_1');
+    expect(result.payment).toEqual({
+      paymentId: 'pay_1',
+      pix: { encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01' },
+    });
+  });
+
+  it('returns payment: null when there is no pro-rata charge to pay (monthly price resolves to 0)', async () => {
+    const freeTier = SubscriptionTier.create({
+      tenantId: 't1', tier: 'ESSENCIAL',
+      services: [{ serviceId: 'svc-1', quantity: 2 }],
+      discountPercentage: 100, isActive: true,
+    });
+    const deps = makeDeps({ tierRepo: { findByTenantIdAndTier: jest.fn().mockResolvedValue(freeTier) } });
+    const useCase = makeUseCase(deps);
+    const result = await useCase.execute(input);
+
+    expect(deps.paymentGateway.createOneOffCharge).not.toHaveBeenCalled();
+    expect(deps.paymentGateway.getPixQrCode).not.toHaveBeenCalled();
+    expect(result.payment).toBeNull();
+  });
+
+  it('does not fail activation if fetching the PIX QR code throws — just omits payment', async () => {
+    const deps = makeDeps({
+      paymentGateway: {
+        createCustomer: jest.fn().mockResolvedValue({ customerId: 'cus_1' }),
+        createOneOffCharge: jest.fn().mockResolvedValue({ paymentId: 'pay_1' }),
+        createSubscription: jest.fn().mockResolvedValue({ subscriptionId: 'asaas_sub_1' }),
+        getPixQrCode: jest.fn().mockRejectedValue(new Error('asaas down')),
+      },
+    });
+    const useCase = makeUseCase(deps);
+    const result = await useCase.execute(input);
+
+    expect(result.payment).toBeNull();
+    expect(deps.clubSubRepo.save).toHaveBeenCalled();
   });
 
   describe('timezone handling', () => {
