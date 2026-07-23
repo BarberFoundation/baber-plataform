@@ -17,6 +17,12 @@ export interface RefreshTokenInput {
   tenantId?: string; // optional — when absent, tenant guard is skipped (HTTP refresh flow)
 }
 
+// A refresh that succeeds server-side (old token revoked, new pair issued) can still
+// be "lost" client-side — e.g. the app is killed before persisting the new pair. The
+// next launch then replays the just-revoked token. Within this short window, treat
+// that as the same legitimate retry rather than a stolen/reused token.
+const REUSE_GRACE_MS = 30_000;
+
 @Injectable()
 export class RefreshTokenUseCase {
   constructor(
@@ -32,7 +38,13 @@ export class RefreshTokenUseCase {
 
     const record = await this.refreshRepo.findByHash(hash);
 
-    if (!record || record.revokedAt !== null || record.expiresAt <= new Date()) {
+    if (!record || record.expiresAt <= new Date()) {
+      throw new InvalidRefreshTokenError();
+    }
+
+    const isFresh = record.revokedAt === null;
+    const isWithinReuseGrace = record.revokedAt !== null && Date.now() - record.revokedAt.getTime() < REUSE_GRACE_MS;
+    if (!isFresh && !isWithinReuseGrace) {
       throw new InvalidRefreshTokenError();
     }
 
@@ -45,8 +57,10 @@ export class RefreshTokenUseCase {
       throw new InvalidRefreshTokenError();
     }
 
-    // Fail-closed: revoke first. If save throws, client loses session but no duplicate tokens exist.
-    await this.refreshRepo.revokeByHash(hash);
+    if (isFresh) {
+      // Fail-closed: revoke first. If save throws, client loses session but no duplicate tokens exist.
+      await this.refreshRepo.revokeByHash(hash);
+    }
 
     return this.tokenPairIssuer.issue(user);
   }

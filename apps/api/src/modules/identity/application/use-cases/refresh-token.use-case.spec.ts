@@ -94,13 +94,29 @@ describe('RefreshTokenUseCase', () => {
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
   });
 
-  it('throws InvalidRefreshTokenError when token is revoked', async () => {
-    const revokedRecord = makeRecord({ revokedAt: new Date(Date.now() - 1000) });
+  it('throws InvalidRefreshTokenError when token was revoked outside the reuse grace window', async () => {
+    const revokedRecord = makeRecord({ revokedAt: new Date(Date.now() - 60_000) });
     const refreshRepo = makeRefreshRepo(revokedRecord);
     const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
     await expect(
       uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID }),
     ).rejects.toBeInstanceOf(InvalidRefreshTokenError);
+  });
+
+  it('allows reuse of a token revoked moments ago (client-side rotation race), without re-revoking', async () => {
+    // The client's refresh call succeeded server-side (old token revoked, new pair
+    // issued) but the app was killed before persisting the new pair locally. The
+    // next launch replays the just-revoked token — within a short grace window
+    // this is treated as the same legitimate retry, not a stolen/reused token.
+    const recentlyRevokedRecord = makeRecord({ revokedAt: new Date(Date.now() - 2000) });
+    const refreshRepo = makeRefreshRepo(recentlyRevokedRecord);
+    const uc = new RefreshTokenUseCase(refreshRepo, makeUserRepo(makeUser()), makeIssuer(refreshRepo));
+
+    const result = await uc.execute({ rawRefreshToken: 'valid-token', tenantId: TENANT_ID });
+
+    expect(result.accessToken).toBeTruthy();
+    expect(result.refreshToken).toBeTruthy();
+    expect(refreshRepo.revokeByHash).not.toHaveBeenCalled();
   });
 
   it('throws InvalidRefreshTokenError when token is expired', async () => {
