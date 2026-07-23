@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, ParseEnumPipe, Post, Put } from '@nestjs/common';
 import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Roles } from '@shared/auth/roles.decorator';
@@ -10,6 +10,7 @@ import { ActivateClubSubscriptionUseCase } from '../application/use-cases/activa
 import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-club-subscription.use-case';
 import { CancelClubSubscriptionUseCase } from '../application/use-cases/cancel-club-subscription.use-case';
 import { GetAvailableSubscriptionTiersUseCase } from '../application/use-cases/get-available-subscription-tiers.use-case';
+import { PAYMENT_GATEWAY, IPaymentGateway } from '../domain/ports/payment-gateway.port';
 import { SubscriptionTier, SubscriptionTierName } from '../domain/entities/subscription-tier.entity';
 import { ClubSubscription } from '../domain/entities/club-subscription.entity';
 
@@ -91,6 +92,7 @@ export class ClubSubscriptionController {
     private readonly getMySubscription: GetMyClubSubscriptionUseCase,
     private readonly cancelSubscription: CancelClubSubscriptionUseCase,
     private readonly getAvailableTiers: GetAvailableSubscriptionTiersUseCase,
+    @Inject(PAYMENT_GATEWAY) private readonly paymentGateway: IPaymentGateway,
   ) {}
 
   @Roles('ADMIN')
@@ -121,7 +123,16 @@ export class ClubSubscriptionController {
   @Post('activate')
   async activateSubscription(@CurrentUser() user: JwtPayload, @Body() dto: ActivateClubSubscriptionDto) {
     const result = await this.activate.execute({ tenantId: user.tenantId, clientId: user.userId, ...dto });
-    return serializeSubscription(result);
+    return {
+      ...serializeSubscription(result.subscription),
+      payment: result.payment,
+    };
+  }
+
+  @Roles('CLIENT')
+  @Get('payments/:paymentId/status')
+  async paymentStatus(@Param('paymentId') paymentId: string) {
+    return this.paymentGateway.getPaymentStatus(paymentId);
   }
 
   @Roles('CLIENT')

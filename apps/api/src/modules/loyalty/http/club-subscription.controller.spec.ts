@@ -3,6 +3,7 @@ import request from 'supertest';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { RolesGuard } from '@shared/auth/roles.guard';
+import { PAYMENT_GATEWAY } from '../domain/ports/payment-gateway.port';
 import { ClubSubscriptionController } from './club-subscription.controller';
 import { UpsertSubscriptionTierUseCase } from '../application/use-cases/upsert-subscription-tier.use-case';
 import { GetSubscriptionTiersUseCase } from '../application/use-cases/get-subscription-tiers.use-case';
@@ -28,6 +29,7 @@ describe('ClubSubscriptionController', () => {
   const getMySubscription = { execute: jest.fn() };
   const cancelSubscription = { execute: jest.fn() };
   const getAvailableTiers = { execute: jest.fn() };
+  const paymentGateway = { getPaymentStatus: jest.fn() };
 
   async function buildApp(role: 'ADMIN' | 'CLIENT') {
     const moduleRef = await Test.createTestingModule({
@@ -39,6 +41,7 @@ describe('ClubSubscriptionController', () => {
         { provide: GetMyClubSubscriptionUseCase, useValue: getMySubscription },
         { provide: CancelClubSubscriptionUseCase, useValue: cancelSubscription },
         { provide: GetAvailableSubscriptionTiersUseCase, useValue: getAvailableTiers },
+        { provide: PAYMENT_GATEWAY, useValue: paymentGateway },
         Reflector,
         { provide: APP_GUARD, useClass: RolesGuard },
       ],
@@ -152,7 +155,7 @@ describe('ClubSubscriptionController', () => {
       currentCycleEnd: '2026-07-31',
       quotas: [{ serviceId: 'svc-1', quantityTotal: 2, quantityConsumed: 0 }],
     });
-    activate.execute.mockResolvedValue(subscription);
+    activate.execute.mockResolvedValue({ subscription, payment: null });
 
     const res = await request(app.getHttpServer())
       .post('/loyalty/club-subscription/activate')
@@ -160,6 +163,7 @@ describe('ClubSubscriptionController', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('ACTIVE');
+    expect(res.body.payment).toBeNull();
     expect(activate.execute).toHaveBeenCalledWith({
       tenantId: 't1',
       clientId: 'user-1',
@@ -167,6 +171,41 @@ describe('ClubSubscriptionController', () => {
       cpfCnpj: '12345678900',
       name: 'Fulano',
     });
+  });
+
+  it('POST /loyalty/club-subscription/activate as CLIENT includes payment when a PIX charge was created', async () => {
+    app = await buildApp('CLIENT');
+    const subscription = ClubSubscription.createNew({
+      tenantId: 't1', clientId: 'user-1', tierId: 'tier-1',
+      asaasCustomerId: 'cus_1', asaasSubscriptionId: 'sub_1',
+      currentCycleStart: '2026-07-01', currentCycleEnd: '2026-07-31',
+      quotas: [{ serviceId: 'svc-1', quantityTotal: 2, quantityConsumed: 0 }],
+    });
+    activate.execute.mockResolvedValue({
+      subscription,
+      payment: { paymentId: 'pay_1', pix: { encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01' } },
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/loyalty/club-subscription/activate')
+      .send({ tier: 'ESSENCIAL', cpfCnpj: '12345678900', name: 'Fulano' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.payment).toEqual({
+      paymentId: 'pay_1',
+      pix: { encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01' },
+    });
+  });
+
+  it('GET /loyalty/club-subscription/payments/:paymentId/status returns the gateway status as CLIENT', async () => {
+    app = await buildApp('CLIENT');
+    paymentGateway.getPaymentStatus.mockResolvedValue({ status: 'RECEIVED' });
+
+    const res = await request(app.getHttpServer()).get('/loyalty/club-subscription/payments/pay_1/status');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: 'RECEIVED' });
+    expect(paymentGateway.getPaymentStatus).toHaveBeenCalledWith('pay_1');
   });
 
   it('GET /loyalty/club-subscription/me returns the serialized subscription as CLIENT', async () => {
