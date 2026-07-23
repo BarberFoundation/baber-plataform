@@ -55,6 +55,19 @@ describe('AsaasPaymentGateway', () => {
     await expect(gateway.createCustomer({ name: 'x', cpfCnpj: '1' })).rejects.toThrow();
   });
 
+  it('throws InvalidPaymentDataError with the Asaas validation message on a 400 with error details', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: async () => JSON.stringify({ errors: [{ code: 'invalid_object', description: 'O CPF/CNPJ informado é inválido.' }] }),
+    });
+    const gateway = new AsaasPaymentGateway(makeConfig());
+    await expect(gateway.createCustomer({ name: 'Fulano', cpfCnpj: '111' })).rejects.toMatchObject({
+      code: 'INVALID_PAYMENT_DATA',
+      message: 'O CPF/CNPJ informado é inválido.',
+    });
+  });
+
   it('getPixQrCode GETs /payments/{id}/pixQrCode', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,

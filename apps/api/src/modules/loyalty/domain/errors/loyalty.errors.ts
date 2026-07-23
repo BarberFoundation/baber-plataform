@@ -59,3 +59,8 @@ export class SubscriptionQuotaExhaustedError extends DomainError {
   readonly code = 'SUBSCRIPTION_QUOTA_EXHAUSTED';
   constructor(message = 'Cota do plano esgotada para este serviço neste ciclo.') { super(message); }
 }
+
+export class InvalidPaymentDataError extends DomainError {
+  readonly code = 'INVALID_PAYMENT_DATA';
+  constructor(message = 'Dados de pagamento inválidos.') { super(message); }
+}

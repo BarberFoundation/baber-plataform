@@ -11,6 +11,7 @@ import {
   PixQrCode,
   PaymentStatusOutput,
 } from '../../domain/ports/payment-gateway.port';
+import { InvalidPaymentDataError } from '../../domain/errors/loyalty.errors';
 
 @Injectable()
 export class AsaasPaymentGateway implements IPaymentGateway {
@@ -32,9 +33,22 @@ export class AsaasPaymentGateway implements IPaymentGateway {
     if (!response.ok) {
       const text = await response.text();
       this.logger.error(`Asaas ${options.method} ${path} failed: ${response.status} ${text}`);
+      if (response.status === 400) {
+        const description = this.extractAsaasErrorDescription(text);
+        if (description) throw new InvalidPaymentDataError(description);
+      }
       throw new Error(`Asaas request failed: ${response.status}`);
     }
     return response.json() as Promise<T>;
+  }
+
+  private extractAsaasErrorDescription(text: string): string | null {
+    try {
+      const parsed = JSON.parse(text) as { errors?: { description?: string }[] };
+      return parsed.errors?.[0]?.description ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerOutput> {
