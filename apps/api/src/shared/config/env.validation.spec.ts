@@ -21,14 +21,29 @@ describe('validateEnv', () => {
     ).toThrow(/FIREBASE_CLIENT_EMAIL/);
   });
 
-  it('accepts production with all Firebase credentials', () => {
+  const FIREBASE = {
+    FIREBASE_PROJECT_ID: 'p',
+    FIREBASE_CLIENT_EMAIL: 'svc@p.iam.gserviceaccount.com',
+    FIREBASE_PRIVATE_KEY: 'key',
+  };
+
+  it('throws in production when Asaas credentials are missing, even with Firebase set', () => {
+    expect(() =>
+      validateEnv({ ...BASE, NODE_ENV: 'production', ...FIREBASE }),
+    ).toThrow(/ASAAS_API_URL/);
+    expect(() =>
+      validateEnv({ ...BASE, NODE_ENV: 'production', ...FIREBASE, ASAAS_API_URL: 'https://api.asaas.com/v3' }),
+    ).toThrow(/ASAAS_API_KEY/);
+  });
+
+  it('accepts production with all Firebase and Asaas credentials', () => {
     expect(() =>
       validateEnv({
         ...BASE,
         NODE_ENV: 'production',
-        FIREBASE_PROJECT_ID: 'p',
-        FIREBASE_CLIENT_EMAIL: 'svc@p.iam.gserviceaccount.com',
-        FIREBASE_PRIVATE_KEY: 'key',
+        ...FIREBASE,
+        ASAAS_API_URL: 'https://api.asaas.com/v3',
+        ASAAS_API_KEY: '$aact_prod_key',
       }),
     ).not.toThrow();
   });

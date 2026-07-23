@@ -106,11 +106,19 @@ export function validateEnv(config: Record<string, unknown>): EnvVars {
   }
 
   if (validated.NODE_ENV === 'production') {
-    const required = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'] as const;
-    const missing = required.filter((key) => !validated[key]);
-    if (missing.length > 0) {
+    const requiredFirebase = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'] as const;
+    const missingFirebase = requiredFirebase.filter((key) => !validated[key]);
+    if (missingFirebase.length > 0) {
       throw new Error(
-        `Firebase Admin credentials are required in production (token signature verification). Missing: ${missing.join(', ')}`,
+        `Firebase Admin credentials are required in production (token signature verification). Missing: ${missingFirebase.join(', ')}`,
+      );
+    }
+
+    const requiredAsaas = ['ASAAS_API_URL', 'ASAAS_API_KEY'] as const;
+    const missingAsaas = requiredAsaas.filter((key) => !validated[key]);
+    if (missingAsaas.length > 0) {
+      throw new Error(
+        `Asaas credentials are required in production (missing envs silently fall back to a stub payment gateway that reports every charge as paid). Missing: ${missingAsaas.join(', ')}`,
       );
     }
   }

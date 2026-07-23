@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from '@shared/database/database.module';
 import { CatalogModule } from '../catalog/catalog.module';
@@ -47,10 +47,16 @@ import { AsaasWebhookController } from './http/asaas-webhook.controller';
     { provide: CLUB_SUBSCRIPTION_REPOSITORY, useClass: ClubSubscriptionDrizzleRepository },
     {
       provide: PAYMENT_GATEWAY,
-      useFactory: (config: ConfigService) =>
-        config.get('ASAAS_API_URL') && config.get('ASAAS_API_KEY')
-          ? new AsaasPaymentGateway(config)
-          : new StubPaymentGateway(),
+      useFactory: (config: ConfigService) => {
+        if (config.get('ASAAS_API_URL') && config.get('ASAAS_API_KEY')) {
+          return new AsaasPaymentGateway(config);
+        }
+        new Logger('LoyaltyModule').error(
+          'ASAAS_API_URL/ASAAS_API_KEY not set — falling back to StubPaymentGateway, which reports every charge as ' +
+            'already paid. Club subscription payments will NOT be verified against Asaas in this environment.',
+        );
+        return new StubPaymentGateway();
+      },
       inject: [ConfigService],
     },
     UpsertStampCardConfigUseCase,
