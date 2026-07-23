@@ -24,6 +24,7 @@ export class CancelClubSubscriptionUseCase {
   async execute(input: CancelClubSubscriptionInput): Promise<void> {
     const subscription = await this.clubSubRepo.findByClientId(input.tenantId, input.clientId);
     if (!subscription) throw new ClubSubscriptionNotFoundError();
+    if (subscription.status === 'CANCELED') return;
 
     await this.paymentGateway.cancelSubscription(subscription.asaasSubscriptionId);
     subscription.cancel();
