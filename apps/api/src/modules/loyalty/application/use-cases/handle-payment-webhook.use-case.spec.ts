@@ -7,6 +7,8 @@ describe('HandlePaymentWebhookUseCase', () => {
       tenantId: 't1', clientId: 'client-1', tierId: 'tier-1', status: 'ACTIVE',
       currentCycleEnd: '2026-07-31',
       renew: jest.fn(), markPastDue: jest.fn(),
+      hasProcessedPayment: jest.fn().mockReturnValue(false),
+      recordProcessedPayment: jest.fn(),
     };
   }
   function makeTier() {
@@ -22,7 +24,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_CHECKOUT_VIEWED', subscriptionId: 'asaas_sub_1' });
+    await useCase.execute({ event: 'PAYMENT_CHECKOUT_VIEWED', subscriptionId: 'asaas_sub_1', paymentId: null });
 
     expect(clubSubRepo.findByAsaasSubscriptionId).not.toHaveBeenCalled();
   });
@@ -33,7 +35,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: null });
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: null, paymentId: null });
 
     expect(clubSubRepo.findByAsaasSubscriptionId).not.toHaveBeenCalled();
   });
@@ -45,7 +47,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: null });
 
     expect(sub.renew).toHaveBeenCalledWith(
       '2026-08-01',
@@ -67,7 +69,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: null });
 
     expect(sub.renew).toHaveBeenCalledWith(
       '2026-09-01',
@@ -83,7 +85,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_OVERDUE', subscriptionId: 'asaas_sub_1' });
+    await useCase.execute({ event: 'PAYMENT_OVERDUE', subscriptionId: 'asaas_sub_1', paymentId: null });
 
     expect(sub.markPastDue).toHaveBeenCalled();
     expect(clubSubRepo.save).toHaveBeenCalledWith(sub);
@@ -96,10 +98,38 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_unknown' });
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_unknown', paymentId: null });
 
     expect(clubSubRepo.save).not.toHaveBeenCalled();
     expect(emitter.emit).not.toHaveBeenCalled();
+  });
+
+  it('skips a redelivered webhook for a payment already processed (replay/idempotency)', async () => {
+    const sub = makeSub();
+    sub.hasProcessedPayment.mockReturnValue(true);
+    const clubSubRepo = { findByAsaasSubscriptionId: jest.fn().mockResolvedValue(sub), save: jest.fn() };
+    const tierRepo = { findById: jest.fn().mockResolvedValue(makeTier()) };
+    const emitter = { emit: jest.fn() };
+    const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
+
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: 'pay_1' });
+
+    expect(sub.hasProcessedPayment).toHaveBeenCalledWith('pay_1');
+    expect(sub.renew).not.toHaveBeenCalled();
+    expect(clubSubRepo.save).not.toHaveBeenCalled();
+    expect(emitter.emit).not.toHaveBeenCalled();
+  });
+
+  it('records the Asaas payment id on renewal so a redelivery of the same event is a no-op', async () => {
+    const sub = makeSub();
+    const clubSubRepo = { findByAsaasSubscriptionId: jest.fn().mockResolvedValue(sub), save: jest.fn((s) => s) };
+    const tierRepo = { findById: jest.fn().mockResolvedValue(makeTier()) };
+    const emitter = { emit: jest.fn() };
+    const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
+
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: 'pay_1' });
+
+    expect(sub.recordProcessedPayment).toHaveBeenCalledWith('pay_1');
   });
 
   it('does nothing on renewal if the subscription tier can no longer be found', async () => {
@@ -109,7 +139,7 @@ describe('HandlePaymentWebhookUseCase', () => {
     const emitter = { emit: jest.fn() };
     const useCase = new HandlePaymentWebhookUseCase(clubSubRepo as never, tierRepo as never, emitter as never);
 
-    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+    await useCase.execute({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: null });
 
     expect(sub.renew).not.toHaveBeenCalled();
     expect(clubSubRepo.save).not.toHaveBeenCalled();

@@ -46,6 +46,7 @@ export class ClubSubscriptionDrizzleRepository implements IClubSubscriptionRepos
         asaasSubscriptionId: subscription.asaasSubscriptionId,
         currentCycleStart: subscription.currentCycleStart,
         currentCycleEnd: subscription.currentCycleEnd,
+        lastProcessedPaymentId: subscription.lastProcessedPaymentId,
         createdAt: subscription.createdAt,
         updatedAt: subscription.updatedAt,
       })
@@ -58,6 +59,7 @@ export class ClubSubscriptionDrizzleRepository implements IClubSubscriptionRepos
           asaasSubscriptionId: subscription.asaasSubscriptionId,
           currentCycleStart: subscription.currentCycleStart,
           currentCycleEnd: subscription.currentCycleEnd,
+          lastProcessedPaymentId: subscription.lastProcessedPaymentId,
           updatedAt: subscription.updatedAt,
         },
       })
@@ -87,6 +89,7 @@ export class ClubSubscriptionDrizzleRepository implements IClubSubscriptionRepos
       currentCycleStart: row.currentCycleStart,
       currentCycleEnd: row.currentCycleEnd,
       quotas,
+      lastProcessedPaymentId: row.lastProcessedPaymentId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -113,6 +116,7 @@ export class ClubSubscriptionDrizzleRepository implements IClubSubscriptionRepos
       currentCycleStart: row.currentCycleStart,
       currentCycleEnd: row.currentCycleEnd,
       quotas,
+      lastProcessedPaymentId: row.lastProcessedPaymentId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });

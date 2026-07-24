@@ -41,6 +41,11 @@ export const clubSubscriptions = pgTable(
     asaasSubscriptionId: text('asaas_subscription_id').notNull(),
     currentCycleStart: date('current_cycle_start').notNull(),
     currentCycleEnd: date('current_cycle_end').notNull(),
+    // Dedupes Asaas webhook redeliveries: without this, a retried
+    // PAYMENT_RECEIVED/PAYMENT_OVERDUE event double-renews the cycle (free
+    // extra quota) or re-marks PAST_DUE, since Asaas retries on any non-2xx
+    // and can also just double-deliver.
+    lastProcessedPaymentId: text('last_processed_payment_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
