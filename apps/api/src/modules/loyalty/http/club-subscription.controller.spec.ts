@@ -5,7 +5,9 @@ import { APP_GUARD, Reflector } from '@nestjs/core';
 import { RolesGuard } from '@shared/auth/roles.guard';
 import { PAYMENT_GATEWAY } from '../domain/ports/payment-gateway.port';
 import { ClubSubscriptionController } from './club-subscription.controller';
-import { UpsertSubscriptionTierUseCase } from '../application/use-cases/upsert-subscription-tier.use-case';
+import { CreateSubscriptionTierUseCase } from '../application/use-cases/create-subscription-tier.use-case';
+import { UpdateSubscriptionTierUseCase } from '../application/use-cases/update-subscription-tier.use-case';
+import { DeactivateSubscriptionTierUseCase } from '../application/use-cases/deactivate-subscription-tier.use-case';
 import { GetSubscriptionTiersUseCase } from '../application/use-cases/get-subscription-tiers.use-case';
 import { ActivateClubSubscriptionUseCase } from '../application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-club-subscription.use-case';
@@ -23,7 +25,9 @@ function injectUser(role: 'ADMIN' | 'CLIENT') {
 
 describe('ClubSubscriptionController', () => {
   let app: INestApplication;
-  const upsertTier = { execute: jest.fn() };
+  const createTier = { execute: jest.fn() };
+  const updateTier = { execute: jest.fn() };
+  const deactivateTier = { execute: jest.fn() };
   const getTiers = { execute: jest.fn() };
   const activate = { execute: jest.fn() };
   const getMySubscription = { execute: jest.fn() };
@@ -35,7 +39,9 @@ describe('ClubSubscriptionController', () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [ClubSubscriptionController],
       providers: [
-        { provide: UpsertSubscriptionTierUseCase, useValue: upsertTier },
+        { provide: CreateSubscriptionTierUseCase, useValue: createTier },
+        { provide: UpdateSubscriptionTierUseCase, useValue: updateTier },
+        { provide: DeactivateSubscriptionTierUseCase, useValue: deactivateTier },
         { provide: GetSubscriptionTiersUseCase, useValue: getTiers },
         { provide: ActivateClubSubscriptionUseCase, useValue: activate },
         { provide: GetMyClubSubscriptionUseCase, useValue: getMySubscription },
@@ -58,49 +64,76 @@ describe('ClubSubscriptionController', () => {
     await app?.close();
   });
 
-  it('PUT /loyalty/club-subscription/tiers/:tier upserts as ADMIN', async () => {
+  it('POST /loyalty/club-subscription/tiers creates as ADMIN', async () => {
     app = await buildApp('ADMIN');
     const tier = SubscriptionTier.create({
-      tenantId: 't1',
-      tier: 'ESSENCIAL',
+      tenantId: 't1', name: 'Essencial',
       services: [{ serviceId: 'svc-1', quantity: 2 }],
-      discountPercentage: 15,
-      isActive: true,
+      discountPercentage: 15, isActive: true,
     });
-    upsertTier.execute.mockResolvedValue(tier);
+    createTier.execute.mockResolvedValue(tier);
 
     const res = await request(app.getHttpServer())
-      .put('/loyalty/club-subscription/tiers/ESSENCIAL')
-      .send({ services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 15, isActive: true });
+      .post('/loyalty/club-subscription/tiers')
+      .send({ name: 'Essencial', services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 15 });
 
-    expect(res.status).toBe(200);
-    expect(res.body.tier).toBe('ESSENCIAL');
-    expect(res.body.discountPercentage).toBe(15);
-    expect(upsertTier.execute).toHaveBeenCalledWith({
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBe(tier.id);
+    expect(res.body.name).toBe('Essencial');
+    expect(createTier.execute).toHaveBeenCalledWith({
       tenantId: 't1',
-      tier: 'ESSENCIAL',
+      name: 'Essencial',
       services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: 15,
-      isActive: true,
     });
   });
 
-  it('PUT /loyalty/club-subscription/tiers/BOGUS rejects an invalid tier param with 400', async () => {
+  it('POST /loyalty/club-subscription/tiers rejects CLIENT with 403', async () => {
+    app = await buildApp('CLIENT');
+    const res = await request(app.getHttpServer())
+      .post('/loyalty/club-subscription/tiers')
+      .send({ name: 'Essencial', services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 15 });
+    expect(res.status).toBe(403);
+  });
+
+  it('PUT /loyalty/club-subscription/tiers/:id updates as ADMIN', async () => {
     app = await buildApp('ADMIN');
+    const tier = SubscriptionTier.create({
+      id: '550e8400-e29b-41d4-a716-446655440000', tenantId: 't1', name: 'Essencial Plus',
+      services: [{ serviceId: 'svc-1', quantity: 2 }],
+      discountPercentage: 20, isActive: true,
+    });
+    updateTier.execute.mockResolvedValue(tier);
 
     const res = await request(app.getHttpServer())
-      .put('/loyalty/club-subscription/tiers/BOGUS')
-      .send({ services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 15, isActive: true });
+      .put('/loyalty/club-subscription/tiers/550e8400-e29b-41d4-a716-446655440000')
+      .send({ name: 'Essencial Plus', services: [{ serviceId: 'svc-1', quantity: 2 }], discountPercentage: 20 });
 
-    expect(res.status).toBe(400);
-    expect(upsertTier.execute).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Essencial Plus');
+    expect(updateTier.execute).toHaveBeenCalledWith({
+      tenantId: 't1', id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'Essencial Plus',
+      services: [{ serviceId: 'svc-1', quantity: 2 }],
+      discountPercentage: 20,
+    });
+  });
+
+  it('PATCH /loyalty/club-subscription/tiers/:id/deactivate as ADMIN returns 204', async () => {
+    app = await buildApp('ADMIN');
+    deactivateTier.execute.mockResolvedValue(undefined);
+
+    const res = await request(app.getHttpServer()).patch('/loyalty/club-subscription/tiers/550e8400-e29b-41d4-a716-446655440000/deactivate');
+
+    expect(res.status).toBe(204);
+    expect(deactivateTier.execute).toHaveBeenCalledWith({ tenantId: 't1', id: '550e8400-e29b-41d4-a716-446655440000' });
   });
 
   it('GET /loyalty/club-subscription/tiers returns serialized tiers as ADMIN', async () => {
     app = await buildApp('ADMIN');
     const tier = SubscriptionTier.create({
       tenantId: 't1',
-      tier: 'JOGADOR',
+      name: 'Ouro',
       services: [{ serviceId: 'svc-2', quantity: 1 }],
       discountPercentage: 10,
       isActive: true,
@@ -111,7 +144,8 @@ describe('ClubSubscriptionController', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
-    expect(res.body[0].tier).toBe('JOGADOR');
+    expect(res.body[0].id).toBe(tier.id);
+    expect(res.body[0].name).toBe('Ouro');
     expect(getTiers.execute).toHaveBeenCalledWith({ tenantId: 't1' });
   });
 
@@ -119,8 +153,8 @@ describe('ClubSubscriptionController', () => {
     app = await buildApp('CLIENT');
     getAvailableTiers.execute.mockResolvedValue([
       {
-        id: 'tier-1',
-        tier: 'ESSENCIAL',
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Essencial',
         services: [{ serviceId: 'svc-1', quantity: 2, priceInCents: 3500 }],
         monthlyPriceInCents: 7000,
         discountPercentage: 0,
@@ -137,29 +171,23 @@ describe('ClubSubscriptionController', () => {
 
   it('GET /loyalty/club-subscription/tiers/available rejects ADMIN with 403', async () => {
     app = await buildApp('ADMIN');
-
     const res = await request(app.getHttpServer()).get('/loyalty/club-subscription/tiers/available');
-
     expect(res.status).toBe(403);
   });
 
   it('POST /loyalty/club-subscription/activate as CLIENT', async () => {
     app = await buildApp('CLIENT');
     const subscription = ClubSubscription.createNew({
-      tenantId: 't1',
-      clientId: 'user-1',
-      tierId: 'tier-1',
-      asaasCustomerId: 'cus_1',
-      asaasSubscriptionId: 'sub_1',
-      currentCycleStart: '2026-07-01',
-      currentCycleEnd: '2026-07-31',
+      tenantId: 't1', clientId: 'user-1', tierId: '550e8400-e29b-41d4-a716-446655440000',
+      asaasCustomerId: 'cus_1', asaasSubscriptionId: 'sub_1',
+      currentCycleStart: '2026-07-01', currentCycleEnd: '2026-07-31',
       quotas: [{ serviceId: 'svc-1', quantityTotal: 2, quantityConsumed: 0 }],
     });
     activate.execute.mockResolvedValue({ subscription, payment: null });
 
     const res = await request(app.getHttpServer())
       .post('/loyalty/club-subscription/activate')
-      .send({ tier: 'ESSENCIAL', cpfCnpj: '12345678900', name: 'Fulano' });
+      .send({ tierId: '550e8400-e29b-41d4-a716-446655440000', cpfCnpj: '12345678900', name: 'Fulano' });
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('ACTIVE');
@@ -167,7 +195,7 @@ describe('ClubSubscriptionController', () => {
     expect(activate.execute).toHaveBeenCalledWith({
       tenantId: 't1',
       clientId: 'user-1',
-      tier: 'ESSENCIAL',
+      tierId: '550e8400-e29b-41d4-a716-446655440000',
       cpfCnpj: '12345678900',
       name: 'Fulano',
     });
@@ -176,7 +204,7 @@ describe('ClubSubscriptionController', () => {
   it('POST /loyalty/club-subscription/activate as CLIENT includes payment when a PIX charge was created', async () => {
     app = await buildApp('CLIENT');
     const subscription = ClubSubscription.createNew({
-      tenantId: 't1', clientId: 'user-1', tierId: 'tier-1',
+      tenantId: 't1', clientId: 'user-1', tierId: '550e8400-e29b-41d4-a716-446655440000',
       asaasCustomerId: 'cus_1', asaasSubscriptionId: 'sub_1',
       currentCycleStart: '2026-07-01', currentCycleEnd: '2026-07-31',
       quotas: [{ serviceId: 'svc-1', quantityTotal: 2, quantityConsumed: 0 }],
@@ -188,7 +216,7 @@ describe('ClubSubscriptionController', () => {
 
     const res = await request(app.getHttpServer())
       .post('/loyalty/club-subscription/activate')
-      .send({ tier: 'ESSENCIAL', cpfCnpj: '12345678900', name: 'Fulano' });
+      .send({ tierId: '550e8400-e29b-41d4-a716-446655440000', cpfCnpj: '12345678900', name: 'Fulano' });
 
     expect(res.status).toBe(201);
     expect(res.body.payment).toEqual({
@@ -211,13 +239,9 @@ describe('ClubSubscriptionController', () => {
   it('GET /loyalty/club-subscription/me returns the serialized subscription as CLIENT', async () => {
     app = await buildApp('CLIENT');
     const subscription = ClubSubscription.createNew({
-      tenantId: 't1',
-      clientId: 'user-1',
-      tierId: 'tier-1',
-      asaasCustomerId: 'cus_1',
-      asaasSubscriptionId: 'sub_1',
-      currentCycleStart: '2026-07-01',
-      currentCycleEnd: '2026-07-31',
+      tenantId: 't1', clientId: 'user-1', tierId: '550e8400-e29b-41d4-a716-446655440000',
+      asaasCustomerId: 'cus_1', asaasSubscriptionId: 'sub_1',
+      currentCycleStart: '2026-07-01', currentCycleEnd: '2026-07-31',
       quotas: [{ serviceId: 'svc-1', quantityTotal: 2, quantityConsumed: 0 }],
     });
     getMySubscription.execute.mockResolvedValue(subscription);
@@ -226,7 +250,7 @@ describe('ClubSubscriptionController', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ACTIVE');
-    expect(res.body.tierId).toBe('tier-1');
+    expect(res.body.tierId).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(getMySubscription.execute).toHaveBeenCalledWith({ tenantId: 't1', clientId: 'user-1' });
   });
 
@@ -245,7 +269,7 @@ describe('ClubSubscriptionController', () => {
 
     const res = await request(app.getHttpServer())
       .post('/loyalty/club-subscription/activate')
-      .send({ tier: 'ESSENCIAL' });
+      .send({ cpfCnpj: '12345678900' });
 
     expect(res.status).toBe(400);
   });

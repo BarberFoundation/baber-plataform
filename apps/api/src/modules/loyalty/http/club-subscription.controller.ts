@@ -1,20 +1,20 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, ParseEnumPipe, Post, Put } from '@nestjs/common';
-import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Put, Patch } from '@nestjs/common';
+import { ArrayMinSize, IsArray, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Roles } from '@shared/auth/roles.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
-import { UpsertSubscriptionTierUseCase } from '../application/use-cases/upsert-subscription-tier.use-case';
+import { CreateSubscriptionTierUseCase } from '../application/use-cases/create-subscription-tier.use-case';
+import { UpdateSubscriptionTierUseCase } from '../application/use-cases/update-subscription-tier.use-case';
+import { DeactivateSubscriptionTierUseCase } from '../application/use-cases/deactivate-subscription-tier.use-case';
 import { GetSubscriptionTiersUseCase } from '../application/use-cases/get-subscription-tiers.use-case';
 import { ActivateClubSubscriptionUseCase } from '../application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from '../application/use-cases/get-my-club-subscription.use-case';
 import { CancelClubSubscriptionUseCase } from '../application/use-cases/cancel-club-subscription.use-case';
 import { GetAvailableSubscriptionTiersUseCase } from '../application/use-cases/get-available-subscription-tiers.use-case';
 import { PAYMENT_GATEWAY, IPaymentGateway } from '../domain/ports/payment-gateway.port';
-import { SubscriptionTier, SubscriptionTierName } from '../domain/entities/subscription-tier.entity';
+import { SubscriptionTier } from '../domain/entities/subscription-tier.entity';
 import { ClubSubscription } from '../domain/entities/club-subscription.entity';
-
-const SUBSCRIPTION_TIER_NAMES: SubscriptionTierName[] = ['ESSENCIAL', 'JOGADOR', 'LENDARIO'];
 
 class TierServiceItemDto {
   @IsString()
@@ -26,7 +26,11 @@ class TierServiceItemDto {
   quantity!: number;
 }
 
-class UpsertSubscriptionTierDto {
+class SubscriptionTierDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
@@ -35,15 +39,13 @@ class UpsertSubscriptionTierDto {
 
   @IsInt()
   @Min(0)
+  @Max(100)
   discountPercentage!: number;
-
-  @IsBoolean()
-  isActive!: boolean;
 }
 
 class ActivateClubSubscriptionDto {
-  @IsIn(SUBSCRIPTION_TIER_NAMES)
-  tier!: SubscriptionTierName;
+  @IsUUID()
+  tierId!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -64,7 +66,8 @@ class ActivateClubSubscriptionDto {
 
 function serializeTier(tier: SubscriptionTier) {
   return {
-    tier: tier.tier,
+    id: tier.id,
+    name: tier.name,
     services: tier.services,
     discountPercentage: tier.discountPercentage,
     isActive: tier.isActive,
@@ -86,7 +89,9 @@ function serializeSubscription(sub: ClubSubscription) {
 @Controller('loyalty/club-subscription')
 export class ClubSubscriptionController {
   constructor(
-    private readonly upsertTier: UpsertSubscriptionTierUseCase,
+    private readonly createTier: CreateSubscriptionTierUseCase,
+    private readonly updateTier: UpdateSubscriptionTierUseCase,
+    private readonly deactivateTier: DeactivateSubscriptionTierUseCase,
     private readonly getTiers: GetSubscriptionTiersUseCase,
     private readonly activate: ActivateClubSubscriptionUseCase,
     private readonly getMySubscription: GetMyClubSubscriptionUseCase,
@@ -96,14 +101,24 @@ export class ClubSubscriptionController {
   ) {}
 
   @Roles('ADMIN')
-  @Put('tiers/:tier')
-  async upsert(
-    @CurrentUser() user: JwtPayload,
-    @Param('tier', new ParseEnumPipe(SUBSCRIPTION_TIER_NAMES)) tier: SubscriptionTierName,
-    @Body() dto: UpsertSubscriptionTierDto,
-  ) {
-    const result = await this.upsertTier.execute({ tenantId: user.tenantId, tier, ...dto });
+  @Post('tiers')
+  async create(@CurrentUser() user: JwtPayload, @Body() dto: SubscriptionTierDto) {
+    const result = await this.createTier.execute({ tenantId: user.tenantId, ...dto });
     return serializeTier(result);
+  }
+
+  @Roles('ADMIN')
+  @Put('tiers/:id')
+  async update(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: SubscriptionTierDto) {
+    const result = await this.updateTier.execute({ tenantId: user.tenantId, id, ...dto });
+    return serializeTier(result);
+  }
+
+  @Roles('ADMIN')
+  @Patch('tiers/:id/deactivate')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deactivate(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    await this.deactivateTier.execute({ tenantId: user.tenantId, id });
   }
 
   @Roles('ADMIN')
