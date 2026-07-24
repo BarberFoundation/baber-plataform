@@ -3,32 +3,32 @@ import {
   SUBSCRIPTION_TIER_REPOSITORY,
   ISubscriptionTierRepository,
 } from '../../domain/repositories/subscription-tier.repository';
-import { SubscriptionTier, SubscriptionTierName, SubscriptionTierServiceItem } from '../../domain/entities/subscription-tier.entity';
+import { SubscriptionTier, SubscriptionTierServiceItem } from '../../domain/entities/subscription-tier.entity';
+import { SubscriptionTierNameTakenError } from '../../domain/errors/loyalty.errors';
 
-export interface UpsertSubscriptionTierInput {
+export interface CreateSubscriptionTierInput {
   tenantId: string;
-  tier: SubscriptionTierName;
+  name: string;
   services: SubscriptionTierServiceItem[];
   discountPercentage: number;
-  isActive: boolean;
 }
 
 @Injectable()
-export class UpsertSubscriptionTierUseCase {
+export class CreateSubscriptionTierUseCase {
   constructor(
     @Inject(SUBSCRIPTION_TIER_REPOSITORY) private readonly tierRepo: ISubscriptionTierRepository,
   ) {}
 
-  async execute(input: UpsertSubscriptionTierInput): Promise<SubscriptionTier> {
-    const existing = await this.tierRepo.findByTenantIdAndTier(input.tenantId, input.tier);
+  async execute(input: CreateSubscriptionTierInput): Promise<SubscriptionTier> {
+    const existing = await this.tierRepo.findByTenantIdAndName(input.tenantId, input.name);
+    if (existing) throw new SubscriptionTierNameTakenError();
+
     const tier = SubscriptionTier.create({
-      id: existing?.id,
-      createdAt: existing?.createdAt,
       tenantId: input.tenantId,
-      tier: input.tier,
+      name: input.name,
       services: input.services,
       discountPercentage: input.discountPercentage,
-      isActive: input.isActive,
+      isActive: true,
     });
     return this.tierRepo.upsert(tier);
   }
