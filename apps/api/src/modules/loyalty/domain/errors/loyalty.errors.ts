@@ -64,3 +64,8 @@ export class InvalidPaymentDataError extends DomainError {
   readonly code = 'INVALID_PAYMENT_DATA';
   constructor(message = 'Dados de pagamento inválidos.') { super(message); }
 }
+
+export class SubscriptionTierNameTakenError extends DomainError {
+  readonly code = 'SUBSCRIPTION_TIER_NAME_TAKEN';
+  constructor(message = 'Já existe um plano com esse nome.') { super(message); }
+}

@@ -37,6 +37,7 @@ const ERROR_CODE_TO_STATUS: Record<string, HttpStatus> = {
   STAMP_CARD_BLOCKED_BY_CLUB_SUBSCRIPTION:  HttpStatus.CONFLICT,
   SUBSCRIPTION_QUOTA_EXHAUSTED:             HttpStatus.UNPROCESSABLE_ENTITY,
   INVALID_PAYMENT_DATA:                     HttpStatus.BAD_REQUEST,
+  SUBSCRIPTION_TIER_NAME_TAKEN:              HttpStatus.CONFLICT,
 };
 
 @Catch(DomainError)
