@@ -11,7 +11,7 @@ describe('HandlePaymentWebhookUseCase', () => {
   }
   function makeTier() {
     return SubscriptionTier.create({
-      tenantId: 't1', tier: 'ESSENCIAL', services: [{ serviceId: 'svc-1', quantity: 2 }],
+      tenantId: 't1', name: 'Essencial', services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: 0, isActive: true,
     });
   }

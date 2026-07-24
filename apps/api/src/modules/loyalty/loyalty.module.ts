@@ -21,7 +21,9 @@ import { GetStampCardConfigUseCase } from './application/use-cases/get-stamp-car
 import { GetMyStampCardUseCase } from './application/use-cases/get-my-stamp-card.use-case';
 import { GrantStampUseCase } from './application/use-cases/grant-stamp.use-case';
 import { RedeemCreditUseCase } from './application/use-cases/redeem-credit.use-case';
-import { UpsertSubscriptionTierUseCase } from './application/use-cases/upsert-subscription-tier.use-case';
+import { CreateSubscriptionTierUseCase } from './application/use-cases/create-subscription-tier.use-case';
+import { UpdateSubscriptionTierUseCase } from './application/use-cases/update-subscription-tier.use-case';
+import { DeactivateSubscriptionTierUseCase } from './application/use-cases/deactivate-subscription-tier.use-case';
 import { GetSubscriptionTiersUseCase } from './application/use-cases/get-subscription-tiers.use-case';
 import { ActivateClubSubscriptionUseCase } from './application/use-cases/activate-club-subscription.use-case';
 import { GetMyClubSubscriptionUseCase } from './application/use-cases/get-my-club-subscription.use-case';
@@ -64,7 +66,9 @@ import { AsaasWebhookController } from './http/asaas-webhook.controller';
     GetMyStampCardUseCase,
     GrantStampUseCase,
     RedeemCreditUseCase,
-    UpsertSubscriptionTierUseCase,
+    CreateSubscriptionTierUseCase,
+    UpdateSubscriptionTierUseCase,
+    DeactivateSubscriptionTierUseCase,
     GetSubscriptionTiersUseCase,
     ActivateClubSubscriptionUseCase,
     GetMyClubSubscriptionUseCase,
