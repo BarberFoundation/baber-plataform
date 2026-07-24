@@ -2,8 +2,6 @@
 import { randomUUID } from 'crypto';
 import { InvalidSubscriptionTierError } from '../errors/loyalty.errors';
 
-export type SubscriptionTierName = 'ESSENCIAL' | 'JOGADOR' | 'LENDARIO';
-
 export interface SubscriptionTierServiceItem {
   serviceId: string;
   quantity: number;
@@ -12,7 +10,7 @@ export interface SubscriptionTierServiceItem {
 export interface SubscriptionTierProps {
   id: string;
   tenantId: string;
-  tier: SubscriptionTierName;
+  name: string;
   services: SubscriptionTierServiceItem[];
   discountPercentage: number;
   isActive: boolean;
@@ -24,7 +22,7 @@ export interface UpsertSubscriptionTierProps {
   id?: string;
   createdAt?: Date;
   tenantId: string;
-  tier: SubscriptionTierName;
+  name: string;
   services: SubscriptionTierServiceItem[];
   discountPercentage: number;
   isActive: boolean;
@@ -33,7 +31,7 @@ export interface UpsertSubscriptionTierProps {
 export class SubscriptionTier {
   readonly id: string;
   readonly tenantId: string;
-  readonly tier: SubscriptionTierName;
+  readonly name: string;
   private readonly _services: SubscriptionTierServiceItem[];
   readonly discountPercentage: number;
   readonly isActive: boolean;
@@ -43,7 +41,7 @@ export class SubscriptionTier {
   private constructor(props: SubscriptionTierProps) {
     this.id = props.id;
     this.tenantId = props.tenantId;
-    this.tier = props.tier;
+    this.name = props.name;
     this._services = props.services.map((s) => ({ ...s }));
     this.discountPercentage = props.discountPercentage;
     this.isActive = props.isActive;
@@ -69,7 +67,7 @@ export class SubscriptionTier {
     return new SubscriptionTier({
       id: props.id ?? randomUUID(),
       tenantId: props.tenantId,
-      tier: props.tier,
+      name: props.name,
       services: props.services,
       discountPercentage: props.discountPercentage,
       isActive: props.isActive,
