@@ -56,7 +56,7 @@ describe('AsaasWebhookController', () => {
       .send({ event: 'PAYMENT_RECEIVED', payment: { subscription: 'asaas_sub_1' } })
       .expect(200);
 
-    expect(execute).toHaveBeenCalledWith({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1' });
+    expect(execute).toHaveBeenCalledWith({ event: 'PAYMENT_RECEIVED', subscriptionId: 'asaas_sub_1', paymentId: null });
     await app.close();
   });
 });

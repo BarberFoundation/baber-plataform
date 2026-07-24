@@ -19,6 +19,7 @@ import { nextRenewalCycle } from '../../domain/utils/date.utils';
 export interface PaymentWebhookInput {
   event: string;
   subscriptionId: string | null;
+  paymentId: string | null;
 }
 
 const RENEWAL_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']);
@@ -44,6 +45,15 @@ export class HandlePaymentWebhookUseCase {
       return;
     }
 
+    // Asaas retries webhook delivery on any non-2xx response and can also just
+    // double-deliver. Without this guard a redelivered PAYMENT_RECEIVED double-renews
+    // the cycle (free extra quota) and a redelivered PAYMENT_OVERDUE is harmless but
+    // still worth skipping for consistency.
+    if (input.paymentId && subscription.hasProcessedPayment(input.paymentId)) {
+      this.logger.log(`Skipping already-processed payment ${input.paymentId} (${input.event})`);
+      return;
+    }
+
     if (RENEWAL_EVENTS.has(input.event)) {
       const tier = await this.tierRepo.findById(subscription.tierId, subscription.tenantId);
       if (!tier) {
@@ -58,6 +68,7 @@ export class HandlePaymentWebhookUseCase {
         cycleEnd,
         tier.services.map((s) => ({ serviceId: s.serviceId, quantityTotal: s.quantity })),
       );
+      if (input.paymentId) subscription.recordProcessedPayment(input.paymentId);
       await this.clubSubRepo.save(subscription);
 
       const payload: ClubSubscriptionRenewedPayload = {
@@ -71,6 +82,7 @@ export class HandlePaymentWebhookUseCase {
     }
 
     subscription.markPastDue();
+    if (input.paymentId) subscription.recordProcessedPayment(input.paymentId);
     await this.clubSubRepo.save(subscription);
 
     const payload: SubscriptionPaymentFailedPayload = {

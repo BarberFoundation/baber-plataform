@@ -21,6 +21,7 @@ export interface ClubSubscriptionProps {
   currentCycleStart: string;
   currentCycleEnd: string;
   quotas: SubscriptionQuota[];
+  lastProcessedPaymentId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +48,7 @@ export class ClubSubscription {
   private _currentCycleStart: string;
   private _currentCycleEnd: string;
   private _quotas: SubscriptionQuota[];
+  private _lastProcessedPaymentId: string | null;
   readonly createdAt: Date;
   private _updatedAt: Date;
 
@@ -61,6 +63,7 @@ export class ClubSubscription {
     this._currentCycleStart = props.currentCycleStart;
     this._currentCycleEnd = props.currentCycleEnd;
     this._quotas = props.quotas.map((q) => ({ ...q }));
+    this._lastProcessedPaymentId = props.lastProcessedPaymentId;
     this.createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
   }
@@ -72,6 +75,7 @@ export class ClubSubscription {
   get currentCycleStart(): string { return this._currentCycleStart; }
   get currentCycleEnd(): string { return this._currentCycleEnd; }
   get quotas(): SubscriptionQuota[] { return this._quotas.map((q) => ({ ...q })); }
+  get lastProcessedPaymentId(): string | null { return this._lastProcessedPaymentId; }
   get updatedAt(): Date { return this._updatedAt; }
 
   static createNew(props: CreateClubSubscriptionProps): ClubSubscription {
@@ -87,6 +91,7 @@ export class ClubSubscription {
       currentCycleStart: props.currentCycleStart,
       currentCycleEnd: props.currentCycleEnd,
       quotas: props.quotas.map((q) => ({ ...q, quantityConsumed: 0 })),
+      lastProcessedPaymentId: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -124,6 +129,16 @@ export class ClubSubscription {
     this._updatedAt = new Date();
   }
 
+  /** True if this exact Asaas payment was already applied — signals the webhook is a redelivery/replay, not a new event. */
+  hasProcessedPayment(paymentId: string): boolean {
+    return this._lastProcessedPaymentId !== null && this._lastProcessedPaymentId === paymentId;
+  }
+
+  recordProcessedPayment(paymentId: string): void {
+    this._lastProcessedPaymentId = paymentId;
+    this._updatedAt = new Date();
+  }
+
   renew(cycleStart: string, cycleEnd: string, tierQuotas: { serviceId: string; quantityTotal: number }[]): void {
     this._status = 'ACTIVE';
     this._currentCycleStart = cycleStart;
@@ -140,6 +155,9 @@ export class ClubSubscription {
     this._currentCycleStart = cycleStart;
     this._currentCycleEnd = cycleEnd;
     this._quotas = tierQuotas.map((q) => ({ ...q, quantityConsumed: 0 }));
+    // New Asaas subscription id starting a fresh billing relationship — old
+    // dedupe marker no longer applies.
+    this._lastProcessedPaymentId = null;
     this._updatedAt = new Date();
   }
 }

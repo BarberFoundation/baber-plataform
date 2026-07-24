@@ -14,4 +14,12 @@ describe('GetMyClubSubscriptionUseCase', () => {
     const useCase = new GetMyClubSubscriptionUseCase(repo as never);
     await expect(useCase.execute({ tenantId: 't1', clientId: 'c1' })).rejects.toThrow(ClubSubscriptionNotFoundError);
   });
+
+  it('throws ClubSubscriptionNotFoundError when the row exists but was canceled', async () => {
+    // Row is reused across cycles (unique tenant+client), so a canceled row still
+    // exists — must read as "no subscription", not resurface as an active plan.
+    const repo = { findByClientId: jest.fn().mockResolvedValue({ status: 'CANCELED' }) };
+    const useCase = new GetMyClubSubscriptionUseCase(repo as never);
+    await expect(useCase.execute({ tenantId: 't1', clientId: 'c1' })).rejects.toThrow(ClubSubscriptionNotFoundError);
+  });
 });

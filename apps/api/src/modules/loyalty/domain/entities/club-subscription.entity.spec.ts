@@ -68,4 +68,24 @@ describe('ClubSubscription', () => {
     expect(sub.currentCycleEnd).toBe('2026-08-31');
     expect(sub.quotas).toEqual([{ serviceId: 'svc-1', quantityTotal: 3, quantityConsumed: 0 }]);
   });
+
+  it('hasProcessedPayment is false for a new subscription (no payment recorded yet)', () => {
+    const sub = makeSub();
+    expect(sub.hasProcessedPayment('pay_1')).toBe(false);
+  });
+
+  it('recordProcessedPayment marks a payment id so hasProcessedPayment sees it as already applied', () => {
+    const sub = makeSub();
+    sub.recordProcessedPayment('pay_1');
+    expect(sub.hasProcessedPayment('pay_1')).toBe(true);
+    expect(sub.hasProcessedPayment('pay_2')).toBe(false);
+  });
+
+  it('reactivate clears the previous payment id, since a new Asaas subscription starts fresh', () => {
+    const sub = makeSub();
+    sub.recordProcessedPayment('pay_1');
+    sub.cancel();
+    sub.reactivate('tier-1', 'cus_abc', 'sub_new', '2026-09-01', '2026-09-30', [{ serviceId: 'svc-1', quantityTotal: 2 }]);
+    expect(sub.hasProcessedPayment('pay_1')).toBe(false);
+  });
 });
