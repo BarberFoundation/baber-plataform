@@ -13,7 +13,6 @@ import { STAMP_CARD_REPOSITORY, IStampCardRepository } from '../../domain/reposi
 import { CATALOG_REPOSITORY, ICatalogRepository } from '../../../catalog/domain/repositories/catalog.repository';
 import { PAYMENT_GATEWAY, IPaymentGateway, PixQrCode } from '../../domain/ports/payment-gateway.port';
 import { ClubSubscription } from '../../domain/entities/club-subscription.entity';
-import { SubscriptionTierName } from '../../domain/entities/subscription-tier.entity';
 import {
   SubscriptionTierNotFoundError,
   ClubSubscriptionAlreadyActiveError,
@@ -25,7 +24,7 @@ import { todayInSaoPaulo, firstDayOfNextMonth, endOfMonth } from '../../domain/u
 export interface ActivateClubSubscriptionInput {
   tenantId: string;
   clientId: string;
-  tier: SubscriptionTierName;
+  tierId: string;
   cpfCnpj: string;
   name: string;
   email?: string;
@@ -55,7 +54,7 @@ export class ActivateClubSubscriptionUseCase {
   ) {}
 
   async execute(input: ActivateClubSubscriptionInput): Promise<ActivateClubSubscriptionOutput> {
-    const tier = await this.tierRepo.findByTenantIdAndTier(input.tenantId, input.tier);
+    const tier = await this.tierRepo.findById(input.tierId, input.tenantId);
     if (!tier || !tier.isActive) throw new SubscriptionTierNotFoundError();
 
     const existing = await this.clubSubRepo.findByClientId(input.tenantId, input.clientId);
@@ -90,7 +89,7 @@ export class ActivateClubSubscriptionUseCase {
         billingType: 'UNDEFINED',
         valueInCents: proratedInCents,
         dueDate: todayStr,
-        description: `Adesão pro-rata — clube ${tier.tier}`,
+        description: `Adesão pro-rata — clube ${tier.name}`,
       });
       try {
         const pix = await this.paymentGateway.getPixQrCode(paymentId);
@@ -106,7 +105,7 @@ export class ActivateClubSubscriptionUseCase {
       billingType: 'UNDEFINED',
       valueInCents: monthlyPriceInCents,
       nextDueDate,
-      description: `Clube ${tier.tier}`,
+      description: `Clube ${tier.name}`,
     });
 
     const cycleEnd = endOfMonth(nextDueDate);
@@ -132,7 +131,7 @@ export class ActivateClubSubscriptionUseCase {
     const saved = await this.clubSubRepo.save(subscription);
 
     const payload: ClubSubscriptionActivatedPayload = {
-      tenantId: input.tenantId, clientId: input.clientId, tier: tier.tier, priceInCents: monthlyPriceInCents,
+      tenantId: input.tenantId, clientId: input.clientId, tier: tier.name, priceInCents: monthlyPriceInCents,
     };
     this.emitter.emit(CLUB_SUBSCRIPTION_EVENTS.ACTIVATED, payload);
 

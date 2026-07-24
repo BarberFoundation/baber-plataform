@@ -10,7 +10,7 @@ import {
 describe('ActivateClubSubscriptionUseCase', () => {
   function makeTier() {
     return SubscriptionTier.create({
-      tenantId: 't1', tier: 'ESSENCIAL',
+      tenantId: 't1', name: 'Essencial',
       services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: 0, isActive: true,
     });
@@ -18,7 +18,7 @@ describe('ActivateClubSubscriptionUseCase', () => {
 
   function makeDeps(overrides: Record<string, unknown> = {}) {
     return {
-      tierRepo: { findByTenantIdAndTier: jest.fn().mockResolvedValue(makeTier()) },
+      tierRepo: { findById: jest.fn().mockResolvedValue(makeTier()) },
       clubSubRepo: { findByClientId: jest.fn().mockResolvedValue(null), save: jest.fn((s) => s) },
       stampCardRepo: { findByClientId: jest.fn().mockResolvedValue(null) },
       catalogRepo: { findById: jest.fn().mockResolvedValue({ priceInCents: 3500 }) },
@@ -40,10 +40,10 @@ describe('ActivateClubSubscriptionUseCase', () => {
     );
   }
 
-  const input = { tenantId: 't1', clientId: 'client-1', tier: 'ESSENCIAL' as const, cpfCnpj: '12345678900', name: 'Fulano' };
+  const input = { tenantId: 't1', clientId: 'client-1', tierId: 'tier-1', cpfCnpj: '12345678900', name: 'Fulano' };
 
   it('throws SubscriptionTierNotFoundError if the tier is not configured', async () => {
-    const deps = makeDeps({ tierRepo: { findByTenantIdAndTier: jest.fn().mockResolvedValue(null) } });
+    const deps = makeDeps({ tierRepo: { findById: jest.fn().mockResolvedValue(null) } });
     await expect(makeUseCase(deps).execute(input)).rejects.toThrow(SubscriptionTierNotFoundError);
   });
 
@@ -84,11 +84,11 @@ describe('ActivateClubSubscriptionUseCase', () => {
 
   it('returns payment: null when there is no pro-rata charge to pay (monthly price resolves to 0)', async () => {
     const freeTier = SubscriptionTier.create({
-      tenantId: 't1', tier: 'ESSENCIAL',
+      tenantId: 't1', name: 'Essencial',
       services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: 100, isActive: true,
     });
-    const deps = makeDeps({ tierRepo: { findByTenantIdAndTier: jest.fn().mockResolvedValue(freeTier) } });
+    const deps = makeDeps({ tierRepo: { findById: jest.fn().mockResolvedValue(freeTier) } });
     const useCase = makeUseCase(deps);
     const result = await useCase.execute(input);
 
