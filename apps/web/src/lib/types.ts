@@ -35,6 +35,20 @@ export interface Service {
   updatedAt: string;
 }
 
+export interface SubscriptionTierServiceItem {
+  serviceId: string;
+  quantity: number;
+}
+
+export interface SubscriptionTier {
+  id: string;
+  name: string;
+  services: SubscriptionTierServiceItem[];
+  discountPercentage: number;
+  isActive: boolean;
+  updatedAt: string;
+}
+
 export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
 export interface Appointment {
