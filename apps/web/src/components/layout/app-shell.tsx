@@ -13,6 +13,7 @@ import {
   Settings,
   ChevronDown,
   Menu,
+  Crown,
   type LucideIcon,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -44,6 +45,7 @@ const NAV: NavItem[] = [
   { to: '/app/appointments', label: 'Agendamentos', icon: CalendarDays, end: false },
   { to: '/app/barbers', label: 'Barbeiros', icon: Users, end: false },
   { to: '/app/services', label: 'Serviços', icon: Scissors, end: false },
+  { to: '/app/plans', label: 'Planos do clube', icon: Crown, end: false, adminOnly: true },
   { to: '/app/reports', label: 'Relatórios', icon: BarChart3, end: false },
   { to: '/app/clients', label: 'Clientes', icon: UserCheck, end: false },
   { to: '/app/team', label: 'Equipe', icon: UsersRound, end: false, adminOnly: true },
