@@ -3,10 +3,10 @@ import { GetAvailableSubscriptionTiersUseCase } from './get-available-subscripti
 import { SubscriptionTier } from '../../domain/entities/subscription-tier.entity';
 
 describe('GetAvailableSubscriptionTiersUseCase', () => {
-  function makeTier(overrides: { tier: 'ESSENCIAL' | 'JOGADOR' | 'LENDARIO'; isActive: boolean; discountPercentage?: number }) {
+  function makeTier(overrides: { name: string; isActive: boolean; discountPercentage?: number }) {
     return SubscriptionTier.create({
       tenantId: 't1',
-      tier: overrides.tier,
+      name: overrides.name,
       services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: overrides.discountPercentage ?? 0,
       isActive: overrides.isActive,
@@ -14,8 +14,8 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
   }
 
   it('returns only active tiers, with id, computed price and per-service price', async () => {
-    const active = makeTier({ tier: 'ESSENCIAL', isActive: true, discountPercentage: 10 });
-    const inactive = makeTier({ tier: 'JOGADOR', isActive: false });
+    const active = makeTier({ name: 'Essencial', isActive: true, discountPercentage: 10 });
+    const inactive = makeTier({ name: 'Ouro', isActive: false });
     const tierRepo = { findByTenantId: jest.fn().mockResolvedValue([active, inactive]) };
     const catalogRepo = { findById: jest.fn().mockResolvedValue({ priceInCents: 5000 }) };
     const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, catalogRepo as never);
@@ -25,7 +25,7 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       id: active.id,
-      tier: 'ESSENCIAL',
+      name: 'Essencial',
       services: [{ serviceId: 'svc-1', quantity: 2, priceInCents: 5000 }],
       monthlyPriceInCents: 9000, // 2 * 5000 = 10000, -10% = 9000
       discountPercentage: 10,
@@ -36,7 +36,7 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
   it('excludes a tier service that no longer exists in the catalog from the price calculation', async () => {
     const tier = SubscriptionTier.create({
       tenantId: 't1',
-      tier: 'ESSENCIAL',
+      name: 'Essencial',
       services: [{ serviceId: 'svc-deleted', quantity: 1 }],
       discountPercentage: 0,
       isActive: true,

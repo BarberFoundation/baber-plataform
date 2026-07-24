@@ -5,7 +5,6 @@ import {
   ISubscriptionTierRepository,
 } from '../../domain/repositories/subscription-tier.repository';
 import { CATALOG_REPOSITORY, ICatalogRepository } from '../../../catalog/domain/repositories/catalog.repository';
-import { SubscriptionTierName } from '../../domain/entities/subscription-tier.entity';
 
 export interface GetAvailableSubscriptionTiersInput {
   tenantId: string;
@@ -19,7 +18,7 @@ export interface AvailableSubscriptionTierServiceView {
 
 export interface AvailableSubscriptionTierView {
   id: string;
-  tier: SubscriptionTierName;
+  name: string;
   services: AvailableSubscriptionTierServiceView[];
   monthlyPriceInCents: number;
   discountPercentage: number;
@@ -49,7 +48,7 @@ export class GetAvailableSubscriptionTiersUseCase {
       }
       views.push({
         id: tier.id,
-        tier: tier.tier,
+        name: tier.name,
         services,
         monthlyPriceInCents: tier.calculatePriceInCents(catalogPrices, { tolerateMissing: true }),
         discountPercentage: tier.discountPercentage,
