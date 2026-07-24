@@ -20,7 +20,7 @@ function makeChain(result: unknown, error?: unknown) {
 
 describe('SubscriptionTierDrizzleRepository', () => {
   const row = {
-    id: 'tier-1', tenantId: 't1', tier: 'ESSENCIAL',
+    id: 'tier-1', tenantId: 't1', name: 'Essencial',
     services: [{ serviceId: 'svc-1', quantity: 2 }],
     discountPercentage: 15, isActive: true,
     createdAt: new Date(), updatedAt: new Date(),
@@ -32,20 +32,20 @@ describe('SubscriptionTierDrizzleRepository', () => {
     const result = await repo.findByTenantId('t1');
     expect(result).toHaveLength(1);
     expect(result[0]).toBeInstanceOf(SubscriptionTier);
-    expect(result[0].tier).toBe('ESSENCIAL');
+    expect(result[0].name).toBe('Essencial');
   });
 
-  it('findByTenantIdAndTier returns null when no row', async () => {
+  it('findByTenantIdAndName returns null when no row', async () => {
     const db = makeChain([]);
     const repo = new SubscriptionTierDrizzleRepository(db as never);
-    expect(await repo.findByTenantIdAndTier('t1', 'ESSENCIAL')).toBeNull();
+    expect(await repo.findByTenantIdAndName('t1', 'Essencial')).toBeNull();
   });
 
   it('upsert reconstructs from the returned row, not the input entity', async () => {
     const db = makeChain([{ ...row, id: 'db-assigned-id' }]);
     const repo = new SubscriptionTierDrizzleRepository(db as never);
     const input = SubscriptionTier.create({
-      tenantId: 't1', tier: 'ESSENCIAL', services: [{ serviceId: 'svc-1', quantity: 2 }],
+      tenantId: 't1', name: 'Essencial', services: [{ serviceId: 'svc-1', quantity: 2 }],
       discountPercentage: 15, isActive: true,
     });
     const result = await repo.upsert(input);

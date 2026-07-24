@@ -5,7 +5,7 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
 import { ISubscriptionTierRepository } from '../../domain/repositories/subscription-tier.repository';
-import { SubscriptionTier, SubscriptionTierName } from '../../domain/entities/subscription-tier.entity';
+import { SubscriptionTier } from '../../domain/entities/subscription-tier.entity';
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -21,11 +21,11 @@ export class SubscriptionTierDrizzleRepository implements ISubscriptionTierRepos
     return rows.map((row) => this.toEntity(row));
   }
 
-  async findByTenantIdAndTier(tenantId: string, tier: SubscriptionTierName): Promise<SubscriptionTier | null> {
+  async findByTenantIdAndName(tenantId: string, name: string): Promise<SubscriptionTier | null> {
     const rows = await this.db
       .select()
       .from(schema.subscriptionTiers)
-      .where(and(eq(schema.subscriptionTiers.tenantId, tenantId), eq(schema.subscriptionTiers.tier, tier)))
+      .where(and(eq(schema.subscriptionTiers.tenantId, tenantId), eq(schema.subscriptionTiers.name, name)))
       .limit(1);
     return rows[0] ? this.toEntity(rows[0]) : null;
   }
@@ -46,7 +46,7 @@ export class SubscriptionTierDrizzleRepository implements ISubscriptionTierRepos
       .values({
         id: tier.id,
         tenantId: tier.tenantId,
-        tier: tier.tier,
+        name: tier.name,
         services,
         discountPercentage: tier.discountPercentage,
         isActive: tier.isActive,
@@ -54,8 +54,9 @@ export class SubscriptionTierDrizzleRepository implements ISubscriptionTierRepos
         updatedAt: tier.updatedAt,
       })
       .onConflictDoUpdate({
-        target: [schema.subscriptionTiers.tenantId, schema.subscriptionTiers.tier],
+        target: schema.subscriptionTiers.id,
         set: {
+          name: tier.name,
           services,
           discountPercentage: tier.discountPercentage,
           isActive: tier.isActive,
@@ -63,8 +64,6 @@ export class SubscriptionTierDrizzleRepository implements ISubscriptionTierRepos
         },
       })
       .returning();
-    // Conflict target is (tenantId, tier), not the id PK — always reconstruct from the
-    // returned row, never echo the input entity (see stamp-card-config-drizzle.repository.ts).
     return this.toEntity(row);
   }
 
@@ -72,7 +71,7 @@ export class SubscriptionTierDrizzleRepository implements ISubscriptionTierRepos
     return SubscriptionTier.reconstitute({
       id: row.id,
       tenantId: row.tenantId,
-      tier: row.tier,
+      name: row.name,
       services: row.services,
       discountPercentage: row.discountPercentage,
       isActive: row.isActive,

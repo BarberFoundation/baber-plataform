@@ -2,7 +2,6 @@ import { pgTable, uuid, text, integer, boolean, jsonb, date, timestamp, pgEnum, 
 import { tenants } from './tenants';
 import { users } from './users';
 
-export const subscriptionTierNameEnum = pgEnum('subscription_tier_name', ['ESSENCIAL', 'JOGADOR', 'LENDARIO']);
 export const clubSubscriptionStatusEnum = pgEnum('club_subscription_status', ['ACTIVE', 'PAST_DUE', 'CANCELED']);
 
 export const subscriptionTiers = pgTable(
@@ -12,7 +11,7 @@ export const subscriptionTiers = pgTable(
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id),
-    tier: subscriptionTierNameEnum('tier').notNull(),
+    name: text('name').notNull(),
     services: jsonb('services').$type<{ serviceId: string; quantity: number }[]>().notNull().default([]),
     discountPercentage: integer('discount_percentage').notNull(),
     isActive: boolean('is_active').notNull().default(true),
@@ -20,7 +19,7 @@ export const subscriptionTiers = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    unique('subscription_tiers_tenant_tier_unique').on(t.tenantId, t.tier),
+    unique('subscription_tiers_tenant_name_unique').on(t.tenantId, t.name),
   ],
 );
 
