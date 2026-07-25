@@ -29,6 +29,7 @@ function makeUserRepo(existingUser?: User): IUserRepository {
     findByFirebaseUid: jest.fn().mockResolvedValue(existingUser ?? null),
     findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(existingUser ?? null),
     findByPhone: jest.fn().mockResolvedValue(null),
+    findByEmail: jest.fn().mockResolvedValue(null),
     findStaffByTenant: jest.fn().mockResolvedValue([]),
     save: jest.fn().mockImplementation(async (u: User) => u),
     findById: jest.fn().mockResolvedValue(null),
@@ -112,7 +113,7 @@ describe('ExchangeFirebaseClientTokenUseCase', () => {
     );
   });
 
-  it('throws InvalidFirebaseTokenError when the token has no phone claim', async () => {
+  it('throws InvalidFirebaseTokenError when the token has neither phone nor email', async () => {
     const validator = makeValidator({
       validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: undefined, phone: undefined, name: undefined }),
     });
@@ -120,6 +121,46 @@ describe('ExchangeFirebaseClientTokenUseCase', () => {
     await expect(uc.execute({ idToken: 'tok', tenantId: TENANT_ID })).rejects.toBeInstanceOf(
       InvalidFirebaseTokenError,
     );
+  });
+
+  it('creates a new CLIENT user with email (Google sign-in) when token has no phone', async () => {
+    const EMAIL = 'user@example.com';
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: EMAIL, phone: undefined, name: 'User Name' }),
+    });
+    const userRepo = makeUserRepo();
+    const uc = new ExchangeFirebaseClientTokenUseCase(validator, userRepo, makeIssuer(makeRefreshRepo()), makeTenantLookup());
+    const result = await uc.execute({ idToken: 'google-tok', tenantId: TENANT_ID });
+    expect(result.accessToken).toBeTruthy();
+    expect(result.user.role).toBe('CLIENT');
+    expect(result.user.phone).toBeNull();
+    expect(userRepo.save).toHaveBeenCalled();
+  });
+
+  it('links firebase uid to a legacy user with the same email (Google sign-in)', async () => {
+    const EMAIL = 'admin@example.com';
+    const legacy = User.reconstitute({
+      id: 'legacy-email-id',
+      tenantId: TENANT_ID,
+      name: 'Admin Legado',
+      role: 'CLIENT',
+      phone: null,
+      email: EMAIL,
+      firebaseUid: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const validator = makeValidator({
+      validate: jest.fn().mockResolvedValue({ uid: FIREBASE_UID, email: EMAIL, phone: undefined, name: undefined }),
+    });
+    const userRepo = makeUserRepo();
+    (userRepo.findByEmail as jest.Mock).mockResolvedValue(legacy);
+
+    const uc = new ExchangeFirebaseClientTokenUseCase(validator, userRepo, makeIssuer(makeRefreshRepo()), makeTenantLookup());
+    const result = await uc.execute({ idToken: 'google-tok', tenantId: TENANT_ID });
+    expect(result.user.id).toBe('legacy-email-id');
+    const saved = (userRepo.save as jest.Mock).mock.calls[0][0] as User;
+    expect(saved.firebaseUid).toBe(FIREBASE_UID);
   });
 
   it('recovers when a concurrent request already created the user (unique violation)', async () => {

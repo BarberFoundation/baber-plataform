@@ -41,8 +41,8 @@ export class ExchangeFirebaseClientTokenUseCase {
       throw new InvalidFirebaseTokenError();
     });
 
-    if (!firebasePayload.phone) {
-      throw new InvalidFirebaseTokenError('Token não contém número de telefone.');
+    if (!firebasePayload.phone && !firebasePayload.email) {
+      throw new InvalidFirebaseTokenError('Token não contém telefone nem e-mail.');
     }
 
     let user = await this.userRepo.findByFirebaseUidAnyTenant(firebasePayload.uid);
@@ -54,19 +54,29 @@ export class ExchangeFirebaseClientTokenUseCase {
       throw new FirebaseAccountTenantMismatchError();
     }
     if (!user) {
-      // Usuário legado criado pelo admin (sem login) com o mesmo telefone: vincula
-      // em vez de inserir e estourar o unique (tenant_id, phone).
-      const legacy = await this.userRepo.findByPhone(firebasePayload.phone, input.tenantId);
-      if (legacy && !legacy.firebaseUid) {
-        legacy.linkFirebaseUid(firebasePayload.uid);
-        user = await this.userRepo.save(legacy);
+      // Legado por telefone (autenticação via SMS anterior ao Google Sign-In)
+      if (firebasePayload.phone) {
+        const legacy = await this.userRepo.findByPhone(firebasePayload.phone, input.tenantId);
+        if (legacy && !legacy.firebaseUid) {
+          legacy.linkFirebaseUid(firebasePayload.uid);
+          user = await this.userRepo.save(legacy);
+        }
+      }
+      // Legado por e-mail (admin criado manualmente com mesmo endereço)
+      if (!user && firebasePayload.email) {
+        const legacy = await this.userRepo.findByEmail(firebasePayload.email, input.tenantId);
+        if (legacy && !legacy.firebaseUid) {
+          legacy.linkFirebaseUid(firebasePayload.uid);
+          user = await this.userRepo.save(legacy);
+        }
       }
     }
 
     if (!user) {
       const newUser = User.createClient({
         tenantId: input.tenantId,
-        phone: firebasePayload.phone,
+        phone: firebasePayload.phone ?? null,
+        email: firebasePayload.email ?? null,
         firebaseUid: firebasePayload.uid,
       });
       try {

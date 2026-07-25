@@ -68,6 +68,7 @@ describe('User entity', () => {
         tenantId: 'tenant-1',
         phone: '+5511999999999',
         firebaseUid: 'firebase-uid-client',
+        email: null,
       });
 
       expect(user.role).toBe('CLIENT');

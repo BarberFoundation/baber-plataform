@@ -24,7 +24,8 @@ export interface CreateAdminUserProps {
 
 export interface CreateClientUserProps {
   tenantId: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
   firebaseUid: string;
 }
 
@@ -123,7 +124,7 @@ export class User {
       name: null,
       role: 'CLIENT',
       phone: props.phone,
-      email: null,
+      email: props.email,
       firebaseUid: props.firebaseUid,
       createdAt: now,
       updatedAt: now,
