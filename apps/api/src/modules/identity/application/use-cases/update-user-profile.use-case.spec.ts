@@ -25,6 +25,7 @@ function makeUserRepo(user: User | null): IUserRepository {
     findByFirebaseUid: jest.fn().mockResolvedValue(null),
     findByFirebaseUidAnyTenant: jest.fn().mockResolvedValue(null),
     findByPhone: jest.fn().mockResolvedValue(null),
+    findByEmail: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue(user),
     findStaffByTenant: jest.fn().mockResolvedValue([]),
     save: jest.fn().mockImplementation(async (u: User) => u),

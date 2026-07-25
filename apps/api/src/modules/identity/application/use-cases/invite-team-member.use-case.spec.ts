@@ -7,6 +7,7 @@ function makeRepo(): IUserRepository {
     findByFirebaseUid: jest.fn(),
     findByFirebaseUidAnyTenant: jest.fn(),
     findByPhone: jest.fn(),
+    findByEmail: jest.fn().mockResolvedValue(null),
     findStaffByTenant: jest.fn(),
     findById: jest.fn(),
     save: jest.fn().mockImplementation(async (u: User) => u),

@@ -3,7 +3,7 @@ import type { User } from '@/lib/types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000/api/v1';
 
-async function refreshToken(): Promise<string | null> {
+export async function refreshToken(): Promise<string | null> {
   try {
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
