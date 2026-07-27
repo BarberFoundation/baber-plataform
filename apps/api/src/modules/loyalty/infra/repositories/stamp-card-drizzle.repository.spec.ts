@@ -74,4 +74,31 @@ describe('StampCardDrizzleRepository', () => {
       expect(db.insert).toHaveBeenCalled();
     });
   });
+
+  describe('withLock', () => {
+    it('takes a Postgres advisory lock inside a transaction before running the work', async () => {
+      const tx = { execute: jest.fn().mockResolvedValue(undefined) };
+      const db = { transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(tx)) };
+      const repo = new StampCardDrizzleRepository(db as never);
+      const work = jest.fn().mockResolvedValue('result');
+
+      const result = await repo.withLock('t1', 'client-1', work);
+
+      expect(result).toBe('result');
+      expect(db.transaction).toHaveBeenCalledTimes(1);
+      expect(tx.execute).toHaveBeenCalledTimes(1);
+      expect(work).toHaveBeenCalledTimes(1);
+      // the lock must be taken before the work runs, not after
+      expect(tx.execute.mock.invocationCallOrder[0]).toBeLessThan(work.mock.invocationCallOrder[0]);
+    });
+
+    it('propagates errors from work() and lets the transaction roll back', async () => {
+      const tx = { execute: jest.fn().mockResolvedValue(undefined) };
+      const db = { transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(tx)) };
+      const repo = new StampCardDrizzleRepository(db as never);
+      const work = jest.fn().mockRejectedValue(new Error('boom'));
+
+      await expect(repo.withLock('t1', 'client-1', work)).rejects.toThrow('boom');
+    });
+  });
 });

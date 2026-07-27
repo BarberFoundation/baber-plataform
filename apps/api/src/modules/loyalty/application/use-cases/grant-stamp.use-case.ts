@@ -45,28 +45,30 @@ export class GrantStampUseCase {
     const config = await this.configRepo.findByTenantId(input.tenantId);
     if (!config || !config.isServiceEligible(input.serviceId)) return;
 
-    const existing = await this.cardRepo.findByClientId(input.tenantId, input.clientId);
-    const card = existing ?? StampCard.createNew(input.tenantId, input.clientId);
+    await this.cardRepo.withLock(input.tenantId, input.clientId, async () => {
+      const existing = await this.cardRepo.findByClientId(input.tenantId, input.clientId);
+      const card = existing ?? StampCard.createNew(input.tenantId, input.clientId);
 
-    const result = card.addStamp(config.stampsRequired, config.creditValueInCents);
-    await this.cardRepo.save(card);
+      const result = card.addStamp(config.stampsRequired, config.creditValueInCents);
+      await this.cardRepo.save(card);
 
-    const addedPayload: StampCardStampAddedPayload = {
-      tenantId: input.tenantId,
-      clientId: input.clientId,
-      currentStamps: card.currentStamps,
-      stampsRequired: config.stampsRequired,
-    };
-    this.emitter.emit(LOYALTY_EVENTS.STAMP_ADDED, addedPayload);
-
-    if (result.completed) {
-      const completedPayload: StampCardCompletedPayload = {
+      const addedPayload: StampCardStampAddedPayload = {
         tenantId: input.tenantId,
         clientId: input.clientId,
-        creditEarnedInCents: result.creditEarnedInCents,
-        totalCreditBalanceInCents: card.creditBalanceInCents,
+        currentStamps: card.currentStamps,
+        stampsRequired: config.stampsRequired,
       };
-      this.emitter.emit(LOYALTY_EVENTS.STAMP_CARD_COMPLETED, completedPayload);
-    }
+      this.emitter.emit(LOYALTY_EVENTS.STAMP_ADDED, addedPayload);
+
+      if (result.completed) {
+        const completedPayload: StampCardCompletedPayload = {
+          tenantId: input.tenantId,
+          clientId: input.clientId,
+          creditEarnedInCents: result.creditEarnedInCents,
+          totalCreditBalanceInCents: card.creditBalanceInCents,
+        };
+        this.emitter.emit(LOYALTY_EVENTS.STAMP_CARD_COMPLETED, completedPayload);
+      }
+    });
   }
 }

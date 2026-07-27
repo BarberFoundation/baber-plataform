@@ -18,18 +18,20 @@ export class RedeemCreditUseCase {
   ) {}
 
   async execute(input: RedeemCreditInput): Promise<void> {
-    const card = await this.cardRepo.findByClientId(input.tenantId, input.clientId);
-    if (!card) throw new StampCardNotFoundError();
+    await this.cardRepo.withLock(input.tenantId, input.clientId, async () => {
+      const card = await this.cardRepo.findByClientId(input.tenantId, input.clientId);
+      if (!card) throw new StampCardNotFoundError();
 
-    card.redeemCredit(input.amountInCents);
-    await this.cardRepo.save(card);
+      card.redeemCredit(input.amountInCents);
+      await this.cardRepo.save(card);
 
-    const payload: StampCardCreditRedeemedPayload = {
-      tenantId: input.tenantId,
-      clientId: input.clientId,
-      amountInCents: input.amountInCents,
-      remainingBalanceInCents: card.creditBalanceInCents,
-    };
-    this.emitter.emit(LOYALTY_EVENTS.CREDIT_REDEEMED, payload);
+      const payload: StampCardCreditRedeemedPayload = {
+        tenantId: input.tenantId,
+        clientId: input.clientId,
+        amountInCents: input.amountInCents,
+        remainingBalanceInCents: card.creditBalanceInCents,
+      };
+      this.emitter.emit(LOYALTY_EVENTS.CREDIT_REDEEMED, payload);
+    });
   }
 }
