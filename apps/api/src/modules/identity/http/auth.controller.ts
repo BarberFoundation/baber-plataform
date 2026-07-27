@@ -15,6 +15,7 @@ import {
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '@shared/auth/public.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
@@ -49,6 +50,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(

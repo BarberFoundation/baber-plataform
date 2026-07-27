@@ -202,7 +202,7 @@ export default function TeamPage() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          disabled={deactivateMutation.isPending}
+                          disabled={deactivateMutation.isPending && deactivateMutation.variables === m.id}
                           onClick={() => deactivateMutation.mutate(m.id)}
                         >
                           Desativar

@@ -88,7 +88,7 @@ function SessionsCard() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        disabled={revokeMutation.isPending}
+                        disabled={revokeMutation.isPending && revokeMutation.variables === s.id}
                         onClick={() => revokeMutation.mutate(s.id)}
                       >
                         Encerrar

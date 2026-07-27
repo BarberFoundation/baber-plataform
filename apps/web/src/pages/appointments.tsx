@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
+import { useTodayInTenantTimezone } from '@/hooks/use-tenant-timezone';
 import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SummaryCard } from '@/components/ui/summary-card';
@@ -15,17 +15,19 @@ import type { Appointment, AppointmentStatus, Barber } from '@/lib/types';
 
 export default function AppointmentsPage() {
   const qc = useQueryClient();
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const today = useTodayInTenantTimezone();
+  const [date, setDate] = useState('');
   const [barberId, setBarberId] = useState('');
   const [status, setStatus] = useState('');
+  const effectiveDate = date || today;
 
   const params = new URLSearchParams();
-  if (date) params.set('date', date);
+  if (effectiveDate) params.set('date', effectiveDate);
   if (barberId) params.set('barberId', barberId);
   if (status) params.set('status', status);
 
   const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ['appointments', date, barberId, status],
+    queryKey: ['appointments', effectiveDate, barberId, status],
     queryFn: () => apiFetch<Appointment[]>(`/appointments?${params.toString()}`),
   });
 
@@ -95,7 +97,7 @@ export default function AppointmentsPage() {
           <div className="flex flex-wrap gap-3">
             <Input
               type="date"
-              value={date}
+              value={effectiveDate}
               onChange={(e) => setDate(e.target.value)}
               className="w-44"
             />
@@ -169,7 +171,7 @@ export default function AppointmentsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={confirm.isPending}
+                              disabled={confirm.isPending && confirm.variables === appt.id}
                               onClick={() => confirm.mutate(appt.id)}
                             >
                               Confirmar
@@ -177,7 +179,7 @@ export default function AppointmentsPage() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={cancel.isPending}
+                              disabled={cancel.isPending && cancel.variables === appt.id}
                               onClick={() => cancel.mutate(appt.id)}
                             >
                               Cancelar
@@ -188,7 +190,7 @@ export default function AppointmentsPage() {
                           <>
                             <Button
                               size="sm"
-                              disabled={complete.isPending}
+                              disabled={complete.isPending && complete.variables === appt.id}
                               onClick={() => complete.mutate(appt.id)}
                             >
                               Concluir
@@ -196,7 +198,7 @@ export default function AppointmentsPage() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={cancel.isPending}
+                              disabled={cancel.isPending && cancel.variables === appt.id}
                               onClick={() => cancel.mutate(appt.id)}
                             >
                               Cancelar

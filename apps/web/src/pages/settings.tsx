@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
@@ -21,18 +21,21 @@ export default function SettingsPage() {
   const [address, setAddress] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [businessHours, setBusinessHours] = useState<Record<DayOfWeek, DaySchedule> | null>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  // TanStack Query structurally shares fetch results, so `tenant`'s reference only
+  // changes when its content actually does — this re-syncs the form on real server
+  // updates (e.g. a save from elsewhere) instead of just once on first load.
+  const lastSyncedRef = useRef<TenantSettings | null>(null);
 
   useEffect(() => {
-    if (tenant && !hasLoaded) {
+    if (tenant && tenant !== lastSyncedRef.current) {
       setName(tenant.name);
       setPhone(tenant.phone ?? '');
       setAddress(tenant.address ?? '');
       setLogoUrl(tenant.logoUrl ?? '');
       setBusinessHours(tenant.businessHours);
-      setHasLoaded(true);
+      lastSyncedRef.current = tenant;
     }
-  }, [tenant, hasLoaded]);
+  }, [tenant]);
 
   const updateMutation = useMutation({
     mutationFn: (data: {

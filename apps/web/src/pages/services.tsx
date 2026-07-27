@@ -282,7 +282,7 @@ export default function ServicesPage() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            disabled={deactivateMutation.isPending}
+                            disabled={deactivateMutation.isPending && deactivateMutation.variables === s.id}
                             onClick={() => deactivateMutation.mutate(s.id)}
                           >
                             Desativar

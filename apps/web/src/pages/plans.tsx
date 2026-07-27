@@ -310,7 +310,7 @@ export default function PlansPage() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            disabled={deactivateMutation.isPending}
+                            disabled={deactivateMutation.isPending && deactivateMutation.variables === t.id}
                             onClick={() => deactivateMutation.mutate(t.id)}
                           >
                             Desativar
