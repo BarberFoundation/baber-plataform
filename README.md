@@ -25,11 +25,13 @@ Scheduling ┤  Scheduling é o CORE (booking, disponibilidade, overlap)
 
 | Contexto      | Responsabilidade                                        |
 |---------------|---------------------------------------------------------|
-| Identity      | auth (OTP cliente / Firebase admin), usuários, roles    |
+| Identity      | auth (Firebase cliente/admin), usuários, roles          |
 | Catalog       | serviços, preços, duração                               |
 | Team          | barbeiros, jornadas, folgas                             |
 | Scheduling    | agendamentos, disponibilidade, política de booking      |
 | Notifications | WhatsApp (confirmação, lembrete, cancelamento)          |
+| Loyalty       | cartão fidelidade (stamp card), assinatura de clube (planos, cobrança Asaas, webhook) |
+| Reporting     | relatórios/métricas do painel admin                      |
 
 ## Setup
 
@@ -89,12 +91,13 @@ API (`pnpm --filter api <script>`):
 ```
 apps/
   api/                  NestJS (5 módulos DDD: domain/application/infra)
-    src/modules/        identity, catalog, team, scheduling, notifications
+    src/modules/        identity, catalog, team, scheduling, loyalty, notifications, reporting
     src/shared/         kernel, tenancy, auth, database (+ schema), health, config
     drizzle/            migrations + seed (schema fica em src/shared/database/schema)
     Dockerfile          imagem usada pelo deploy no Fly.io
   web/                  React 18 + Vite (painel admin)
-    src/pages/          landing, login, dashboard, appointments, barbers, services
+    src/pages/          landing, login, dashboard, appointments, barbers, services,
+                         clients, plans, profile, reports, settings, team
     src/components/     UI (shadcn/ui)
     src/store/          Zustand
 docker-compose.yml      Postgres + Redis (+ Evolution API comentado)
