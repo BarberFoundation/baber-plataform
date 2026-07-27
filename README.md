@@ -1,3 +1,6 @@
+<img width="1919" height="849" alt="{10F9D2FC-7B2A-4B9C-910A-36B3CD7204D4}" src="https://github.com/user-attachments/assets/81aa0cd0-a01f-42af-994f-f38919f2704c" />
+
+
 # barber-platform
 
 Monorepo da plataforma de barbearia (multi-tenant). Backend NestJS + Drizzle, painel admin React, mobile Flutter em repo separado (`barber-mobile`).
