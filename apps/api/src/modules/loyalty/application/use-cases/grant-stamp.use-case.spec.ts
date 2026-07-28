@@ -2,6 +2,10 @@ import { GrantStampUseCase } from './grant-stamp.use-case';
 import { StampCard } from '../../domain/entities/stamp-card.entity';
 import { StampCardConfig } from '../../domain/entities/stamp-card-config.entity';
 
+function withLockPassthrough() {
+  return jest.fn((_tenantId: string, _clientId: string, work: () => unknown) => work());
+}
+
 function makeConfig(overrides: Partial<{ eligibleServiceIds: string[]; stampsRequired: number; creditValueInCents: number; isActive: boolean }> = {}) {
   return StampCardConfig.create({
     tenantId: 't1',
@@ -15,7 +19,7 @@ function makeConfig(overrides: Partial<{ eligibleServiceIds: string[]; stampsReq
 
 describe('GrantStampUseCase', () => {
   it('does nothing when the tenant has no stamp card config', async () => {
-    const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
+    const cardRepo = { findByClientId: jest.fn(), save: jest.fn(), withLock: withLockPassthrough() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(null) };
     const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
@@ -28,7 +32,7 @@ describe('GrantStampUseCase', () => {
   });
 
   it('does nothing when the completed service is not eligible', async () => {
-    const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
+    const cardRepo = { findByClientId: jest.fn(), save: jest.fn(), withLock: withLockPassthrough() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
     const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
@@ -41,7 +45,7 @@ describe('GrantStampUseCase', () => {
   });
 
   it('creates a new card, adds a stamp, saves it and emits STAMP_ADDED', async () => {
-    const cardRepo = { findByClientId: jest.fn().mockResolvedValue(null), save: jest.fn((c) => Promise.resolve(c)) };
+    const cardRepo = { findByClientId: jest.fn().mockResolvedValue(null), save: jest.fn((c) => Promise.resolve(c)), withLock: withLockPassthrough() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
     const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
@@ -50,6 +54,7 @@ describe('GrantStampUseCase', () => {
     await useCase.execute({ tenantId: 't1', clientId: 'client-1', serviceId: 'svc-1' });
 
     expect(cardRepo.save).toHaveBeenCalledWith(expect.any(StampCard));
+    expect(cardRepo.withLock).toHaveBeenCalledWith('t1', 'client-1', expect.any(Function));
     expect(emit).toHaveBeenCalledWith(
       'loyalty.stamp_card.stamp_added',
       expect.objectContaining({ tenantId: 't1', clientId: 'client-1', currentStamps: 1, stampsRequired: 2 }),
@@ -59,7 +64,7 @@ describe('GrantStampUseCase', () => {
   it('emits STAMP_CARD_COMPLETED in addition to STAMP_ADDED when the threshold is reached', async () => {
     const existing = StampCard.createNew('t1', 'client-1');
     existing.addStamp(2, 5000); // one stamp already, threshold=2
-    const cardRepo = { findByClientId: jest.fn().mockResolvedValue(existing), save: jest.fn((c) => Promise.resolve(c)) };
+    const cardRepo = { findByClientId: jest.fn().mockResolvedValue(existing), save: jest.fn((c) => Promise.resolve(c)), withLock: withLockPassthrough() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
     const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue(null) };
     const emit = jest.fn();
@@ -75,7 +80,7 @@ describe('GrantStampUseCase', () => {
   });
 
   it('does nothing if the client has an ACTIVE club subscription', async () => {
-    const cardRepo = { findByClientId: jest.fn(), save: jest.fn() };
+    const cardRepo = { findByClientId: jest.fn(), save: jest.fn(), withLock: withLockPassthrough() };
     const configRepo = { findByTenantId: jest.fn().mockResolvedValue(makeConfig()) };
     const clubSubRepo = { findByClientId: jest.fn().mockResolvedValue({ status: 'ACTIVE' }) };
     const emit = jest.fn();

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
@@ -49,6 +49,19 @@ export class StampCardDrizzleRepository implements IStampCardRepository {
       })
       .returning();
     return this.toEntity(row);
+  }
+
+  // Advisory lock instead of `SELECT ... FOR UPDATE`: grant-stamp needs to
+  // serialize against redeem-credit even when no row exists yet (new card),
+  // and a row lock can't protect a row that hasn't been inserted. The lock
+  // is session-scoped for the transaction's duration, so it still correctly
+  // fences off the find()+save() pair below even though those run on the
+  // pool's `this.db` connection rather than `tx`.
+  async withLock<T>(tenantId: string, clientId: string, work: () => Promise<T>): Promise<T> {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`stamp-card:${tenantId}:${clientId}`}))`);
+      return work();
+    });
   }
 
   private toEntity(row: typeof schema.stampCards.$inferSelect): StampCard {
