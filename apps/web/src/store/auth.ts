@@ -26,6 +26,12 @@ export const useAuthStore = create<AuthState>()(
         return expiresAt - 30_000 < Date.now();
       },
     }),
-    { name: 'baber-auth' },
+    {
+      name: 'baber-auth',
+      // accessToken/expiresAt are re-derived from the httpOnly refresh cookie on
+      // load (see ProtectedRoute) — persisting the live bearer token to
+      // localStorage would leave it readable by any injected/XSS script.
+      partialize: (state) => ({ user: state.user }),
+    },
   ),
 );

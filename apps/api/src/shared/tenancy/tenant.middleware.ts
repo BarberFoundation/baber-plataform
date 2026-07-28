@@ -23,8 +23,9 @@ export class TenantMiddleware implements NestMiddleware {
   constructor(private readonly tenantContext: TenantContext) {}
 
   use(req: Request, _res: Response, next: NextFunction): void {
-    const fromHeader = req.header('x-tenant-id');
     const fromToken = this.decodeTenantId(req.header('authorization'));
+    const fromHeader =
+      process.env.NODE_ENV !== 'production' ? req.header('x-tenant-id') : undefined;
 
     const tenantId = fromToken ?? fromHeader;
     if (tenantId) {

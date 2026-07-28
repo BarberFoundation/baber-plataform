@@ -9,10 +9,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [status, setStatus] = useState<'checking' | 'ok' | 'redirect'>('checking');
 
   useEffect(() => {
-    if (!accessToken) { setStatus('redirect'); return; }
-    if (!isTokenExpired()) { setStatus('ok'); return; }
+    if (accessToken && !isTokenExpired()) { setStatus('ok'); return; }
+    // accessToken isn't persisted (see store/auth.ts) — on a fresh page load it's
+    // always null here, so re-derive it from the httpOnly refresh cookie.
     refreshToken().then((token) => setStatus(token ? 'ok' : 'redirect'));
-  }, []);
+  }, [accessToken]);
 
   if (status === 'checking') return null;
   if (status === 'redirect') return <Navigate to="/login" replace />;

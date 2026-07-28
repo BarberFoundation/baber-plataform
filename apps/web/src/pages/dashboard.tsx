@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { animate, stagger } from 'animejs';
 import { apiFetch } from '@/lib/api';
+import { useTenantTimezone, useTodayInTenantTimezone } from '@/hooks/use-tenant-timezone';
 import { STATUS_LABEL, STATUS_VARIANT, STATUS_ICON, STATUS_ICON_CLASS } from '@/lib/appointment-status';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { SummaryCard } from '@/components/ui/summary-card';
@@ -11,8 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { Appointment, AppointmentStatus } from '@/lib/types';
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
+function getGreeting(timezone: string | undefined): string {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone, hour: 'numeric', hourCycle: 'h23' }).format(new Date()),
+  );
   if (hour >= 5 && hour < 12) return 'Bom dia';
   if (hour >= 12 && hour < 18) return 'Boa tarde';
   return 'Boa noite';
@@ -23,7 +24,8 @@ function StatusBadge({ status }: { status: AppointmentStatus }) {
 }
 
 export default function DashboardPage() {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const timezone = useTenantTimezone();
+  const today = useTodayInTenantTimezone();
   const cardsRef = useRef<HTMLDivElement>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
 
@@ -62,12 +64,17 @@ export default function DashboardPage() {
     {} as Partial<Record<AppointmentStatus, number>>,
   );
 
-  const dateLabel = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
+  const dateLabel = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: timezone,
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  }).format(new Date());
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">{getGreeting()}</p>
+        <p className="text-sm font-medium text-primary">{getGreeting(timezone)}</p>
         <h1 className="text-2xl font-bold capitalize">{dateLabel}</h1>
         <p className="text-muted-foreground text-sm">Resumo dos agendamentos de hoje</p>
       </div>

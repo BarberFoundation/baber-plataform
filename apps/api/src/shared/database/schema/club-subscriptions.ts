@@ -51,6 +51,7 @@ export const clubSubscriptions = pgTable(
   },
   (t) => [
     unique('club_subscriptions_tenant_client_unique').on(t.tenantId, t.clientId),
+    unique('club_subscriptions_asaas_subscription_id_unique').on(t.asaasSubscriptionId),
   ],
 );
 

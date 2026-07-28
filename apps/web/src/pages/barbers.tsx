@@ -220,7 +220,7 @@ export default function BarbersPage() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            disabled={deactivateMutation.isPending}
+                            disabled={deactivateMutation.isPending && deactivateMutation.variables === b.id}
                             onClick={() => deactivateMutation.mutate(b.id)}
                           >
                             Desativar
