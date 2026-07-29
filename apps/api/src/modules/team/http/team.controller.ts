@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -19,12 +18,12 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  isUUID,
   Matches,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { requireTenantId } from '@shared/tenancy/require-tenant-id';
 import { Public } from '@shared/auth/public.decorator';
 import { Roles } from '@shared/auth/roles.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
@@ -36,7 +35,7 @@ import { GetBarberUseCase } from '../application/use-cases/get-barber.use-case';
 import { ListBarbersUseCase } from '../application/use-cases/list-barbers.use-case';
 import { DeactivateBarberUseCase } from '../application/use-cases/deactivate-barber.use-case';
 import { Barber } from '../domain/entities/barber.entity';
-import { DayOfWeek } from '../domain/value-objects/work-schedule';
+import { DayOfWeek } from '@shared/kernel/value-objects/work-schedule';
 
 class DayScheduleDto {
   @IsBoolean()
@@ -125,8 +124,7 @@ export class TeamController {
   @Public()
   @Get()
   async list(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
-    if (!isUUID(tenantId, '4')) throw new BadRequestException('x-tenant-id must be a valid UUID v4.');
+    requireTenantId(tenantId);
     const barbers = await this.listBarbers.execute({ tenantId, includeInactive: false });
     return barbers.map(serializeBarber);
   }
@@ -148,8 +146,7 @@ export class TeamController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Headers('x-tenant-id') tenantId: string,
   ) {
-    if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
-    if (!isUUID(tenantId, '4')) throw new BadRequestException('x-tenant-id must be a valid UUID v4.');
+    requireTenantId(tenantId);
     const barber = await this.getBarber.execute({ id, tenantId });
     return serializeBarber(barber);
   }

@@ -39,6 +39,12 @@ export function endOfMonth(dateOnly: string): string {
   return fmtUTCDateOnly(new Date(Date.UTC(year, month, 0)));
 }
 
+/** Given a date-only 'YYYY-MM-DD', returns how many days that month has. Pure calendar arithmetic via Date.UTC — see nextRenewalCycle for why local getters are unsafe here. */
+export function daysInMonthUTC(dateOnly: string): number {
+  const [year, month] = dateOnly.split('-').map(Number);
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
 /**
  * Given a date-only 'YYYY-MM-DD' cycle end, returns the day after it (new cycle
  * start) and the last day of the following month (new cycle end).

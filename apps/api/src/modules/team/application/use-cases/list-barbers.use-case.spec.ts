@@ -1,7 +1,7 @@
 import { ListBarbersUseCase } from './list-barbers.use-case';
 import { ITeamRepository } from '../../domain/repositories/team.repository';
 import { Barber } from '../../domain/entities/barber.entity';
-import { defaultWorkSchedule } from '../../domain/value-objects/work-schedule';
+import { defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const makeBarber = (id: string, isActive: boolean) =>
   Barber.reconstitute({

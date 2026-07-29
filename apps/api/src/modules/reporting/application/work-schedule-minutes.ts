@@ -1,4 +1,4 @@
-import { WorkSchedule, DayOfWeek } from '../../team/domain/value-objects/work-schedule';
+import { WorkSchedule, DayOfWeek } from '@shared/kernel/value-objects/work-schedule';
 
 /** getUTCDay(): 0=domingo ... 6=sábado */
 const WEEKDAYS: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];

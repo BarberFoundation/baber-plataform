@@ -2,7 +2,7 @@ import { SetWorkScheduleUseCase, SetWorkScheduleInput } from './set-work-schedul
 import { ITeamRepository } from '../../domain/repositories/team.repository';
 import { Barber } from '../../domain/entities/barber.entity';
 import { BarberNotFoundError } from '../../domain/errors/team.errors';
-import { defaultWorkSchedule, WorkSchedule } from '../../domain/value-objects/work-schedule';
+import { defaultWorkSchedule, WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 function makeExisting() {
   return Barber.reconstitute({

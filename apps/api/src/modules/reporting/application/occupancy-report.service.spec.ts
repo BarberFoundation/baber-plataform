@@ -1,6 +1,6 @@
 import { OccupancyReportService } from './occupancy-report.service';
 import { IReportingRepository } from './ports/reporting.repository';
-import { WorkSchedule } from '../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 // jornada só na segunda, 09:00–18:00 (540 min/semana)
 const mondayOnly: WorkSchedule = {

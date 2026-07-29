@@ -1,4 +1,4 @@
-import { nextRenewalCycle, toLocalDateString, todayInSaoPaulo, firstDayOfNextMonth, endOfMonth } from './date.utils';
+import { nextRenewalCycle, toLocalDateString, todayInSaoPaulo, firstDayOfNextMonth, endOfMonth, daysInMonthUTC } from './date.utils';
 
 describe('nextRenewalCycle', () => {
   it('advances to the next day and the end of that day\'s month', () => {
@@ -56,5 +56,19 @@ describe('endOfMonth', () => {
 
   it('handles February in a leap year', () => {
     expect(endOfMonth('2028-02-10')).toBe('2028-02-29');
+  });
+});
+
+describe('daysInMonthUTC', () => {
+  it('returns 31 for a 31-day month', () => {
+    expect(daysInMonthUTC('2026-08-15')).toBe(31);
+  });
+
+  it('handles February in a leap year', () => {
+    expect(daysInMonthUTC('2028-02-01')).toBe(29);
+  });
+
+  it('handles February in a non-leap year', () => {
+    expect(daysInMonthUTC('2026-02-01')).toBe(28);
   });
 });

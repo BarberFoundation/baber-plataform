@@ -2,7 +2,7 @@ import { GetBarberUseCase } from './get-barber.use-case';
 import { ITeamRepository } from '../../domain/repositories/team.repository';
 import { Barber } from '../../domain/entities/barber.entity';
 import { BarberNotFoundError } from '../../domain/errors/team.errors';
-import { defaultWorkSchedule } from '../../domain/value-objects/work-schedule';
+import { defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const EXISTING = Barber.reconstitute({
   id: 'barber-1',

@@ -14,7 +14,7 @@ import { Public } from '@shared/auth/public.decorator';
 import { Roles } from '@shared/auth/roles.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
-import { DayOfWeek } from '../../team/domain/value-objects/work-schedule';
+import { DayOfWeek } from '@shared/kernel/value-objects/work-schedule';
 import { ListTenantsUseCase } from '../application/use-cases/list-tenants.use-case';
 import { FindTenantBySlugUseCase } from '../application/use-cases/find-tenant-by-slug.use-case';
 import { GetTenantSettingsUseCase } from '../application/use-cases/get-tenant-settings.use-case';

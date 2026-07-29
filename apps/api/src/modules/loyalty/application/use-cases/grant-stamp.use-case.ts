@@ -34,10 +34,13 @@ export class GrantStampUseCase {
   ) {}
 
   async execute(input: GrantStampInput): Promise<void> {
+    // Club subscribers don't accrue stamp-card stamps — the club replaces the stamp-card benefit
+    // for as long as the subscription is active (symmetric to ClubSubscriptionBlockedByStampCardError,
+    // which blocks activating a club subscription while a stamp card already has progress).
     const activeSubscription = await this.clubSubRepo.findByClientId(input.tenantId, input.clientId);
     if (activeSubscription && activeSubscription.status === 'ACTIVE') {
       this.logger.debug(
-        `Skipping stamp accrual: client ${input.clientId} has an active club subscription`,
+        `Skipping stamp accrual: client ${input.clientId} has an active club subscription (stamp card blocked by club subscription)`,
       );
       return;
     }

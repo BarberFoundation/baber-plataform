@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { WorkSchedule, defaultWorkSchedule } from '../value-objects/work-schedule';
+import { WorkSchedule, defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 export interface BarberProps {
   id: string;

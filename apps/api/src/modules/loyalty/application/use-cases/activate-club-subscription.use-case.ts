@@ -20,6 +20,7 @@ import {
 } from '../../domain/errors/loyalty.errors';
 import { CLUB_SUBSCRIPTION_EVENTS, ClubSubscriptionActivatedPayload } from '@shared/events/club-subscription-events';
 import { todayInSaoPaulo, firstDayOfNextMonth, endOfMonth } from '../../domain/utils/date.utils';
+import { proratedChargeInCents } from '../../domain/utils/pricing.utils';
 
 export interface ActivateClubSubscriptionInput {
   tenantId: string;
@@ -36,8 +37,10 @@ export interface ActivateClubSubscriptionOutput {
   payment: { paymentId: string; pix: PixQrCode } | null;
 }
 
-function daysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate();
+interface GatewaySubscriptionResult {
+  customerId: string;
+  subscriptionId: string;
+  payment: { paymentId: string; pix: PixQrCode } | null;
 }
 
 @Injectable()
@@ -71,44 +74,11 @@ export class ActivateClubSubscriptionUseCase {
       if (service) catalogPrices.set(item.serviceId, service.priceInCents);
     }
     const monthlyPriceInCents = tier.calculatePriceInCents(catalogPrices);
-
     const todayStr = todayInSaoPaulo();
-    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number);
-    const totalDays = daysInMonth(todayYear, todayMonth - 1);
-    const daysRemaining = totalDays - todayDay + 1;
-    const proratedInCents = Math.round((monthlyPriceInCents * daysRemaining) / totalDays);
 
-    const { customerId } = await this.paymentGateway.createCustomer({
-      name: input.name, cpfCnpj: input.cpfCnpj, email: input.email, phone: input.phone,
-    });
+    const { customerId, subscriptionId, payment } = await this.chargeAndSubscribe(input, tier.name, monthlyPriceInCents, todayStr);
 
-    let payment: { paymentId: string; pix: PixQrCode } | null = null;
-    if (proratedInCents > 0) {
-      const { paymentId } = await this.paymentGateway.createOneOffCharge({
-        customerId,
-        billingType: 'UNDEFINED',
-        valueInCents: proratedInCents,
-        dueDate: todayStr,
-        description: `Adesão pro-rata — clube ${tier.name}`,
-      });
-      try {
-        const pix = await this.paymentGateway.getPixQrCode(paymentId);
-        payment = { paymentId, pix };
-      } catch (err) {
-        this.logger.warn(`Failed to fetch PIX QR code for payment ${paymentId}: ${(err as Error).message}`);
-      }
-    }
-
-    const nextDueDate = firstDayOfNextMonth(todayStr);
-    const { subscriptionId } = await this.paymentGateway.createSubscription({
-      customerId,
-      billingType: 'UNDEFINED',
-      valueInCents: monthlyPriceInCents,
-      nextDueDate,
-      description: `Clube ${tier.name}`,
-    });
-
-    const cycleEnd = endOfMonth(nextDueDate);
+    const cycleEnd = endOfMonth(firstDayOfNextMonth(todayStr));
     const quotas = tier.services.map((s) => ({ serviceId: s.serviceId, quantityTotal: s.quantity, quantityConsumed: 0 }));
 
     let subscription: ClubSubscription;
@@ -136,5 +106,47 @@ export class ActivateClubSubscriptionUseCase {
     this.emitter.emit(CLUB_SUBSCRIPTION_EVENTS.ACTIVATED, payload);
 
     return { subscription: saved, payment };
+  }
+
+  /** Creates the gateway customer, charges the pro-rata amount (if any), and opens the recurring subscription. */
+  private async chargeAndSubscribe(
+    input: ActivateClubSubscriptionInput,
+    tierName: string,
+    monthlyPriceInCents: number,
+    todayStr: string,
+  ): Promise<GatewaySubscriptionResult> {
+    const { customerId } = await this.paymentGateway.createCustomer({
+      name: input.name, cpfCnpj: input.cpfCnpj, email: input.email, phone: input.phone,
+    });
+
+    const proratedInCents = proratedChargeInCents(monthlyPriceInCents, todayStr);
+
+    let payment: { paymentId: string; pix: PixQrCode } | null = null;
+    if (proratedInCents > 0) {
+      const { paymentId } = await this.paymentGateway.createOneOffCharge({
+        customerId,
+        billingType: 'UNDEFINED',
+        valueInCents: proratedInCents,
+        dueDate: todayStr,
+        description: `Adesão pro-rata — clube ${tierName}`,
+      });
+      try {
+        const pix = await this.paymentGateway.getPixQrCode(paymentId);
+        payment = { paymentId, pix };
+      } catch (err) {
+        this.logger.warn(`Failed to fetch PIX QR code for payment ${paymentId}: ${(err as Error).message}`);
+      }
+    }
+
+    const nextDueDate = firstDayOfNextMonth(todayStr);
+    const { subscriptionId } = await this.paymentGateway.createSubscription({
+      customerId,
+      billingType: 'UNDEFINED',
+      valueInCents: monthlyPriceInCents,
+      nextDueDate,
+      description: `Clube ${tierName}`,
+    });
+
+    return { customerId, subscriptionId, payment };
   }
 }

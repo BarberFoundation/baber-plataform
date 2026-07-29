@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
-import { WorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 import { TenantNotFoundError } from '../../domain/errors/identity.errors';
 
 type DB = PostgresJsDatabase<typeof schema>;

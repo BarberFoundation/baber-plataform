@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
-import { WorkSchedule } from '../../../modules/team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 export const barbers = pgTable('barbers', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { TEAM_REPOSITORY, ITeamRepository } from '../../domain/repositories/team.repository';
 import { Barber } from '../../domain/entities/barber.entity';
 import { BarberNotFoundError } from '../../domain/errors/team.errors';
-import { WorkSchedule } from '../../domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 export interface SetWorkScheduleInput {
   id: string;

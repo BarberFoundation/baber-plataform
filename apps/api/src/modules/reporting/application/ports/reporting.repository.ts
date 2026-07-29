@@ -1,4 +1,4 @@
-import { WorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 export const REPORTING_REPOSITORY = Symbol('IReportingRepository');
 
