@@ -5,7 +5,7 @@ import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
 import { ITeamRepository } from '../../domain/repositories/team.repository';
 import { Barber } from '../../domain/entities/barber.entity';
-import { WorkSchedule, defaultWorkSchedule } from '../../domain/value-objects/work-schedule';
+import { WorkSchedule, defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 type DB = PostgresJsDatabase<typeof schema>;
 

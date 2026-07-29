@@ -5,7 +5,7 @@ import { Injectable, Scope } from '@nestjs/common';
  * request HTTP. Preenchido pelo TenantMiddleware a partir do JWT.
  *
  * Repositories injetam isto e filtram toda query por tenantId
- * automaticamente (ver BaseTenantRepository).
+ * manualmente nas queries.
  */
 @Injectable({ scope: Scope.REQUEST })
 export class TenantContext {

@@ -1,5 +1,5 @@
 import { availableMinutesForRange } from './work-schedule-minutes';
-import { WorkSchedule } from '../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const schedule: WorkSchedule = {
   mon: { isWorking: true,  startTime: '09:00', endTime: '18:00' }, // 540

@@ -4,7 +4,7 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DRIZZLE } from '@shared/database/database.tokens';
 import * as schema from '@shared/database/schema';
 import { IBarberLookup, BarberLookupResult, ActiveBarber } from '../../domain/ports/barber-lookup.port';
-import { WorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { WorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 type DB = PostgresJsDatabase<typeof schema>;
 

@@ -18,8 +18,8 @@ import {
   IsOptional,
   IsString,
   Matches,
-  isUUID,
 } from 'class-validator';
+import { requireTenantId } from '@shared/tenancy/require-tenant-id';
 import { Public } from '@shared/auth/public.decorator';
 import { Roles } from '@shared/auth/roles.decorator';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
@@ -84,11 +84,6 @@ function serializeAppointment(a: Appointment) {
   };
 }
 
-function requireTenantId(tenantId: string | undefined): void {
-  if (!tenantId) throw new BadRequestException('x-tenant-id header is required.');
-  if (!isUUID(tenantId, '4')) throw new BadRequestException('x-tenant-id must be a valid UUID v4.');
-}
-
 @Controller('appointments')
 export class SchedulingController {
   constructor(
@@ -111,6 +106,7 @@ export class SchedulingController {
     @Query('date') date: string,
   ) {
     requireTenantId(tenantId);
+
     if (!serviceId || !date) {
       throw new BadRequestException('serviceId e date são obrigatórios.');
     }

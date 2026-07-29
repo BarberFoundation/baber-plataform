@@ -50,11 +50,6 @@ export class ClubSubscriptionBlockedByStampCardError extends DomainError {
   constructor(message = 'Cliente possui cartão de fidelidade em andamento — resgate ou zere o cartão antes de assinar o clube.') { super(message); }
 }
 
-export class StampCardBlockedByClubSubscriptionError extends DomainError {
-  readonly code = 'STAMP_CARD_BLOCKED_BY_CLUB_SUBSCRIPTION';
-  constructor(message = 'Cliente possui assinatura de clube ativa — não acumula cartão de fidelidade.') { super(message); }
-}
-
 export class SubscriptionQuotaExhaustedError extends DomainError {
   readonly code = 'SUBSCRIPTION_QUOTA_EXHAUSTED';
   constructor(message = 'Cota do plano esgotada para este serviço neste ciclo.') { super(message); }

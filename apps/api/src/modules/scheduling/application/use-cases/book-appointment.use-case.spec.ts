@@ -4,7 +4,7 @@ import { IBarberLookup } from '../../domain/ports/barber-lookup.port';
 import { IServiceLookup } from '../../domain/ports/service-lookup.port';
 import { Appointment } from '../../domain/entities/appointment.entity';
 import { AppointmentConflictError, InvalidAppointmentTimeError, NoBarberAvailableError } from '../../domain/errors/scheduling.errors';
-import { defaultWorkSchedule } from '../../../team/domain/value-objects/work-schedule';
+import { defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const MONDAY = '2025-03-10';
 

@@ -1,5 +1,5 @@
 import { Barber } from './barber.entity';
-import { defaultWorkSchedule } from '../value-objects/work-schedule';
+import { defaultWorkSchedule } from '@shared/kernel/value-objects/work-schedule';
 
 const BASE = {
   tenantId: 'tenant-1',
