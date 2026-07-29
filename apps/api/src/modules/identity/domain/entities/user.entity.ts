@@ -8,6 +8,7 @@ export interface UserProps {
   role: Role;
   phone: string | null;
   email: string | null;
+  cpf?: string | null;
   firebaseUid: string | null;
   isActive?: boolean;
   createdAt: Date;
@@ -42,7 +43,8 @@ export class User {
   private _name: string | null;
   readonly role: Role;
   private _phone: string | null;
-  readonly email: string | null;
+  private _email: string | null;
+  private _cpf: string | null;
   private _firebaseUid: string | null;
   private _isActive: boolean;
   readonly createdAt: Date;
@@ -54,7 +56,8 @@ export class User {
     this._name = props.name;
     this.role = props.role;
     this._phone = props.phone;
-    this.email = props.email;
+    this._email = props.email;
+    this._cpf = props.cpf ?? null;
     this._firebaseUid = props.firebaseUid;
     this._isActive = props.isActive ?? true;
     this.createdAt = props.createdAt;
@@ -67,6 +70,14 @@ export class User {
 
   get phone(): string | null {
     return this._phone;
+  }
+
+  get email(): string | null {
+    return this._email;
+  }
+
+  get cpf(): string | null {
+    return this._cpf;
   }
 
   get firebaseUid(): string | null {
@@ -93,6 +104,14 @@ export class User {
     this._phone = phone;
   }
 
+  updateEmail(email: string | null): void {
+    this._email = email;
+  }
+
+  updateCpf(cpf: string | null): void {
+    this._cpf = cpf;
+  }
+
   deactivate(): void {
     this._isActive = false;
   }
@@ -110,6 +129,7 @@ export class User {
       role: 'ADMIN',
       phone: props.phone,
       email: props.email,
+      cpf: null,
       firebaseUid: props.firebaseUid,
       createdAt: now,
       updatedAt: now,
@@ -125,6 +145,7 @@ export class User {
       role: 'CLIENT',
       phone: props.phone,
       email: props.email,
+      cpf: null,
       firebaseUid: props.firebaseUid,
       createdAt: now,
       updatedAt: now,
@@ -140,6 +161,7 @@ export class User {
       role: props.role,
       phone: props.phone,
       email: null,
+      cpf: null,
       firebaseUid: null,
       isActive: true,
       createdAt: now,

@@ -21,7 +21,7 @@ describe('GetUserProfileUseCase', () => {
     };
     const uc = new GetUserProfileUseCase(repo);
     const result = await uc.execute({ userId: 'user-1', tenantId: 'tenant-1' });
-    expect(result).toEqual({ id: 'user-1', name: 'João', role: 'CLIENT', phone: '+5511999999999', email: null });
+    expect(result).toEqual({ id: 'user-1', name: 'João', role: 'CLIENT', phone: '+5511999999999', email: null, cpf: null });
   });
 
   it('throws UserNotFoundError when user does not exist', async () => {

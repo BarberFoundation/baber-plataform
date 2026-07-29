@@ -10,6 +10,8 @@ export interface UpdateUserProfileInput {
   tenantId: string;
   name?: string;
   phone?: string;
+  email?: string;
+  cpf?: string;
 }
 
 export interface UpdateUserProfileOutput {
@@ -18,6 +20,7 @@ export interface UpdateUserProfileOutput {
   role: string;
   phone: string | null;
   email: string | null;
+  cpf: string | null;
 }
 
 @Injectable()
@@ -35,6 +38,8 @@ export class UpdateUserProfileUseCase {
 
     if (input.name !== undefined) user.rename(input.name);
     if (input.phone !== undefined) user.updatePhone(input.phone);
+    if (input.email !== undefined) user.updateEmail(input.email);
+    if (input.cpf !== undefined) user.updateCpf(input.cpf);
     const saved = await this.userRepo.save(user);
 
     return {
@@ -43,6 +48,7 @@ export class UpdateUserProfileUseCase {
       role: saved.role,
       phone: saved.phone,
       email: saved.email,
+      cpf: saved.cpf,
     };
   }
 }
