@@ -13,6 +13,7 @@ export interface GetUserProfileOutput {
   role: string;
   phone: string | null;
   email: string | null;
+  cpf: string | null;
 }
 
 @Injectable()
@@ -22,6 +23,6 @@ export class GetUserProfileUseCase {
   async execute(input: GetUserProfileInput): Promise<GetUserProfileOutput> {
     const user = await this.userRepo.findById(input.userId, input.tenantId);
     if (!user) throw new UserNotFoundError();
-    return { id: user.id, name: user.name, role: user.role, phone: user.phone, email: user.email };
+    return { id: user.id, name: user.name, role: user.role, phone: user.phone, email: user.email, cpf: user.cpf };
   }
 }

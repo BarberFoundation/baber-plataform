@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { CurrentUser } from '@shared/auth/current-user.decorator';
 import { JwtPayload } from '@shared/auth/jwt-token.service';
@@ -17,6 +17,16 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\D/g, '') : value))
+  @IsString()
+  @IsOptional()
+  cpf?: string;
 }
 
 @Controller('me')
@@ -38,6 +48,8 @@ export class MeController {
       tenantId: user.tenantId,
       name: dto.name,
       phone: dto.phone,
+      email: dto.email,
+      cpf: dto.cpf,
     });
   }
 }
