@@ -8,6 +8,7 @@ import { STAMP_CARD_REPOSITORY } from './domain/repositories/stamp-card.reposito
 import { SUBSCRIPTION_TIER_REPOSITORY } from './domain/repositories/subscription-tier.repository';
 import { CLUB_SUBSCRIPTION_REPOSITORY } from './domain/repositories/club-subscription.repository';
 import { PAYMENT_GATEWAY } from './domain/ports/payment-gateway.port';
+import { SERVICE_PRICE_LOOKUP } from './domain/ports/service-price-lookup.port';
 
 import { StampCardConfigDrizzleRepository } from './infra/repositories/stamp-card-config-drizzle.repository';
 import { StampCardDrizzleRepository } from './infra/repositories/stamp-card-drizzle.repository';
@@ -15,6 +16,7 @@ import { SubscriptionTierDrizzleRepository } from './infra/repositories/subscrip
 import { ClubSubscriptionDrizzleRepository } from './infra/repositories/club-subscription-drizzle.repository';
 import { AsaasPaymentGateway } from './infra/gateways/asaas-payment.gateway';
 import { StubPaymentGateway } from './infra/gateways/stub-payment.gateway';
+import { CatalogPriceLookupAdapter } from './infra/adapters/catalog-price-lookup.adapter';
 
 import { UpsertStampCardConfigUseCase } from './application/use-cases/upsert-stamp-card-config.use-case';
 import { GetStampCardConfigUseCase } from './application/use-cases/get-stamp-card-config.use-case';
@@ -47,6 +49,7 @@ import { AsaasWebhookController } from './http/asaas-webhook.controller';
     { provide: STAMP_CARD_REPOSITORY, useClass: StampCardDrizzleRepository },
     { provide: SUBSCRIPTION_TIER_REPOSITORY, useClass: SubscriptionTierDrizzleRepository },
     { provide: CLUB_SUBSCRIPTION_REPOSITORY, useClass: ClubSubscriptionDrizzleRepository },
+    { provide: SERVICE_PRICE_LOOKUP, useClass: CatalogPriceLookupAdapter },
     {
       provide: PAYMENT_GATEWAY,
       useFactory: (config: ConfigService) => {

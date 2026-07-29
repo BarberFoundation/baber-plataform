@@ -17,8 +17,8 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
     const active = makeTier({ name: 'Essencial', isActive: true, discountPercentage: 10 });
     const inactive = makeTier({ name: 'Ouro', isActive: false });
     const tierRepo = { findByTenantId: jest.fn().mockResolvedValue([active, inactive]) };
-    const catalogRepo = { findById: jest.fn().mockResolvedValue({ priceInCents: 5000 }) };
-    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, catalogRepo as never);
+    const priceLookup = { findPriceInCents: jest.fn().mockResolvedValue(5000) };
+    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, priceLookup as never);
 
     const result = await useCase.execute({ tenantId: 't1' });
 
@@ -30,7 +30,7 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
       monthlyPriceInCents: 9000, // 2 * 5000 = 10000, -10% = 9000
       discountPercentage: 10,
     });
-    expect(catalogRepo.findById).toHaveBeenCalledWith('svc-1', 't1');
+    expect(priceLookup.findPriceInCents).toHaveBeenCalledWith('svc-1', 't1');
   });
 
   it('excludes a tier service that no longer exists in the catalog from the price calculation', async () => {
@@ -42,8 +42,8 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
       isActive: true,
     });
     const tierRepo = { findByTenantId: jest.fn().mockResolvedValue([tier]) };
-    const catalogRepo = { findById: jest.fn().mockResolvedValue(null) };
-    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, catalogRepo as never);
+    const priceLookup = { findPriceInCents: jest.fn().mockResolvedValue(null) };
+    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, priceLookup as never);
 
     const result = await useCase.execute({ tenantId: 't1' });
 
@@ -53,12 +53,12 @@ describe('GetAvailableSubscriptionTiersUseCase', () => {
 
   it('returns an empty array when there are no active tiers', async () => {
     const tierRepo = { findByTenantId: jest.fn().mockResolvedValue([]) };
-    const catalogRepo = { findById: jest.fn() };
-    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, catalogRepo as never);
+    const priceLookup = { findPriceInCents: jest.fn() };
+    const useCase = new GetAvailableSubscriptionTiersUseCase(tierRepo as never, priceLookup as never);
 
     const result = await useCase.execute({ tenantId: 't1' });
 
     expect(result).toEqual([]);
-    expect(catalogRepo.findById).not.toHaveBeenCalled();
+    expect(priceLookup.findPriceInCents).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,7 @@ import {
   IClubSubscriptionRepository,
 } from '../../domain/repositories/club-subscription.repository';
 import { STAMP_CARD_REPOSITORY, IStampCardRepository } from '../../domain/repositories/stamp-card.repository';
-import { CATALOG_REPOSITORY, ICatalogRepository } from '../../../catalog/domain/repositories/catalog.repository';
+import { SERVICE_PRICE_LOOKUP, IServicePriceLookup } from '../../domain/ports/service-price-lookup.port';
 import { PAYMENT_GATEWAY, IPaymentGateway, PixQrCode } from '../../domain/ports/payment-gateway.port';
 import { ClubSubscription } from '../../domain/entities/club-subscription.entity';
 import {
@@ -51,7 +51,7 @@ export class ActivateClubSubscriptionUseCase {
     @Inject(SUBSCRIPTION_TIER_REPOSITORY) private readonly tierRepo: ISubscriptionTierRepository,
     @Inject(CLUB_SUBSCRIPTION_REPOSITORY) private readonly clubSubRepo: IClubSubscriptionRepository,
     @Inject(STAMP_CARD_REPOSITORY) private readonly stampCardRepo: IStampCardRepository,
-    @Inject(CATALOG_REPOSITORY) private readonly catalogRepo: ICatalogRepository,
+    @Inject(SERVICE_PRICE_LOOKUP) private readonly priceLookup: IServicePriceLookup,
     @Inject(PAYMENT_GATEWAY) private readonly paymentGateway: IPaymentGateway,
     @Inject(EventEmitter2) private readonly emitter: EventEmitter2,
   ) {}
@@ -70,8 +70,8 @@ export class ActivateClubSubscriptionUseCase {
 
     const catalogPrices = new Map<string, number>();
     for (const item of tier.services) {
-      const service = await this.catalogRepo.findById(item.serviceId, input.tenantId);
-      if (service) catalogPrices.set(item.serviceId, service.priceInCents);
+      const priceInCents = await this.priceLookup.findPriceInCents(item.serviceId, input.tenantId);
+      if (priceInCents !== null) catalogPrices.set(item.serviceId, priceInCents);
     }
     const monthlyPriceInCents = tier.calculatePriceInCents(catalogPrices);
     const todayStr = todayInSaoPaulo();

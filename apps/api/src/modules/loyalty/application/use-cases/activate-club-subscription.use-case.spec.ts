@@ -21,7 +21,7 @@ describe('ActivateClubSubscriptionUseCase', () => {
       tierRepo: { findById: jest.fn().mockResolvedValue(makeTier()) },
       clubSubRepo: { findByClientId: jest.fn().mockResolvedValue(null), save: jest.fn((s) => s) },
       stampCardRepo: { findByClientId: jest.fn().mockResolvedValue(null) },
-      catalogRepo: { findById: jest.fn().mockResolvedValue({ priceInCents: 3500 }) },
+      priceLookup: { findPriceInCents: jest.fn().mockResolvedValue(3500) },
       paymentGateway: {
         createCustomer: jest.fn().mockResolvedValue({ customerId: 'cus_1' }),
         createOneOffCharge: jest.fn().mockResolvedValue({ paymentId: 'pay_1' }),
@@ -36,7 +36,7 @@ describe('ActivateClubSubscriptionUseCase', () => {
   function makeUseCase(deps: ReturnType<typeof makeDeps>) {
     return new ActivateClubSubscriptionUseCase(
       deps.tierRepo as never, deps.clubSubRepo as never, deps.stampCardRepo as never,
-      deps.catalogRepo as never, deps.paymentGateway as never, deps.emitter as never,
+      deps.priceLookup as never, deps.paymentGateway as never, deps.emitter as never,
     );
   }
 

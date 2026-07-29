@@ -4,7 +4,7 @@ import {
   SUBSCRIPTION_TIER_REPOSITORY,
   ISubscriptionTierRepository,
 } from '../../domain/repositories/subscription-tier.repository';
-import { CATALOG_REPOSITORY, ICatalogRepository } from '../../../catalog/domain/repositories/catalog.repository';
+import { SERVICE_PRICE_LOOKUP, IServicePriceLookup } from '../../domain/ports/service-price-lookup.port';
 
 export interface GetAvailableSubscriptionTiersInput {
   tenantId: string;
@@ -28,7 +28,7 @@ export interface AvailableSubscriptionTierView {
 export class GetAvailableSubscriptionTiersUseCase {
   constructor(
     @Inject(SUBSCRIPTION_TIER_REPOSITORY) private readonly tierRepo: ISubscriptionTierRepository,
-    @Inject(CATALOG_REPOSITORY) private readonly catalogRepo: ICatalogRepository,
+    @Inject(SERVICE_PRICE_LOOKUP) private readonly priceLookup: IServicePriceLookup,
   ) {}
 
   async execute(input: GetAvailableSubscriptionTiersInput): Promise<AvailableSubscriptionTierView[]> {
@@ -40,10 +40,10 @@ export class GetAvailableSubscriptionTiersUseCase {
       const catalogPrices = new Map<string, number>();
       const services: AvailableSubscriptionTierServiceView[] = [];
       for (const item of tier.services) {
-        const service = await this.catalogRepo.findById(item.serviceId, input.tenantId);
-        if (service) {
-          catalogPrices.set(item.serviceId, service.priceInCents);
-          services.push({ serviceId: item.serviceId, quantity: item.quantity, priceInCents: service.priceInCents });
+        const priceInCents = await this.priceLookup.findPriceInCents(item.serviceId, input.tenantId);
+        if (priceInCents !== null) {
+          catalogPrices.set(item.serviceId, priceInCents);
+          services.push({ serviceId: item.serviceId, quantity: item.quantity, priceInCents });
         }
       }
       views.push({
